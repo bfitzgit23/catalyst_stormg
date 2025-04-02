@@ -1,5 +1,5 @@
 subarch: amd64
-version_stamp: stormg-22-03-2025
+version_stamp: stormg-02-04-2025
 target: livecd-stage1
 rel_type: default
 profile: default/linux/amd64/23.0/desktop
