@@ -3,7 +3,7 @@ version_stamp: stormg-22-03-2025
 target: livecd-stage1
 rel_type: default
 profile: default/linux/amd64/23.0/desktop
-snapshot_treeish: 1c9f3a0647cbfbbace4ce802157939939a2f3a8d
+snapshot_treeish: bd6107dbebe71859f12618eb0669c5d110c9b076
 source_subpath: default/stage3-amd64-openrc-latest.tar.xz
 compression_mode: pixz
 portage_confdir: /home/ben/Desktop/catalyst_stormg/config/stages
