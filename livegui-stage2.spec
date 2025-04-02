@@ -1,10 +1,10 @@
 subarch: amd64
-version_stamp: stormg-22-03-2025
+version_stamp: stormg-02-04-2025
 target: livecd-stage2
 rel_type: default
 profile: 2default/linux/amd64/23.0/desktop
-snapshot_treeish: 1c9f3a0647cbfbbace4ce802157939939a2f3a8d
-source_subpath: default/livecd-stage1-amd64-stormg-22-03-2025
+snapshot_treeish: bd6107dbebe71859f12618eb0669c5d110c9b076
+source_subpath: default/livecd-stage1-amd64-stormg-02-04-2025
 portage_confdir: /home/ben/Desktop/catalyst_stormg/config/stages
 repos: /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/guru
 /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/tezeta
@@ -16,9 +16,9 @@ repos: /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/guru
 livecd/bootargs: overlayfs nodhcp dokeymap dodetect dousb quiet splash zram.num_devices=1
 livecd/depclean: no
 livecd/fstype: squashfs
-livecd/iso: StormG_latest_xfce_22-03-2025.iso
+livecd/iso: StormG_latest_xfce_02-04-2025.iso
 livecd/type: gentoo-release-livecd
-livecd/volid: StormGenZ_LiveDVD_22-03-2025
+livecd/volid: StormGenZ_LiveDVD_02-04-2025
 livecd/readme: Welcome to StormG, making Gentoo GNU/Linux easy for anyone, pro or newbie! Containing the famous calamares installer, a highly customized XFCE desktop, bash aliases in the users .bashrc in their home directory, oh-my-bash to simplify bash usage and more!
 livecd/motd: "Welcome to StormG"
 livecd/users: gentoo
