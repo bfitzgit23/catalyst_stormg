@@ -49,12 +49,19 @@
     <property name="plugin-6" type="string" value="systray">
       <property name="square-icons" type="bool" value="true"/>
       <property name="known-items" type="array">
-        <value type="string" value="hp-systray"/>
+        <value type="string" value="TelegramDesktop"/>
+        <value type="string" value="steam"/>
+        <value type="string" value="chrome_status_icon_1"/>
         <value type="string" value="flameshot"/>
         <value type="string" value="vlc"/>
         <value type="string" value="blueman"/>
       </property>
       <property name="known-legacy-items" type="array">
+        <value type="string" value="wi-fi network connection “spirit-of-76 1” active: spirit-of-76 (60%)"/>
+        <value type="string" value="wi-fi network connection “spirit-of-76 1” active: spirit-of-76 (49%)"/>
+        <value type="string" value="wi-fi network connection “spirit-of-76 1” active: spirit-of-76 (43%)"/>
+        <value type="string" value="wi-fi network connection “spirit-of-76 1” active: spirit-of-76 (77%)"/>
+        <value type="string" value="wi-fi network connection “spirit-of-76” active: spirit-of-76 (67%)"/>
         <value type="string" value="wi-fi network connection “spirit-of-76” active: spirit-of-76 (83%)"/>
         <value type="string" value="notification-daemon"/>
         <value type="string" value="networkmanager applet"/>
@@ -76,7 +83,7 @@
     <property name="plugin-1" type="string" value="power-manager-plugin"/>
     <property name="plugin-4" type="string" value="pulseaudio">
       <property name="enable-keyboard-shortcuts" type="bool" value="true"/>
-      <property name="known-players" type="string" value="vlc"/>
+      <property name="known-players" type="string" value="Chrome;firefox;vlc"/>
     </property>
     <property name="plugin-9" type="string" value="weather">
       <property name="location" type="empty">
@@ -126,16 +133,19 @@
       <property name="button-icon" type="string" value="/usr/share/pixmaps/gentoo/misc/10389-gentoo-g-transparent.png"/>
       <property name="hover-switch-category" type="bool" value="true"/>
       <property name="recent" type="array">
-        <value type="string" value="gentoo-pkg-manager.desktop"/>
-        <value type="string" value="firefox-esr.desktop"/>
-        <value type="string" value="xfce4-taskmanager.desktop"/>
+        <value type="string" value="google-chrome.desktop"/>
+        <value type="string" value="discord.desktop"/>
+        <value type="string" value="gparted.desktop"/>
+        <value type="string" value="io.github.edo9300.EDOPro.desktop"/>
+        <value type="string" value="steam.desktop"/>
+        <value type="string" value="wine-Programs-SWG Hunted Launcher.desktop"/>
+        <value type="string" value="org.telegram.desktop.desktop"/>
+        <value type="string" value="thunar.desktop"/>
         <value type="string" value="org.flameshot.Flameshot.desktop"/>
-        <value type="string" value="qt6ct.desktop"/>
-        <value type="string" value="xfce4-power-manager-settings.desktop"/>
-        <value type="string" value="vlc.desktop"/>
-        <value type="string" value="kvantummanager.desktop"/>
+        <value type="string" value="net.lutris.Lutris.desktop"/>
       </property>
       <property name="menu-opacity" type="int" value="75"/>
+      <property name="menu-height" type="int" value="499"/>
     </property>
   </property>
 </channel>

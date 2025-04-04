@@ -208,7 +208,6 @@ livecd/packages:
 	xfce-extra/xfce4-pulseaudio-plugin
 	xfce-extra/xfce4-weather-plugin
 	xfce-extra/xfce4-whiskermenu-plugin
-	xfce-extra/xfce4-docklike-plugin
 	xfce-extra/xfce4-panel-profiles
 	x11-misc/xdg-user-dirs
 	sys-process/htop

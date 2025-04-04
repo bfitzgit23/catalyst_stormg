@@ -4,13 +4,6 @@
 configs:
 - level: 0
   monitors:
-  - id: "aef821649bb7b07299abd54e1c60486d40c449b8"
-    display_name: "Chimei Innolux Corporation 0x175C (eDP)"
-    geometry:
-      x: 0
-      y: 0
-      width: 1920
-      height: 1080
   - id: "bd4586e4497d69c4858f7e8bf6d6f8c31b59d3a3"
     display_name: "Najing CEC Panda FPD Technology CO. ltd 0x004D (eDP-1)"
     geometry:
@@ -19,72 +12,99 @@ configs:
       width: 1920
       height: 1080
   icons:
+    "/home/ben/Desktop/stormscratch-grub-theme":
+      row: 2
+      col: 0
+    "/home/ben/Desktop/SWG-Hunted-Launcher":
+      row: 3
+      col: 0
+    "/home/ben/Desktop/Gentoo-LXDM.tar.gz":
+      row: 2
+      col: 0
+    "/home/ben/Desktop/World of Warcraft":
+      row: 4
+      col: 1
+    "/home/ben/Desktop/Infinity":
+      row: 7
+      col: 0
+    "/home/ben/Desktop/Gentoo-Optimized-1920x1080.png":
+      row: 1
+      col: 0
+    "/home/ben/Desktop/Infinity Login.desktop":
+      row: 8
+      col: 0
+    "/home/ben/Desktop/Star Wars Galaxies.desktop":
+      row: 0
+      col: 1
+    "8ED45B72D45B5B91":
+      row: 3
+      col: 0
+      last_seen: 1742607670750499
+    "/home/ben/Desktop/catalyst_stormg":
+      row: 1
+      col: 0
+    "/home/ben/Desktop/usr":
+      row: 1
+      col: 0
+    "5d29b4d8-2add-350e-a902-0d2d23ef38a0":
+      row: 4
+      col: 0
+      last_seen: 1742607670752395
+    "/home/ben/Desktop/mac":
+      row: 4
+      col: 0
+    "/home/ben/Desktop/2025-03-24_05-17.png":
+      row: 5
+      col: 0
+    "/home/ben/Desktop/gentoo-pkg-manager.desktop":
+      row: 4
+      col: 0
+    "4E21-0000":
+      row: 5
+      col: 0
+      last_seen: 1742612103883243
+    "/home/ben/Desktop/StormG_latest_xfce_22-03-2025.iso":
+      row: 6
+      col: 0
+    "/home/ben/Desktop/SWG Beyond.lnk":
+      row: 5
+      col: 1
+    "/home/ben/Desktop/StormFS-Linux":
+      row: 8
+      col: 0
+    "/home/ben/Desktop/Backups":
+      row: 1
+      col: 1
+    "/home/ben/Desktop/StarWarsGalaxies":
+      row: 3
+      col: 1
+    "/":
+      row: 1
+      col: 0
     "/home/ben":
       row: 0
       col: 0
     "trash:///":
       row: 9
       col: 17
-    "/home/gentoo/Desktop/gentoo-handbook.desktop":
-      row: 2
-      col: 0
-    "4E21-0000":
-      row: 5
-      col: 0
-      last_seen: 1742612103883243
-    "/home/ben/Desktop/catalyst_stormg":
-      row: 1
-      col: 0
-    "/home/gentoo/Desktop/calamares.desktop":
-      row: 3
-      col: 0
-    "8ED45B72D45B5B91":
-      row: 3
-      col: 0
-      last_seen: 1742607670750499
-    "/home/ben/Desktop/gentoo-pkg-manager.desktop":
-      row: 4
-      col: 0
-    "/home/ben/Desktop/stormscratch-grub-theme":
-      row: 2
-      col: 0
-    "/":
-      row: 1
-      col: 0
-    "/home/ben/Desktop/mac":
-      row: 4
-      col: 0
-    "/home/ben/Desktop/Gentoo-LXDM.tar.gz":
-      row: 2
-      col: 0
-    "/home/ben/Desktop/Gentoo-Optimized-1920x1080.png":
-      row: 1
-      col: 0
-    "/home/ben/Desktop/StormG_latest_xfce_22-03-2025.iso":
-      row: 6
-      col: 0
-    "/home/gentoo/Desktop/gentoo-pkg-manager.desktop":
-      row: 1
-      col: 0
-    "/home/gentoo":
-      row: 0
-      col: 0
-    "/home/ben/Desktop/SWG-Hunted-Launcher":
-      row: 3
-      col: 0
-    "/home/ben/Desktop/2025-03-24_05-17.png":
-      row: 5
-      col: 0
-    "/home/ben/Desktop/usr":
-      row: 1
-      col: 0
     "/home/ben/Desktop/StormG_latest_xfce_22-03-2025 (copy 1).iso":
       row: 7
+      col: 0
+    "/home/ben/Desktop/Infinity Launcher.desktop":
+      row: 9
       col: 0
     "/home/ben/Desktop/catalyst_stormgenz":
       row: 3
       col: 0
-    "5d29b4d8-2add-350e-a902-0d2d23ef38a0":
-      row: 4
+    "/home/ben/Desktop/Battle.net.desktop":
+      row: 2
+      col: 1
+    "/home/ben/Desktop/Infinity Login.lnk":
+      row: 7
       col: 0
-      last_seen: 1742607670752395
+    "/home/ben/Desktop/Hunted":
+      row: 5
+      col: 1
+    "/home/ben/Desktop/SWG Hunted Launcher.desktop":
+      row: 6
+      col: 1

@@ -8,8 +8,8 @@
   <property name="cell-height-scale" type="double" value="1.1000000000000001"/>
   <property name="misc-default-geometry" type="string" value="90x30"/>
   <property name="font-name" type="string" value="DejaVu Sans Mono 18"/>
-  <property name="color-palette" type="string" value="#000000;#aa0000;#00aa00;#aa5500;#0000aa;#aa00aa;#00aaaa;#aaaaaa;#555555;#ff5555;#55ff55;#ffff55;#5555ff;#ff55ff;#55ffff;#ffffff"/>
-  <property name="color-foreground" type="string" value="#ffffff"/>
+  <property name="color-palette" type="string" value="rgb(0,0,0);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(0,0,0);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141);rgb(95,76,141)"/>
+  <property name="color-foreground" type="string" value="#5f5e4c4b8d8d"/>
   <property name="dropdown-show-borders" type="bool" value="false"/>
   <property name="dropdown-status-icon" type="bool" value="false"/>
   <property name="dropdown-keep-open-default" type="bool" value="true"/>
@@ -17,8 +17,8 @@
   <property name="color-use-theme" type="bool" value="false"/>
   <property name="color-background-vary" type="bool" value="false"/>
   <property name="color-background" type="string" value="#000000"/>
-  <property name="color-cursor-foreground" type="string" value=""/>
-  <property name="color-cursor" type="string" value=""/>
+  <property name="color-cursor-foreground" type="string" value="#5f5e4c4b8d8d"/>
+  <property name="color-cursor" type="string" value="#5f5e4c4b8d8d"/>
   <property name="color-cursor-use-default" type="bool" value="true"/>
   <property name="color-selection" type="string" value=""/>
   <property name="color-selection-background" type="string" value=""/>
@@ -26,5 +26,5 @@
   <property name="color-bold" type="string" value=""/>
   <property name="color-bold-use-default" type="bool" value="true"/>
   <property name="color-bold-is-bright" type="bool" value="true"/>
-  <property name="tab-activity-color" type="string" value="#aa0000"/>
+  <property name="tab-activity-color" type="string" value="#5f5e4c4b8d8d"/>
 </channel>
