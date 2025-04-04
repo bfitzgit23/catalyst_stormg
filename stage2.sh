@@ -27,6 +27,9 @@ groupadd ntp
 useradd -M -g messagebus messagebus
 groupadd avahi
 useradd -M -g avahi avahi
+useradd -M -g portage portage
+
+emerge --sync -q && eix-update
 
 pushd /home/gentoo
 mkdir -pv .config Desktop .local .oh-my-bash .cache/oh-my-bash

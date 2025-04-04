@@ -249,3 +249,6 @@ livecd/packages:
 	gnome-extra/yad
 	gnome-extra/zenity
 	x11-misc/plank
+	app-editors/mousepad
+	sys-libs/kpmcore
+	sys-fs/jfsutils
