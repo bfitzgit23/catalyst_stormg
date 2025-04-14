@@ -18,7 +18,7 @@ livecd/depclean: no
 livecd/fstype: squashfs
 livecd/iso: StormG_latest_xfce_04-14-2025.iso
 livecd/type: gentoo-release-livecd
-livecd/volid: StormGenZ_LiveDVD_02-14-2025
+livecd/volid: StormGenZ_LiveDVD_04-14-2025
 livecd/readme: Welcome to StormG, making Gentoo GNU/Linux easy for anyone, pro or newbie! Containing the famous calamares installer, a highly customized XFCE desktop, bash aliases in the users .bashrc in their home directory, oh-my-bash to simplify bash usage and more!
 livecd/motd: "Welcome to StormG"
 livecd/users: gentoo
