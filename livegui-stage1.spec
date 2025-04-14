@@ -35,33 +35,51 @@ livecd/use:
 	build
 
 livecd/packages:
+	app-accessibility/brltty
+	app-accessibility/espeakup
 	app-admin/hddtemp
 	app-admin/sudo
 	app-admin/syslog-ng
 	app-admin/sysstat
+	app-admin/testdisk
 	app-arch/bzip2
 	app-arch/cpio
+	app-arch/dpkg
+	app-arch/deb2targz
 	app-arch/gzip
 	app-arch/mt-st
 	app-arch/p7zip
 	app-arch/pbzip2
+	app-arch/rpm
 	app-arch/tar
 	app-arch/zip
 	app-arch/unrar
 	app-backup/fsarchiver
+	app-benchmarks/bonnie
+	app-benchmarks/bonnie++
+	app-benchmarks/dbench
+	app-benchmarks/iozone
+	app-benchmarks/stress
+	app-benchmarks/tiobench
 	app-cdr/dvd+rw-tools
 	app-cdr/cdrtools
+	app-crypt/chntpw
 	app-crypt/gnupg
 	app-crypt/pinentry
+	app-editors/joe
+	app-editors/mg
 	app-editors/nano
-	app-editors/vim
 	app-emacs/ebuild-mode
+	app-emulation/cloud-init
+	app-emulation/spice-vdagent
 #	Fails to build...
 #	app-emulation/xen-tools
 	app-eselect/eselect-repository
+	app-misc/colordiff
 	app-misc/livecd-tools
 	app-misc/mc
 	app-misc/pax-utils
+	app-misc/screen
 	app-misc/tmux
 	app-misc/wipe
 	app-portage/cpuid2cpuflags
@@ -74,6 +92,7 @@ livecd/packages:
 	app-portage/ufed
 	app-shells/bash-completion
 	app-shells/gentoo-bashcomp
+	app-text/bibutils
 	app-text/dos2unix
 	app-text/ghostscript-gpl
 	app-text/pdftk
@@ -82,11 +101,9 @@ livecd/packages:
 	app-text/wgetpaste
 	app-text/xournalpp
 	app-vim/gentoo-syntax
+	dev-debug/strace
 	dev-lang/perl
 	dev-lang/python
-	dev-lang/ruby
-	dev-ruby/bundler
-	dev-ruby/em-websocket
 #	Gone until it supports python3_10
 #	dev-util/kdevelop-python
 	dev-vcs/git
@@ -94,12 +111,32 @@ livecd/packages:
 	media-gfx/fbgrab
 	media-gfx/gimp
 	media-gfx/graphviz
-#	media-gfx/inkscape
+	media-gfx/hugin
+	media-gfx/inkscape
+	media-gfx/povray
 	media-sound/alsa-utils
+	media-video/mpv
+	net-analyzer/iptraf-ng
+	net-analyzer/nmap
 	net-analyzer/openbsd-netcat
+	net-analyzer/tcpdump
+	net-analyzer/tcptraceroute
+	net-analyzer/traceroute
+	net-dialup/minicom
+	net-dialup/mingetty
+	net-dialup/pptpclient
+	net-dialup/rp-pppoe
+	net-dns/bind-tools
+	net-fs/cifs-utils
+	net-fs/nfs-utils
 	net-ftp/ftp
 	net-ftp/ncftp
 	net-im/pidgin
+	net-irc/hexchat
+	net-irc/irssi
+	net-irc/quassel
+	net-irc/weechat
+	net-misc/chrony
 	net-misc/chrony
 	net-misc/dhcpcd
 	net-misc/iputils
@@ -108,18 +145,23 @@ livecd/packages:
 	net-misc/rdate
 	net-misc/rdesktop
 	net-misc/rsync
+	net-misc/telnet-bsd
 	net-misc/vconfig
 	net-misc/wget
 	net-misc/whois
+	net-proxy/dante
+	net-proxy/tsocks
 	net-vpn/networkmanager-openvpn
 	net-vpn/networkmanager-pptp
 	net-vpn/openfortivpn
 	net-vpn/openvpn
+	net-vpn/tor
 	net-wireless/b43-fwcutter
 	net-wireless/iw
 	net-wireless/wireless-tools
 	net-wireless/wpa_supplicant
 	sys-apps/arch-chroot
+	sys-apps/arrayprobe
 	sys-apps/acl
 	sys-apps/attr
 	sys-apps/busybox
@@ -152,6 +194,8 @@ livecd/packages:
 	sys-apps/netplug
 	sys-apps/nvme-cli
 	sys-apps/pciutils
+	sys-apps/pcmciautils
+	sys-apps/pv
 	sys-apps/sdparm
 	sys-apps/sed
 	sys-apps/setserial
@@ -162,6 +206,7 @@ livecd/packages:
 	sys-apps/util-linux
 	sys-auth/ssh-import-id
 	sys-block/aoetools
+	sys-block/fio
 	sys-block/gparted
 	sys-block/mtx
 	sys-block/open-iscsi
@@ -169,11 +214,17 @@ livecd/packages:
 	sys-block/partimage
 	sys-block/tw_cli
 	sys-block/whdd
+	sys-boot/efibootmgr
 	sys-boot/grub
-	sys-boot/os-prober
+	sys-firmware/b43-firmware
+	sys-firmware/ipw2100-firmware
+	sys-firmware/ipw2200-firmware
 	sys-fs/bcache-tools
+	sys-fs/bcachefs-tools
 	sys-fs/btrfs-progs
+	sys-fs/cryptsetup
 	sys-fs/ddrescue
+	sys-fs/dmraid
 	sys-fs/dosfstools
 	sys-fs/e2fsprogs
 	sys-fs/exfat-utils
@@ -182,11 +233,19 @@ livecd/packages:
 	sys-fs/f2fs-tools
 	sys-fs/genfstab
 	sys-fs/growpart
+	sys-fs/jfsutils
 	sys-fs/lsscsi
 	sys-fs/lvm2
 	sys-fs/mac-fdisk
+	sys-fs/mdadm
+	sys-fs/multipath-tools
 	sys-fs/ntfs3g
+	sys-fs/reiserfsprogs
+	sys-fs/squashfs-tools
+	sys-fs/xfsdump
 	sys-fs/xfsprogs
+	sys-kernel/dracut
+	sys-kernel/installkernel
 	sys-kernel/linux-firmware
 	sys-libs/gpm
 	sys-power/acpid
@@ -195,7 +254,9 @@ livecd/packages:
 	sys-process/iotop
 	sys-process/procps
 	sys-process/psmisc
+	www-client/chromium
 	www-client/firefox
+	www-client/links
 	x11-misc/lightdm-gtk-greeter
 	x11-misc/lightdm
  	gnome-base/gnome-common
