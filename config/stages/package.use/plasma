@@ -1,0 +1,1 @@
+kde-plasma/plasma-meta -kwallet -sddm -discover -grub -plymouth -sdk -webengine
