@@ -8,9 +8,6 @@ source_subpath: default/stage3-amd64-openrc-latest.tar.xz
 compression_mode: pixz
 portage_confdir: /home/ben/Desktop/catalyst_stormg/config/stages
 repos: /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/guru
-/home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/tezeta
-/home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/tatsh-overlay
-/home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/edgets
 /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/steam-overlay
 
 livecd/use:
@@ -44,30 +41,19 @@ livecd/packages:
 	app-admin/testdisk
 	app-arch/bzip2
 	app-arch/cpio
-	app-arch/dpkg
-	app-arch/deb2targz
 	app-arch/gzip
 	app-arch/mt-st
 	app-arch/p7zip
 	app-arch/pbzip2
-	app-arch/rpm
 	app-arch/tar
 	app-arch/zip
 	app-arch/unrar
 	app-backup/fsarchiver
-	app-benchmarks/bonnie
-	app-benchmarks/bonnie++
-	app-benchmarks/dbench
-	app-benchmarks/iozone
-	app-benchmarks/stress
-	app-benchmarks/tiobench
 	app-cdr/dvd+rw-tools
 	app-cdr/cdrtools
 	app-crypt/chntpw
 	app-crypt/gnupg
 	app-crypt/pinentry
-	app-editors/joe
-	app-editors/mg
 	app-editors/nano
 	app-emacs/ebuild-mode
 	app-emulation/cloud-init
@@ -79,8 +65,6 @@ livecd/packages:
 	app-misc/livecd-tools
 	app-misc/mc
 	app-misc/pax-utils
-	app-misc/screen
-	app-misc/tmux
 	app-misc/wipe
 	app-portage/cpuid2cpuflags
 	app-portage/eix
@@ -100,7 +84,6 @@ livecd/packages:
 	app-text/tree
 	app-text/wgetpaste
 	app-text/xournalpp
-	app-vim/gentoo-syntax
 	dev-debug/strace
 	dev-lang/perl
 	dev-lang/python
@@ -108,12 +91,6 @@ livecd/packages:
 #	dev-util/kdevelop-python
 	dev-vcs/git
 	dev-vcs/subversion
-	media-gfx/fbgrab
-	media-gfx/gimp
-	media-gfx/graphviz
-	media-gfx/hugin
-	media-gfx/inkscape
-	media-gfx/povray
 	media-sound/alsa-utils
 	media-video/mpv
 	net-analyzer/iptraf-ng
@@ -131,11 +108,6 @@ livecd/packages:
 	net-fs/nfs-utils
 	net-ftp/ftp
 	net-ftp/ncftp
-	net-im/pidgin
-	net-irc/hexchat
-	net-irc/irssi
-	net-irc/quassel
-	net-irc/weechat
 	net-misc/chrony
 	net-misc/chrony
 	net-misc/dhcpcd
@@ -145,7 +117,6 @@ livecd/packages:
 	net-misc/rdate
 	net-misc/rdesktop
 	net-misc/rsync
-	net-misc/telnet-bsd
 	net-misc/vconfig
 	net-misc/wget
 	net-misc/whois
@@ -155,7 +126,6 @@ livecd/packages:
 	net-vpn/networkmanager-pptp
 	net-vpn/openfortivpn
 	net-vpn/openvpn
-	net-vpn/tor
 	net-wireless/b43-fwcutter
 	net-wireless/iw
 	net-wireless/wireless-tools
@@ -194,7 +164,6 @@ livecd/packages:
 	sys-apps/netplug
 	sys-apps/nvme-cli
 	sys-apps/pciutils
-	sys-apps/pcmciautils
 	sys-apps/pv
 	sys-apps/sdparm
 	sys-apps/sed
@@ -254,26 +223,14 @@ livecd/packages:
 	sys-process/iotop
 	sys-process/procps
 	sys-process/psmisc
-	www-client/chromium
-	www-client/firefox
-	www-client/links
+	www-client/firefox-bin
 	x11-misc/lightdm-gtk-greeter
 	x11-misc/lightdm
- 	gnome-base/gnome-common
   	sys-auth/polkit
-   	gnome-extra/polkit-gnome
-	xfce-base/thunar-volman
-	xfce-extra/thunar-archive-plugin
-	xfce-extra/thunar-media-tags-plugin
-	xfce-extra/xfce4-mailwatch-plugin
-	xfce-extra/xfce4-pulseaudio-plugin
-	xfce-extra/xfce4-weather-plugin
-	xfce-extra/xfce4-whiskermenu-plugin
-	xfce-extra/xfce4-panel-profiles
+   	gnome-extra/polkit-kde
 	x11-misc/xdg-user-dirs
 	sys-process/htop
 	sys-process/cronie
-	net-wireless/blueman
 	net-wireless/bluez
 	net-print/cups
 	net-print/gutenprint
@@ -283,33 +240,22 @@ livecd/packages:
 	net-fs/samba
 	media-sound/pavucontrol
 	media-fonts/terminus-font
-	gnome-extra/nm-applet
 	gnome-base/gvfs
-	app-arch/engrampa
 	app-admin/syslog-ng
- 	xfce-base/xfce4-meta
-	x11-misc/qt5ct
-	gui-apps/qt6ct
-	x11-themes/kvantum
 	media-video/vlc
 	x11-themes/gtk-engines-adwaita
  	media-gfx/flameshot
-	media-fonts/jetbrains-mono
-	media-fonts/nerdfonts
 	net-wireless/broadcom-sta
 	app-emulation/spice-vdagent
 	dev-qt/qtwebengine
 	app-misc/fastfetch
 	app-admin/calamares
-	x11-themes/adw-gtk3
-	x11-themes/papirus-icon-theme
 	media-fonts/corefonts
 	x11-themes/gentoo10-backgrounds
 	x11-themes/gentoo-xcursors
 	x11-themes/gentoo-artwork
 	gnome-extra/yad
 	gnome-extra/zenity
-	x11-misc/plank
-	app-editors/mousepad
 	sys-libs/kpmcore
 	sys-fs/jfsutils
+	net-print/epson-inket-printer-escpr
