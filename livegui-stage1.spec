@@ -259,3 +259,4 @@ livecd/packages:
 	sys-libs/kpmcore
 	sys-fs/jfsutils
 	net-print/epson-inket-printer-escpr
+	kde-plasma/plasma-meta
