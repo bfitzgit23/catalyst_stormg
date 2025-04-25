@@ -7,9 +7,6 @@ snapshot_treeish: bd6107dbebe71859f12618eb0669c5d110c9b076
 source_subpath: default/livecd-stage1-amd64-stormg-04-14-2025
 portage_confdir: /home/ben/Desktop/catalyst_stormg/config/stages
 repos: /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/guru
-/home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/tezeta
-/home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/tatsh-overlay
-/home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/edgets
 /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/steam-overlay
 
 
