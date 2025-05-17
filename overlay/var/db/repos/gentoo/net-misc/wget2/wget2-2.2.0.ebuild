@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -11,7 +11,7 @@ SRC_URI="mirror://gnu/wget/${P}.tar.gz"
 LICENSE="GPL-3+ LGPL-3+"
 SLOT="0/0" # subslot = libwget.so version
 KEYWORDS="~amd64 ~arm64 ~loong ~x86"
-IUSE="brotli bzip2 doc +gnutls gpgme +http2 idn lzip lzma openssl pcre psl +ssl test xattr zlib"
+IUSE="brotli bzip2 doc +gnutls gpgme +http2 idn lzip lzma pcre psl +ssl test xattr zlib"
 
 RDEPEND="
 	brotli? ( app-arch/brotli )
@@ -40,7 +40,7 @@ RDEPEND="
 DEPEND="${RDEPEND}"
 BDEPEND="
 	virtual/pkgconfig
-	doc? ( app-text/doxygen[dot] )
+	doc? ( >=app-text/doxygen-1.13.2[dot] )
 "
 
 RESTRICT="!test? ( test )"

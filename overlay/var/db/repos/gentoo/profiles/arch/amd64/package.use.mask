@@ -17,6 +17,15 @@
 
 #--- END OF EXAMPLES ---
 
+# Michał Górny <mgorny@gentoo.org> (2025-05-08)
+# dev-python/sigstore is keyworded here.
+>=dev-lang/python-3.14 -verify-sig
+>=dev-python/python-tests-3.14 -verify-sig
+
+# Jimi Huotari <chiitoo@gentoo.org> (2025-04-24)
+# Unmask on amd64.
+lxqt-base/lxqt-meta -wayland
+
 # # Sam James <sam@gentoo.org> (2025-03-11)
 # The COBOL frontend only allows building on a small number of platforms
 # for now until more testing and integration is done.
@@ -112,7 +121,7 @@ sys-apps/hwloc -rocm -l0
 
 # Paul Zander <negril.nx+gentoo@gmail.com> (2024-04-20)
 # only keyworded for amd64 currently
-media-gfx/blender -gnome -oneapi -renderdoc -vulkan
+media-gfx/blender -gnome -renderdoc -vulkan
 
 # Ionen Wolkens <ionen@gentoo.org> (2024-04-16)
 # dev-qt/qtlanguageserver:6 is keyworded here
@@ -189,6 +198,7 @@ dev-build/cmake -dap
 
 # Michał Górny <mgorny@gentoo.org> (2023-06-24)
 # dev-db/mongodb miraculously got keyworded here.
+dev-libs/mongo-c-driver -test-full
 dev-python/pymongo -test-full
 
 # Sam James <sam@gentoo.org> (2023-05-15)
@@ -431,8 +441,10 @@ app-admin/rsyslog -imhttp -mdblookup
 dev-lang/ocaml -spacetime
 
 # Luke Dashjr <luke-jr+gentoobugs@utopios.org> (2017-01-04)
+# Matt Whitlock <gentoo@mattwhitlock.name> (2025-04-12)
 # Assembly optimisations are supported on amd64 for all versions
 dev-libs/libsecp256k1 -asm
+net-p2p/bitcoin-core -asm
 
 # Andreas Sturmlechner <asturm@gentoo.org> (2016-12-31)
 # on behalf of Andreas K. Hüttel <dilfridge@gentoo.org> (2016-12-14)

@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} pypy3 )
+PYTHON_COMPAT=( python3_{10..13} )
 inherit python-any-r1 toolchain-funcs meson-multilib
 
 DESCRIPTION="LC3 is an efficient low latency audio codec"
@@ -12,7 +12,7 @@ SRC_URI="https://github.com/google/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}
 
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86"
+KEYWORDS="amd64 arm arm64 ~loong ~mips ppc ppc64 ~riscv ~sparc x86"
 IUSE="test tools"
 RESTRICT="!test? ( test )"
 
@@ -24,6 +24,10 @@ BDEPEND="
 		')
 	)
 "
+
+PATCHES=(
+	"${FILESDIR}"/${P}-typo-fix.patch
+)
 
 python_check_deps() {
 	python_has_version "dev-python/numpy[${PYTHON_USEDEP}]" &&

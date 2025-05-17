@@ -52,9 +52,10 @@ RDEPEND="
 	systemd? (
 		sys-apps/systemd
 	)
-	vaapi? (
-		media-video/ffmpeg[libdrm,vaapi]
-	)
+	vaapi? ( || (
+		media-video/ffmpeg[libdrm(-),vaapi]
+		media-video/ffmpeg[drm(-),vaapi]
+	) )
 	wireshark-plugins? (
 		net-analyzer/wireshark
 	)
@@ -139,7 +140,7 @@ src_configure() {
 
 pkg_postinst()
 {
-	fcaps cap_sys_nice bin/wivrn-server
+	fcaps cap_sys_nice usr/bin/wivrn-server
 	xdg_pkg_postinst
 	elog "WiVRn requires a compatible client on VR headset to run."
 	if [[ ${PV} == 9999 ]]; then

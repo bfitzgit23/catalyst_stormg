@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{10..13} )
 
 inherit cmake flag-o-matic python-r1
 
@@ -30,10 +30,10 @@ DEPEND="
 	app-arch/zstd:=
 	dev-cpp/abseil-cpp:=
 	dev-libs/libpcre2:=
-	>=dev-libs/protobuf-3.0.0:=
+	dev-libs/protobuf:=
 	sys-libs/zlib:=
 	>=dev-libs/libusb-1.0.28
-	dev-libs/libfmt:=
+	>=dev-libs/libfmt-11:=
 "
 RDEPEND="${DEPEND}
 	udev? ( dev-util/android-udev-rules )
@@ -49,6 +49,7 @@ DOCS=()
 
 src_prepare() {
 	eapply "${DISTDIR}/${PN}-31.0.3-no-gtest.patch"
+	eapply "${FILESDIR}/android-tools-35.0.2-protobuf.patch"
 
 	cd "${S}/vendor/core" || die
 	eapply "${S}/patches/core/0011-Remove-the-useless-dependency-on-gtest.patch"

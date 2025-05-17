@@ -1,6 +1,14 @@
 # Copyright 2023-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
+# Viorel Munteanu (2025-05-06)
+# Needs dev-lang/go which is not keyworded here
+net-dialup/picocom man
+
+# NRK <nrk@disroot.org> (2025-04-07)
+# media-libs/libyuv is not keyworded
+media-libs/imlib2 y4m
+
 # NRK <nrk@disroot.org> (2025-03-17)
 # media-libs/libavif is not keyworded
 media-libs/imlib2 avif
@@ -36,8 +44,3 @@ dev-libs/mongo-c-driver test
 # Leonardo Hernández Hernández <leohdz172@proton.me> (2023-12-26)
 # net-libs/grpc not keyworded here
 app-admin/syslog-ng grpc
-
-# Leonardo Hernández Hernández <leohdz172@proton.me> (2023-11-15)
-# media-libs/shaderc in not keyworded
-media-video/ffmpeg shaderc
-media-video/ffmpeg-compat shaderc

@@ -1,8 +1,0 @@
-[Unit]
-Description=doveadm quota recalc
-
-[Timer]
-OnCalendar=*-*-* 04:45:00
-
-[Install]
-WantedBy=timers.target

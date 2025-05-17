@@ -5,7 +5,7 @@ EAPI=8
 
 CRATES=" "
 LLVM_COMPAT=( {17..19} )
-RUST_MIN_VER="1.82.0"
+RUST_MIN_VER="1.84.0"
 
 inherit cargo edo multiprocessing llvm-r1 shell-completion
 
@@ -54,6 +54,19 @@ src_unpack() {
 	fi
 }
 
+src_compile() {
+	cargo_src_compile
+
+	if [[ ${PV} == 9999 ]] ; then
+		einfo "Generating shell completions"
+		mkdir shell || die
+		local BIN="${WORKDIR}/${P}/$(cargo_target_dir)/pk"
+		"${BIN}" completion bash > shell/pk.bash || die
+		"${BIN}" completion zsh > shell/_pk || die
+		"${BIN}" completion fish > shell/pk.fish || die
+	fi
+}
+
 src_test() {
 	unset CLICOLOR CLICOLOR_FORCE
 
@@ -63,16 +76,13 @@ src_test() {
 	edo ${CARGO} nextest run $(usev !debug '--release') \
 		--color always \
 		--all-features \
-		--tests \
-		-- --skip pkg::env::current_dir
+		--tests
 }
 
 src_install() {
 	cargo_src_install
 
-	if [[ ${PV} != 9999 ]] ; then
-		newbashcomp shell/pk.bash pk
-		dozshcomp shell/_pk
-		dofishcomp shell/pk.fish
-	fi
+	newbashcomp shell/pk.bash pk
+	dozshcomp shell/_pk
+	dofishcomp shell/pk.fish
 }

@@ -24,7 +24,7 @@ inherit toolchain-funcs
 # @DESCRIPTION:
 # Return all the flag variables that our high level functions operate on.
 all-flag-vars() {
-	echo {ADA,C,CPP,CXX,CCAS,F,FC,LD}FLAGS
+	echo {ADA,C,CPP,CXX,CCAS,F,FC,GDC,LD}FLAGS
 }
 
 # @FUNCTION: setup-allowed-flags
@@ -46,7 +46,7 @@ setup-allowed-flags() {
 _setup-allowed-flags() {
 	ALLOWED_FLAGS=(
 		-pipe -O '-O[123szg]' '-mcpu=*' '-march=*' '-mtune=*' '-mfpmath=*'
-		-flto '-flto=*' -fno-lto
+		-flto '-flto=*' -fno-lto -ffat-lto-objects
 
 		# Hardening flags
 		'-fstack-protector*'
@@ -77,7 +77,7 @@ _setup-allowed-flags() {
 		-ggdb '-ggdb[0-9]'
 		-gdwarf '-gdwarf-*'
 		-gstabs -gstabs+
-		-gz
+		-gz '-gz=*'
 		-glldb
 		'-fdebug-default-version=*'
 

@@ -1,4 +1,4 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2022-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -16,9 +16,12 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 
+IUSE="test"
+RESTRICT="!test? ( test )"
+
 BDEPEND="
 	test? (
-		media-video/ffmpeg[mp3,vorbis]
+		media-video/ffmpeg[lame,vorbis]
 	)
 	"
 

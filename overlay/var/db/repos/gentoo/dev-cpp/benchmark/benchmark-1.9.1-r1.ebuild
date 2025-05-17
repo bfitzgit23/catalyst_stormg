@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..12} )
+PYTHON_COMPAT=( python3_{11..13} )
 
 inherit cmake-multilib flag-o-matic python-single-r1
 
@@ -13,7 +13,7 @@ SRC_URI="https://github.com/google/benchmark/archive/v${PV}.tar.gz -> ${P}.tar.g
 
 LICENSE="Apache-2.0"
 SLOT="0/$(ver_cut 1)"
-KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
+KEYWORDS="amd64 ~arm arm64 ~loong ~ppc ppc64 ~riscv x86"
 IUSE="doc debug libpfm test +tools"
 RESTRICT="!test? ( test )"
 REQUIRED_USE="tools? ( ${PYTHON_REQUIRED_USE} )"

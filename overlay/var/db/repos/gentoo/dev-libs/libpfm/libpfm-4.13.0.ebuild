@@ -1,9 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit toolchain-funcs
+inherit dot-a toolchain-funcs
 
 DESCRIPTION="Hardware-based performance monitoring interface for Linux"
 HOMEPAGE="https://perfmon2.sourceforge.net"
@@ -28,6 +28,7 @@ src_prepare() {
 }
 
 src_compile() {
+	use static-libs && lto-guarantee-fat
 	# 'DBG=' unsets '-Werror' and other optional flags, bug #664294
 	emake AR="$(tc-getAR)" CC="$(tc-getCC)" DBG=
 }
@@ -44,5 +45,5 @@ src_install() {
 		find "${ED}" -name '*.a' -delete || die
 	fi
 
-	find "${ED}" -name '*.la' -delete || die
+	strip-lto-bytecode
 }

@@ -1,10 +1,10 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
 
 CMAKE_MAKEFILE_GENERATOR=emake
-PYTHON_COMPAT=( python3_{9..12} )
+PYTHON_COMPAT=( python3_{10..13} )
 inherit cmake python-any-r1
 
 DESCRIPTION="Automatic theorem prover for satisfiability modulo theories (SMT) problems"
@@ -34,6 +34,7 @@ PATCHES=(
 	"${FILESDIR}"/${P}-gentoo.patch
 	"${FILESDIR}"/${P}-toml.patch
 	"${FILESDIR}"/${P}-bash-5.2-fix.patch
+	"${FILESDIR}"/${P}-size_t.patch
 )
 
 python_check_deps() {
@@ -67,7 +68,7 @@ src_configure() {
 		-e "s|lo = NULL|lo = 0|g" \
 		-e "s|hi = NULL|hi = 0|g" \
 		"${BUILD_DIR}"/src/parser/cvc/CvcParser.c \
-		die
+		|| die
 }
 
 src_test() {

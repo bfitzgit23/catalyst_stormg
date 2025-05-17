@@ -67,7 +67,7 @@ RDEPEND="
 	>=dev-libs/glib-2.66.0
 	dev-libs/libgcrypt
 	dev-libs/libnl:3
-	>=dev-libs/libxml2-2.9.1
+	>=dev-libs/libxml2-2.9.1:=
 	>=net-analyzer/openbsd-netcat-1.105-r1
 	>=net-libs/gnutls-3.2.0:=
 	net-libs/libtirpc:=
@@ -157,8 +157,8 @@ PDEPEND="
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-11.0.0-Fix-paths-in-libvirt-guests.sh.in.patch
-	"${FILESDIR}"/${PN}-9.9.0-do-not-use-sysconfig.patch
-	"${FILESDIR}"/${PN}-10.7.0-fix-paths-for-apparmor.patch
+	"${FILESDIR}"/${PN}-11.3.0-do-not-use-sysconfig.patch
+	"${FILESDIR}"/${PN}-11.3.0-fix-paths-for-apparmor.patch
 )
 
 python_check_deps() {

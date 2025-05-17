@@ -7,7 +7,7 @@ CMAKE_MAKEFILE_GENERATOR="emake"
 ECM_HANDBOOK="forceoptional"
 ECM_TEST="forceoptional"
 LUA_COMPAT=( luajit )
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{11..13} )
 PVCUT=$(ver_cut 1-3)
 KFMIN=6.7.0
 QTMIN=6.7.2
@@ -18,7 +18,7 @@ HOMEPAGE="https://apps.kde.org/cantor/"
 
 LICENSE="GPL-2" # TODO: CHECK
 SLOT="6"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="amd64 arm64"
 IUSE="+analitza julia lua postscript python qalculate R webengine"
 
 REQUIRED_USE="lua? ( ${LUA_REQUIRED_USE} ) python? ( ${PYTHON_REQUIRED_USE} )"

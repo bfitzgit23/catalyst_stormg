@@ -53,6 +53,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-2021-make.patch #Bug #883167
 	"${FILESDIR}"/${PN}-2020-bibtex.patch
 	"${FILESDIR}"/${P}-spark.patch
+	"${FILESDIR}"/${PN}-2021-sighandler.patch
 )
 
 QA_FLAGS_IGNORED=(
@@ -76,6 +77,22 @@ src_prepare() {
 	sed -i \
 		-e 's:configure.in:configure.ac:g' \
 		Makefile.in || die
+	sed -i \
+		-e 's: effect: effekt:g' \
+		-e 's:(effect:(effekt:g' \
+		-e 's:\.effect:\.effekt:g' \
+		src/extract/mltree.ml \
+		src/extract/mltree.mli \
+		src/mlw/expr.ml \
+		src/mlw/expr.mli \
+		src/mlw/ity.ml \
+		src/mlw/ity.mli \
+		|| die
+	sed -i \
+		-e 's:Pervasives:Stdlib:g' \
+		src/gnat/gnat_loc.ml \
+		src/gnat/gnat_expl.ml \
+		|| die
 	mv configure.{in,ac} || die
 	eautoreconf
 	default

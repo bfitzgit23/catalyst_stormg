@@ -1,5 +1,0 @@
-{
-  "type": "regex",
-  "regex": "Ripcord Linux ([^ ]+) ",
-  "url": "https://cancel.fm/ripcord/"
-}

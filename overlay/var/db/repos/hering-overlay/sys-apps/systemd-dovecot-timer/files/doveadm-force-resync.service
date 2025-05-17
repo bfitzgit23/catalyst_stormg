@@ -1,6 +1,0 @@
-[Unit]
-Description=doveadm force-resync
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/doveadm force-resync -A '*'

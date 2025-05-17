@@ -1,8 +1,0 @@
-[Unit]
-Description=Auto Mysql Backup
-
-[Timer]
-OnCalendar=daily
-
-[Install]
-WantedBy=timers.target

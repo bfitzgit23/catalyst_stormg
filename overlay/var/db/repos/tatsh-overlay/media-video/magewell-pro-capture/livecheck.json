@@ -1,5 +1,0 @@
-{
-  "type": "regex",
-  "regex": ",\"version\":\"([^\"]+)\",?",
-  "url": "https://www.magewell.com/downloads/pro-capture/driver/linux-x86"
-}

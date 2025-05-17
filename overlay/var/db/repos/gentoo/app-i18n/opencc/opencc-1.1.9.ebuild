@@ -18,7 +18,7 @@ S="${WORKDIR}/OpenCC-ver.${PV}"
 
 LICENSE="Apache-2.0"
 SLOT="0/1.1"
-KEYWORDS="~amd64 ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~x86"
+KEYWORDS="amd64 arm64 ~hppa ~loong ppc ppc64 ~riscv x86"
 IUSE="doc python test"
 REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
 RESTRICT="!test? ( test )"
@@ -46,6 +46,14 @@ BDEPEND="${PYTHON_DEPS}
 "
 
 DOCS=( AUTHORS NEWS.md README.md )
+
+PATCHES=(
+	"${FILESDIR}/${PN}-1.1.7-fix-missing-cstdint-for-gcc-15.patch"
+)
+
+pkg_setup() {
+	use python && python-single-r1_pkg_setup
+}
 
 src_prepare() {
 	# as of opencc 1.1.8 there is no clean way to disable duplicated building of the clib again.

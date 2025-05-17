@@ -4,10 +4,6 @@
 # Unmask the flag which corresponds to ARCH.
 -sparc
 
-# Sam James <sam@gentoo.org> (2025-01-05)
-# Older targets don't have an old enough dev-lang/ada-bootstrap available
-ada_target_gnat_2021
-
 # matoro <matoro_gentoo@matoro.tk> (2024-06-11)
 # Extensive use of unaligned access, no plans to fix, #636552
 # https://github.com/memcached/memcached/issues/902
@@ -114,13 +110,9 @@ webkit
 mono
 
 # Gustavo Zacarias <gustavoz@gentoo.org>
-# It doesn't even build
-d
 # LCDproc masks see bug #148072
 lcd_devices_g15
 lcd_devices_ula200
-# Masking hardened, it isn't really supported, see bugs #144126 #78951
-hardened
 # AIO is b0rked for now....
 aio
 romio

@@ -1,9 +1,0 @@
-DEFINED_PHASES=install postinst
-DESCRIPTION=Utility for acquiring debugging information from usb hid devices
-EAPI=8
-HOMEPAGE=https://www.pjrc.com/teensy/hid_listen.html
-KEYWORDS=amd64 x86
-LICENSE=GPL-3
-SLOT=0
-SRC_URI=https://www.pjrc.com/teensy/hid_listen_1.01.zip
-_md5_=5bde32294e949386093e33719eb410e1

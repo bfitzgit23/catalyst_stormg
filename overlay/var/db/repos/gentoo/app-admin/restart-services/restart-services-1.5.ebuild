@@ -9,12 +9,12 @@ SRC_URI="https://dev.gentoo.org/~mschiff/src/${PN}/${P}.tgz"
 
 LICENSE="GPL-3"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~ppc64 ~sparc ~x86"
+KEYWORDS="amd64 ~arm ~arm64 ~ppc ~ppc64 ~sparc x86"
 
 RDEPEND="
 	app-admin/lib_users
 	app-portage/portage-utils
-	|| ( sys-apps/openrc sys-apps/openrc-navi sys-apps/systemd )
+	|| ( sys-apps/openrc sys-apps/systemd )
 "
 
 src_install() {

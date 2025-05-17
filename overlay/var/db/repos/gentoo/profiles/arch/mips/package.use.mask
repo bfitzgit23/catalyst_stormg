@@ -1,6 +1,18 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
+# NRK <nrk@disroot.org> (2025-04-07)
+# media-libs/libyuv is not keyworded
+media-libs/imlib2 y4m
+
+# Z. Liu <zhixu.liu@gmail.com> (2025-02-28)
+# requires sys-libs/db:5.3
+dev-lisp/clisp berkdb
+
+# Matt Jolly <kangie@gentoo.org> (2025-04-02)
+# Requires net-misc/gsasl which is not keyworded here
+net-misc/curl sasl-scram
+
 # Sam James <sam@gentoo.org> (2025-03-19)
 # media-libs/libebur128 not keyworded here
 media-video/pipewire loudness
@@ -190,10 +202,6 @@ dev-cpp/eigen test
 # net-libs/libotr fails tests, #918448
 net-irc/irssi otr
 
-# matoro <matoro_gentoo@matoro.tk> (2024-02-28)
-# dev-util/glslang not keyworded here
-media-video/ffmpeg glslang
-
 # Sam James <sam@gentoo.org> (2024-01-02)
 # dev-libs/capstone not keyworded here
 dev-lang/php capstone
@@ -280,7 +288,6 @@ net-dns/ddclient test
 
 # Mike Gilbert <floppym@gentoo.org> (2022-10-16)
 # Only supported on MIPS.
-dev-lang/gnat-gpl -fixed-point
 sys-devel/gcc -fixed-point
 
 # Matt Turner <mattst88@gentoo.org> (2022-04-18)
@@ -321,9 +328,10 @@ dev-libs/libgudev test
 dev-python/diskcache test
 
 # Sam James <sam@gentoo.org> (2021-02-06)
+# dev-qt/qtbase:6 is not keyworded here
 # media-sound/sndio is not yet keyworded here
 # bug #769098, bug #769122
-media-libs/openal sndio
+media-libs/openal gui sndio
 
 # Sam James <sam@gentoo.org> (2021-01-19)
 # Joonas Niilola <juippis@gentoo.org> (2021-01-10)

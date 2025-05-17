@@ -245,6 +245,16 @@ ECARGO_VENDOR="${ECARGO_HOME}/gentoo"
 # @DESCRIPTION:
 # List of URIs to put in SRC_URI created from CRATES variable.
 
+# @FUNCTION: _cargo_check_initialized
+# @INTERNAL
+# @DESCRIPTION:
+# Checks if rust_pkg_setup has been run.
+_cargo_check_initialized() {
+	if [[ -z "${CARGO}" ]]; then
+		die "CARGO is not set; was rust_pkg_setup run?"
+	fi
+}
+
 # @FUNCTION: _cargo_set_crate_uris
 # @USAGE: <crates>
 # @DESCRIPTION:
@@ -448,7 +458,9 @@ _cargo_gen_git_config() {
 # Return the directory within target that contains the build, e.g.
 # target/aarch64-unknown-linux-gnu/release.
 cargo_target_dir() {
-	echo "${CARGO_TARGET_DIR:-target}/$(rust_abi)/$(usex debug debug release)"
+	local abi
+	tc-is-cross-compiler && abi=/$(rust_abi)
+	echo "${CARGO_TARGET_DIR:-target}${abi}/$(usex debug debug release)"
 }
 
 # @FUNCTION: cargo_update_crates
@@ -466,9 +478,7 @@ cargo_target_dir() {
 cargo_update_crates () {
 	debug-print-function ${FUNCNAME} "$@"
 
-	if [[ -z ${CARGO} ]]; then
-		die "CARGO is not set; was rust_pkg_setup run?"
-	fi
+	_cargo_check_initialized
 
 	local path=${1:-"${S}/Cargo.toml"}
 	if [[ $# -gt 1 ]]; then
@@ -532,7 +542,7 @@ cargo_src_unpack() {
 		popd >/dev/null || die
 
 		if [[ ${#crates[@]} -ge 300 ]]; then
-			eqawarn "This package uses a very large number of CRATES.  Please provide"
+			eqawarn "QA Notice: This package uses a very large number of CRATES.  Please provide"
 			eqawarn "a crate tarball instead and fetch it via SRC_URI.  You can use"
 			eqawarn "'pycargoebuild --crate-tarball' to create one."
 		fi
@@ -550,6 +560,8 @@ cargo_live_src_unpack() {
 
 	[[ "${PV}" == *9999* ]] || die "${FUNCNAME} only allowed in live/9999 ebuilds"
 	[[ "${EBUILD_PHASE}" == unpack ]] || die "${FUNCNAME} only allowed in src_unpack"
+
+	_cargo_check_initialized
 
 	mkdir -p "${S}" || die
 	mkdir -p "${ECARGO_VENDOR}" || die
@@ -601,12 +613,12 @@ cargo_live_src_unpack() {
 	export CARGO_HOME="${ECARGO_REGISTRY_DIR}"
 
 	# Absence of quotes around offline arg is intentional, as cargo bails out if it encounters ''
-	einfo "cargo fetch ${offline:+--offline}"
-	cargo fetch ${offline:+--offline} || die #nowarn
+	einfo "${CARGO} fetch ${offline:+--offline}"
+	"${CARGO}" fetch ${offline:+--offline} || die #nowarn
 
 	# Let cargo copy all required crates to "${WORKDIR}" for offline use in later phases.
-	einfo "cargo vendor ${offline:+--offline} ${ECARGO_VENDOR}"
-	cargo vendor ${offline:+--offline} "${ECARGO_VENDOR}" || die #nowarn
+	einfo "${CARGO} vendor ${offline:+--offline} ${ECARGO_VENDOR}"
+	"${CARGO}" vendor ${offline:+--offline} "${ECARGO_VENDOR}" || die #nowarn
 
 	# Users may have git checkouts made by cargo.
 	# While cargo vendors the sources, it still needs git checkout to be present.
@@ -762,6 +774,10 @@ cargo_env() {
 		# locally. Do this in a subshell so that they remain set afterwards.
 		unset CARGO_BUILD_RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTFLAGS
 
+		# Only tell Cargo to cross-compile when actually needed to avoid the
+		# aforementioned build host vs target flag separation issue.
+		tc-is-cross-compiler || unset CARGO_BUILD_TARGET
+
 		"${@}"
 	)
 }
@@ -772,9 +788,7 @@ cargo_env() {
 cargo_src_compile() {
 	debug-print-function ${FUNCNAME} "$@"
 
-	if [[ -z "${CARGO}" ]]; then
-		die "CARGO is not set; was rust_pkg_setup run?"
-	fi
+	_cargo_check_initialized
 
 	set -- "${CARGO}" build $(usex debug "" --release) ${ECARGO_ARGS[@]} "$@"
 	einfo "${@}"
@@ -790,9 +804,7 @@ cargo_src_compile() {
 cargo_src_install() {
 	debug-print-function ${FUNCNAME} "$@"
 
-	if [[ -z "${CARGO}" ]]; then
-		die "CARGO is not set; was rust_pkg_setup run?"
-	fi
+	_cargo_check_initialized
 
 	set -- "${CARGO}" install $(has --path ${@} || echo --path ./) \
 		--root "${ED}/usr" \
@@ -812,9 +824,7 @@ cargo_src_install() {
 cargo_src_test() {
 	debug-print-function ${FUNCNAME} "$@"
 
-	if [[ -z "${CARGO}" ]]; then
-		die "CARGO is not set; was rust_pkg_setup run?"
-	fi
+	_cargo_check_initialized
 
 	set -- "${CARGO}" test $(usex debug "" --release) ${ECARGO_ARGS[@]} "$@"
 	einfo "${@}"

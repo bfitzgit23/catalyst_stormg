@@ -4,6 +4,15 @@
 # New entries go on top.
 # Please use the same syntax as in package.use.mask.
 
+# Andreas Sturmlechner <asturm@gentoo.org> (2025-05-06)
+# USE=experimental is not stable by definition
+media-libs/zxing-cpp experimental
+
+# Michał Górny <mgorny@gentoo.org> (2024-04-12)
+# dev-python/mpi4py has no stable keywords.
+media-gfx/netgen mpi
+sci-libs/vtk mpi
+
 # Sam James <sam@gentoo.org> (2025-03-07)
 # Gradually unmask for newer Rust to avoid making users recompile for
 # the change. See bug #735154.
@@ -16,12 +25,6 @@ app-arch/mt-st test
 # Volkmar W. Pogatzki <gentoo@pogatzki.net> (2025-01-04)
 # dev-libs/protobuf-28.3 is not yet marked stable.
 >=dev-java/protobuf-java-4.28.3 system-protoc
-
-# Andreas Sturmlechner <asturm@gentoo.org> (2024-08-29)
-# Pin down kf6compat mask to currently stable versions.
-<kde-frameworks/kglobalaccel-5.116.0-r1 kf6compat
-<kde-frameworks/kguiaddons-5.116.0-r1 kf6compat
-<kde-frameworks/kwallet-5.116.0-r1 kf6compat
 
 # Joonas Niilola <juippis@gentoo.org> (2023-07-14)
 # Calendar is broken with some languages on 115.0 release with <icu-75.
@@ -46,12 +49,6 @@ sys-block/nbdkit libguestfs
 # Andreas Sturmlechner <asturm@gentoo.org> (2022-12-24)
 # dev-util/hip and its rocm dependencies not stable yet
 sci-physics/lammps hip
-
-# Sam James <sam@gentoo.org> (2022-12-07)
-# Needs unstable media-libs/libvpl
-media-video/ffmpeg qsv
-media-video/ffmpeg-compat qsv
-media-video/handbrake qsv
 
 # Guillermo Joandet <gjoandet@gmail.com> (2022-11-22)
 # app-text/pandoc is not stable
@@ -95,14 +92,6 @@ x11-wm/xpra doc
 # Pulls in dev-libs/pmdk which has Haskell deps, a dep on rocr-runtime
 # all of which are not stable anywhere.
 sys-cluster/ceph pmdk rbd-rwl
-
-# Andreas K. Hüttel <dilfridge@gentoo.org> (2021-05-30)
-# dev-perl/Net-Netmask-2.0.100 needs ... and ... which ends
-# up pulling in a Test-Simple version newer than 5.32.
-# Not something we want to add to all stable users' Perl.
-# Stable-masking the test useflag until Perl 5.34 goes stable too.
-# Bug 779163
-dev-perl/Net-Netmask test
 
 # Mart Raudsepp <leio@gentoo.org> (2021-02-21)
 # Enabling sysprof causes consumers to include sysprof-capture-4

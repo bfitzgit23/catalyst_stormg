@@ -1,5 +1,0 @@
-{
-  "type": "regex",
-  "regex": "mimeo-([\\d\\.]+)\\.tar\\.xz\\b",
-  "url": "https://xyne.dev/projects/mimeo/src/"
-}

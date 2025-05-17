@@ -1,6 +1,25 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
+# Michał Górny <mgorny@gentoo.org> (2024-05-08)
+# The sigstore bundle.
+dev-python/betterproto
+dev-python/securesystemslib
+dev-python/sigstore
+dev-python/sigstore-protobuf-specs
+dev-python/sigstore-rekor-types
+dev-python/rfc3161-client
+dev-python/tuf
+
+# Michał Górny <mgorny@gentoo.org> (2024-04-20)
+# The mitmproxy bundle.
+dev-python/mitmproxy-wireguard
+dev-util/bpf-linker
+dev-util/btfdump
+net-proxy/mitmproxy
+net-proxy/mitmproxy-linux
+net-proxy/mitmproxy-rs
+
 # idealseal <realidealseal@protonmail.com> (2025-03-02)
 # Fish was ported to Rust.
 >=app-shells/fish-4.0.0
@@ -42,8 +61,6 @@ sys-apps/eza
 sys-apps/lsd
 sys-apps/fd
 net-wireless/urh
-net-proxy/mitmproxy
-net-proxy/mitmproxy-rs
 net-wireless/gr-ieee802154
 net-wireless/gr-rds
 net-wireless/gr-scopy
@@ -118,7 +135,6 @@ dev-python/pyghmi
 dev-python/omemo-dr
 net-im/transwhat
 dev-python/noiseprotocol
-dev-python/mitmproxy-wireguard
 dev-python/magic-wormhole
 dev-python/magic-wormhole-transit-relay
 dev-python/magic-wormhole-mailbox-server
@@ -217,6 +233,7 @@ app-crypt/certbot-nginx
 app-crypt/rpm-sequoia
 app-emulation/virtiofsd
 app-eselect/eselect-rust
+app-misc/gramps
 app-misc/khal
 app-text/mdbook
 dev-embedded/esptool
@@ -288,7 +305,6 @@ dev-python/pymdown-extensions
 dev-python/pyspelling
 dev-python/pyspnego
 dev-python/pyproject-fmt
-dev-python/pyproject-fmt-rust
 dev-python/pytest-jupyter
 dev-python/pytest-localftpserver
 dev-python/pytest-salt-factories
@@ -345,7 +361,9 @@ gnome-extra/gnome-browser-connector
 gnome-extra/gnome-tweaks
 gnome-extra/sushi
 >=media-gfx/libimagequant-4
+media-gfx/gimp
 >=media-libs/libopenraw-0.3.2
+media-plugins/gimp-lqr
 media-video/rav1e
 net-analyzer/wtfis
 net-dns/pdns-recursor

@@ -6,6 +6,7 @@
 EAPI=8
 
 CRATES=""
+RUST_MIN_VER="1.85.0"
 
 declare -A GIT_CRATES=(
 	[libdrm_amdgpu_sys]='https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs;69196107b2a8ab8dabfd67265f004f16f146a308;libdrm-amdgpu-sys-rs-%commit%'
@@ -28,7 +29,7 @@ LICENSE+="
 	UbuntuFontLicense-1.0 Unicode-3.0 ZLIB
 "
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 IUSE="man"
 

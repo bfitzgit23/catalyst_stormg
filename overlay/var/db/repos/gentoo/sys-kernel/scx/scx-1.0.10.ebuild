@@ -10,7 +10,7 @@ CRATES="
 
 RUST_MIN_VER="1.74.1"
 
-inherit llvm-r1 linux-info cargo rust-toolchain meson
+inherit llvm-r1 linux-info cargo rust-toolchain toolchain-funcs meson
 
 DESCRIPTION="sched_ext schedulers and tools"
 HOMEPAGE="https://github.com/sched-ext/scx"
@@ -30,7 +30,7 @@ LICENSE+="
 	Apache-2.0 BSD-2 BSD CC0-1.0 ISC MIT MPL-2.0 Unicode-3.0 ZLIB
 "
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="systemd"
 
 DEPEND="
@@ -70,9 +70,11 @@ pkg_setup() {
 src_prepare() {
 	default
 
-	# Inject the rust_abi value into install_rust_user_scheds
-	sed -i "s;\${MESON_BUILD_ROOT};\${MESON_BUILD_ROOT}/$(rust_abi);" \
-		meson-scripts/install_rust_user_scheds || die
+	if tc-is-cross-compiler; then
+		# Inject the rust_abi value into install_rust_user_scheds
+		sed -i "s;\${MESON_BUILD_ROOT};\${MESON_BUILD_ROOT}/$(rust_abi);" \
+			meson-scripts/install_rust_user_scheds || die
+	fi
 
 	# bug #944832
 	sed -i 's;^#!/usr/bin/;#!/sbin/;' \

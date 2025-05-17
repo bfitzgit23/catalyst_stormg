@@ -1,11 +1,11 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{11..13} )
 
-inherit edo python-any-r1 toolchain-funcs
+inherit edo flag-o-matic python-any-r1 toolchain-funcs
 
 DESCRIPTION="Light-weight X11 desktop panel"
 HOMEPAGE="https://aanatoly.github.io/fbpanel/"
@@ -40,15 +40,12 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-7.0-python3-shebangs.patch
 	"${FILESDIR}"/${PN}-7.0-remove-gdk-pixbuf-xlib.h.patch
 	"${FILESDIR}"/${PN}-7.0-python3.10.patch
+	"${FILESDIR}"/${PN}-7.0-2to3.patch
 )
-
-src_prepare() {
-	default
-	2to3 -n -w --no-diffs configure .config/*.py || die
-}
 
 src_configure() {
 	tc-export CC
+	append-cflags -std=gnu17
 
 	# not autotools based
 	local confargs=(

@@ -27,7 +27,8 @@ groupadd ntp
 useradd -M -g messagebus messagebus
 groupadd avahi
 useradd -M -g avahi avahi
-useradd -M -g portage portage
+groupadd power
+groupadd storage
 
 emerge --sync -q && eix-update
 
@@ -60,12 +61,11 @@ chsh -s /bin/bash root
 chsh -s /bin/bash gentoo
 
 mkdir -p /home/gentoo/.config/autostart
-cp -v /xfce-configs/.config/autostart/dock.desktop /home/gentoo/.config/autostart/
-cp -v /usr/share/applications/calamares.desktop /home/gentoo/.config/autostart/
+cp -a /usr/share/applications/calamares.desktop /home/gentoo/.config/autostart/calamares.desktop
 
-chown -R gentoo:gentoo /home/gentoo/.config
+chown -R gentoo /home/gentoo/.config
 
-chown -R gentoo:gentoo /home/gentoo/*
+chown -R gentoo /home/gentoo/*
 
 # User face image
 cp /xfce-configs/.face /home/gentoo/.face
@@ -81,6 +81,8 @@ gpasswd -a gentoo autologin
 
 groupadd -r nopasswdlogin
 gpasswd -a gentoo nopasswdlogin
+gpasswd -a gentoo power
+gpasswd -a gentoo storage
 
 cp -af /usr/share/applications/calamares.desktop /home/gentoo/Desktop/calamares.desktop
 chown -R gentoo:users /home/gentoo/Desktop/calamares.desktop
@@ -105,8 +107,9 @@ ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 sed -i 's/#\(en_US\.UTF-8\)/\1/' /etc/locale.gen
 locale-gen
 
-chown 0 /etc/sudoers
+chmod 0 /etc/sudoers
 chown root:root /etc/sudoers
+chmod 0440 /etc/sudoers 
 
 rm -rf /usr/share/backgrounds/xfce
 
@@ -117,3 +120,6 @@ chown -R gentoo /tmp
 su -c 'echo "" >> /etc/NetworkManager/NetworkManager.conf'
 su -c 'echo "[device]" >> /etc/NetworkManager/NetworkManager.conf'
 su -c 'echo "wifi.scan-rand-mac-address=no" >> /etc/NetworkManager.conf'
+
+chmod 644 /etc/passwd
+

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -16,7 +16,7 @@ if [[ ${PV} == *9999 ]] ; then
 
 	REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 else
-	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/waynedavison.asc
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/andrewtridgell.asc
 	inherit verify-sig
 
 	if [[ -n ${RSYNC_NEEDS_AUTOCONF} ]] ; then
@@ -41,8 +41,10 @@ IUSE="acl examples iconv lz4 rrsync ssl stunnel system-zlib xattr xxhash zstd"
 REQUIRED_USE+=" examples? ( ${PYTHON_REQUIRED_USE} )"
 REQUIRED_USE+=" rrsync? ( ${PYTHON_REQUIRED_USE} )"
 
+# attr is autodetected and then dropped by -Wl,--as-needed:
+# https://github.com/RsyncProject/rsync/pull/753
 RDEPEND="
-	>=dev-libs/popt-1.5
+	>=dev-libs/popt-1.19
 	acl? ( virtual/acl )
 	examples? (
 		${PYTHON_DEPS}
@@ -57,7 +59,6 @@ RDEPEND="
 	)
 	ssl? ( dev-libs/openssl:= )
 	system-zlib? ( sys-libs/zlib )
-	xattr? ( kernel_linux? ( sys-apps/attr ) )
 	xxhash? ( >=dev-libs/xxhash-0.8 )
 	zstd? ( >=app-arch/zstd-1.4:= )
 	iconv? ( virtual/libiconv )"
@@ -73,8 +74,12 @@ if [[ ${PV} == *9999 ]] ; then
 			dev-python/commonmark[${PYTHON_USEDEP}]
 		')"
 else
-	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-waynedavison )"
+	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-andrewtridgell )"
 fi
+
+PATCHES=(
+	"${FILESDIR}"/${PN}-3.4.1-c23.patch
+)
 
 pkg_setup() {
 	# - USE=examples needs Python itself at runtime, but nothing else
@@ -143,7 +148,7 @@ src_install() {
 	dodoc NEWS.md README.md TODO tech_report.tex
 
 	insinto /etc
-	newins "${FILESDIR}"/rsyncd.conf-3.0.9-r1 rsyncd.conf
+	newins "${FILESDIR}"/rsyncd.conf-3.2.7-r5 rsyncd.conf
 
 	insinto /etc/logrotate.d
 	newins "${FILESDIR}"/rsyncd.logrotate rsyncd

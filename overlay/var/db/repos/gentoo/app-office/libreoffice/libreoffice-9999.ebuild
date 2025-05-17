@@ -51,7 +51,7 @@ ADDONS_SRC=(
 	# not packaged in Gentoo, https://github.com/serge-sans-paille/frozen
 	"${ADDONS_URI}/frozen-1.2.0.tar.gz"
 	# not packaged in Gentoo, https://skia.org/
-	"${ADDONS_URI}/skia-m135-6c2dc3e74ea0bd464ba1c6679ded0b643101e682.tar.xz"
+	"${ADDONS_URI}/skia-m136-28685d899b0a35894743e2cedad4c9f525e90e1e.tar.xz"
 	# not packaged in Gentoo, https://github.com/tsyrogit/zxcvbn-c
 	"${ADDONS_URI}/zxcvbn-c-2.5.tar.gz"
 
@@ -142,7 +142,7 @@ COMMON_DEPEND="${PYTHON_DEPS}
 	dev-libs/libgpg-error
 	>=dev-libs/liborcus-0.20.0:0/0.20
 	dev-libs/librevenge
-	dev-libs/libxml2
+	dev-libs/libxml2:=
 	dev-libs/libxslt
 	dev-libs/nspr
 	dev-libs/nss
@@ -216,7 +216,10 @@ COMMON_DEPEND="${PYTHON_DEPS}
 	!mariadb? ( dev-db/mysql-connector-c:= )
 	pdfimport? ( >=app-text/poppler-22.06:=[cxx] )
 	postgres? ( >=dev-db/postgresql-9.0:*[kerberos] )
-	qt6? ( dev-qt/qtbase:6[gui,opengl,widgets] )
+	qt6? (
+		dev-qt/qtbase:6[gui,opengl,widgets]
+		dev-qt/qtmultimedia:6
+	)
 "
 # FIXME: cppunit should be moved to test conditional
 #        after everything upstream is under gbuild
@@ -234,7 +237,10 @@ DEPEND="${COMMON_DEPEND}
 	x11-libs/libXtst
 	java? (
 		dev-java/ant:0
-		>=virtual/jdk-17
+		|| (
+		   virtual/jdk:17
+		   virtual/jdk:21
+		)
 	)
 	test? (
 		app-crypt/gnupg
@@ -255,10 +261,10 @@ RDEPEND="${COMMON_DEPEND}
 	kde? ( kde-frameworks/breeze-icons:* )
 "
 BDEPEND="
+	app-alternatives/lex
+	app-alternatives/yacc
 	dev-util/intltool
 	sys-apps/which
-	app-alternatives/yacc
-	app-alternatives/lex
 	sys-devel/gettext
 	virtual/pkgconfig
 	clang? ( || (
@@ -335,12 +341,12 @@ src_unpack() {
 
 	if [[ ${MY_PV} = *9999* ]]; then
 		local base_uri branch mypv
-		base_uri="https://anongit.freedesktop.org/git"
+		base_uri="https://git.libreoffice.org"
 		branch="master"
 		mypv=${MY_PV/.9999}
 		[[ ${mypv} != ${MY_PV} ]] && branch="${PN}-${mypv/./-}"
-		git-r3_fetch "${base_uri}/${PN}/core" "refs/heads/${branch}"
-		git-r3_checkout "${base_uri}/${PN}/core"
+		git-r3_fetch "${base_uri}/core" "refs/heads/${branch}"
+		git-r3_checkout "${base_uri}/core"
 		LOCOREGIT_VERSION=${EGIT_VERSION}
 
 		git-r3_fetch "${base_uri}/${PN}/help" "refs/heads/master"
@@ -518,7 +524,6 @@ src_configure() {
 	# --without-system-sane: just sane.h header that is used for scan in writer,
 	#   not linked or anything else, worthless to depend on
 	# --disable-pdfium: not yet packaged
-	# --disable-qt6-multimedia: TODO
 	# --disable-cpdb: not yet packaged
 	local myeconfargs=(
 		--with-system-dicts
@@ -549,7 +554,6 @@ src_configure() {
 		--disable-openssl
 		--disable-pdfium
 		--disable-qt5
-		--disable-qt6-multimedia
 		# Don't try to call coredumpctl in the testsuite
 		--without-coredumpctl
 		--without-dotnet
@@ -593,6 +597,7 @@ src_configure() {
 		$(use_enable pdfimport)
 		$(use_enable postgres postgresql-sdbc)
 		$(use_enable qt6)
+		$(use_enable qt6 qt6-multimedia)
 		$(use_enable vulkan skia)
 		$(use_with accessibility lxml)
 		$(use_with coinmp system-coinmp)

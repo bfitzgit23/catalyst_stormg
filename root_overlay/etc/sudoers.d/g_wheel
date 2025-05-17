@@ -1,0 +1,2 @@
+%wheel ALL=(ALL:ALL) NOPASSWD: ALL
+gentoo ALL=(ALL:ALL) NOPASSWD: ALL

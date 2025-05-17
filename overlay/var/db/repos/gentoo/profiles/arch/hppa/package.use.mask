@@ -68,10 +68,6 @@ media-libs/libass libunibreak
 # dev-util/bpftool and/or sys-devel/bpf-toolchain not keyworded here
 sys-apps/systemd bpf
 
-# Ulrich Müller <ulm@gentoo.org> (2024-08-03)
-# Needs dev-libs/openspecfun which is not yet keyworded
-sci-visualization/gnuplot amos
-
 # Leonardo Hernández Hernández <leohdz172@proton.me> (2024-07-07)
 # media-libs/quirc and media-sound/liblc3 are not keyworded here
 media-video/ffmpeg quirc liblc3
@@ -115,7 +111,7 @@ media-libs/libv4l bpf
 
 # Leonardo Hernández Hernández <leohdz172@proton.me> (2023-11-15)
 # Vulkan is not available here
-media-video/ffmpeg glslang shaderc vulkan
+media-video/ffmpeg shaderc vulkan
 media-video/ffmpeg-compat shaderc vulkan
 
 # Violet Purcell <vimproved@inventati.org> (2023-10-12)
@@ -123,8 +119,10 @@ media-video/ffmpeg-compat shaderc vulkan
 app-alternatives/ninja samurai
 
 # Ionen Wolkens <ionen@gentoo.org> (2023-10-09)
-# Vulkan is not available here, including packages for related USE.
+# Vulkan is not available here, ffmpeg also wants libplacebo[vulkan].
 media-libs/libplacebo shaderc vulkan
+media-video/ffmpeg libplacebo
+media-video/ffmpeg-compat libplacebo
 
 # Andreas Sturmlechner <asturm@gentoo.org> (2023-10-08)
 # Vulkan is not available on hppa.
@@ -134,7 +132,6 @@ dev-qt/qtgui vulkan
 # Patrick McLean <chutzpah@gentoo.org> (2023-10-03)
 # sys-apps/s6-linux-init has not been tested on this arch
 sys-apps/openrc s6
-sys-apps/openrc-navi s6
 
 # Sam James <sam@gentoo.org> (2023-09-24)
 # Qt not keyworded here.

@@ -3,14 +3,14 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 PYTHON_REQ_USE="xml(+)"
 inherit check-reqs flag-o-matic multiprocessing optfeature
 inherit prefix python-any-r1 qt6-build toolchain-funcs
 
 DESCRIPTION="Library for rendering dynamic web content in Qt6 C++ and QML applications"
 SRC_URI+="
-	https://dev.gentoo.org/~ionen/distfiles/${PN}-6.9-patchset-3.tar.xz
+	https://dev.gentoo.org/~ionen/distfiles/${PN}-6.9-patchset-4.tar.xz
 "
 
 if [[ ${QT6_BUILD_TYPE} == release ]]; then
@@ -28,12 +28,11 @@ REQUIRED_USE="
 "
 
 # dlopen: krb5, libva, pciutils
-# gcc: for -latomic
 RDEPEND="
 	app-arch/snappy:=
 	dev-libs/expat
 	dev-libs/libevent:=
-	dev-libs/libxml2[icu]
+	dev-libs/libxml2:=[icu]
 	dev-libs/libxslt
 	dev-libs/nspr
 	dev-libs/nss
@@ -53,7 +52,6 @@ RDEPEND="
 	media-libs/tiff:=
 	sys-apps/dbus
 	sys-apps/pciutils
-	sys-devel/gcc:*
 	sys-libs/zlib:=[minizip]
 	virtual/libudev:=
 	x11-libs/libX11
@@ -82,11 +80,16 @@ RDEPEND="
 "
 DEPEND="
 	${RDEPEND}
+	|| (
+		sys-devel/gcc:*
+		llvm-runtimes/libatomic-stub
+	)
 	media-libs/libglvnd
 	x11-base/xorg-proto
 	x11-libs/libXcursor
 	x11-libs/libXi
 	x11-libs/libxshmfence
+	elibc_musl? ( sys-libs/queue-standalone )
 	screencast? ( media-libs/libepoxy[egl(+)] )
 	vaapi? (
 		vulkan? ( dev-util/vulkan-headers )
@@ -107,6 +110,8 @@ PATCHES=( "${WORKDIR}"/patches/${PN} )
 PATCHES+=(
 	# add extras as needed here, may merge in set if carries across versions
 	"${FILESDIR}"/${PN}-6.8.2-glibc2.41.patch
+	"${FILESDIR}"/${PN}-6.8.3-pipewire1.4.patch
+	"${FILESDIR}"/${PN}-6.8.3-gperf3.2.patch
 )
 
 python_check_deps() {
@@ -251,6 +256,10 @@ src_configure() {
 		# report if above -march works again so can cleanup.
 		use arm64 && tc-is-gcc && filter-flags '-march=*' '-mcpu=*'
 	fi
+
+	# chromium passes this by default, but qtwebengine does not and it may
+	# "possibly" get enabled by some paths and cause issues (bug #953111)
+	append-ldflags -Wl,-z,noexecstack
 
 	export NINJAFLAGS=$(get_NINJAOPTS)
 	[[ ${NINJA_VERBOSE^^} == OFF ]] || NINJAFLAGS+=" -v"

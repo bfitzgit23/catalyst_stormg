@@ -1,0 +1,2 @@
+kde-plasma/plasma-meta -discover -sddm -grub -sdk display-manager -webengine wacom
+kde-apps/kde-apps-meta -multimediaa -games -education -admin -graphics

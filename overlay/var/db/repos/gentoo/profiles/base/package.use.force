@@ -1,6 +1,21 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
+# Sam James <sam@gentoo.org> (2025-04-22)
+# qemu[X] still has automagic on some parts of gtk[X]. Workaround that
+# for now for bug #954152.
+app-emulation/qemu X
+
+# Ionen Wolkens <ionen@gentoo.org> (2025-04-21)
+# Currently fails to build without, and Valve would likely not be
+# interested in a bug. May leave forced depending on how this goes.
+app-emulation/wine-proton mingw
+
+# Sebastian Pipping <sping@gentoo.org> (2025-03-27)
+# This blocks accidental use of bundled vulnerable dev-libs/expat
+# for now (bug #952113)
+<dev-libs/xmlrpc-c-1.59.03-r2 libxml2
+
 # Joonas Niilola <juippis@gentoo.org> (2025-03-05)
 # 136.0 can't be compiled with "-rust-extensions".
 ~mail-client/thunderbird-136.0 rust-extensions
@@ -62,12 +77,6 @@ dev-lang/rust:1.74.1 llvm_slot_17
 dev-lang/rust-bin:1.74.1 llvm_slot_17
 dev-lang/rust:1.71.1 llvm_slot_16
 dev-lang/rust-bin:1.71.1 llvm_slot_16
-
-# Sam James <sam@gentoo.org> (2024-09-30)
-# gnat-gpl only exists for (bootstrapping) Ada. Until bug #940471 is handled,
-# force Ada on. Once it is split/moved/gutted, this won't be necessary
-# as it'll always build Ada.
-dev-lang/gnat-gpl ada cxx
 
 # Sam James <sam@gentoo.org> (2024-06-03)
 # Poor rendering performance otherwise (bug #931215).
@@ -253,7 +262,7 @@ net-misc/wget ssl
 llvm-runtimes/libcxx libcxxabi
 
 # Sergei Trofimovich <slyfox@gentoo.org> (2019-08-17)
-# USE=-cxx us a sure way to break native install as modern gcc
+# USE=-cxx is a sure way to break native install as modern gcc
 # requires C++ to bootstrap. But in rare cases it's useful
 # to have a compiler not capable of C++, bug #692126.
 sys-devel/gcc cxx
@@ -283,6 +292,12 @@ gnome-base/gnome-desktop seccomp
 app-misc/tracker-miners seccomp
 net-libs/webkit-gtk seccomp
 
+# Lukas Schmelting <lschmelting@posteo.com> after consulting
+# Mart Raudsepp <leio@gentoo.org> (2025-19-02)
+# GNOME without Xwayland is not mainstream yet. Current priority is that
+# users have working apps, advanced users can still override this
+x11-wm/mutter xwayland
+
 # Luke Dashjr <luke-jr+gentoobugs@utopios.org> (2018-11-19)
 # iasl is not keyworded on many platforms yet
 sys-firmware/seabios binary
@@ -311,12 +326,12 @@ app-shells/bash:0 readline
 # Michał Górny <mgorny@gentoo.org> (2012-10-14)
 # Force-enable all PYTHON_TARGETS for python-exec to avoid using private
 # API. Please remember to keep it in sync with python_targets.desc.
-dev-lang/python-exec python_targets_python3_10
 dev-lang/python-exec python_targets_python3_11
 dev-lang/python-exec python_targets_python3_12
 dev-lang/python-exec python_targets_python3_13
 dev-lang/python-exec python_targets_python3_13t
-dev-lang/python-exec python_targets_pypy3
+dev-lang/python-exec python_targets_python3_14
+dev-lang/python-exec python_targets_python3_14t
 dev-lang/python-exec python_targets_pypy3_11
 
 # Zac Medico <zmedico@gentoo.org> (2010-10-20)

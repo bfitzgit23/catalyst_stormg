@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -21,7 +21,7 @@ SRC_URI="https://github.com/rails/rails/archive/v${PV}.tar.gz -> rails-${PV}.tgz
 
 LICENSE="MIT"
 SLOT="$(ver_cut 1-2)"
-KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~ppc ~ppc64 ~riscv ~sparc ~x86"
+KEYWORDS="amd64 ~arm ~arm64 ~hppa ~ppc ~ppc64 ~riscv ~sparc ~x86"
 IUSE="test"
 
 RUBY_S="rails-${PV}/${PN}"
@@ -70,4 +70,9 @@ all_ruby_prepare() {
 	# Avoid tests that fail with a fixed cgi.rb version
 	sed -e '/test_session_store_with_all_domains/askip "Fails with fixed cgi.rb"' \
 		-i test/dispatch/session/cookie_store_test.rb || die
+
+	# Avoid tests requiring chrome
+	sed -e '/DrivenBySeleniumWith/,/^end/ s:^:#:' \
+		-i test/abstract_unit.rb || die
+	rm -f test/dispatch/system_testing/{driver,screenshot_helper,system_test_case}_test.rb || die
 }

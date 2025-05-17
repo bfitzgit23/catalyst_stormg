@@ -1,5 +1,0 @@
-{
-  "type": "regex",
-  "regex": "\"/releases/v([^\"]+)\"",
-  "url": "https://clonehero.net/"
-}

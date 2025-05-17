@@ -68,7 +68,7 @@ COMMON_DEPEND="
 	dbus? ( sys-apps/dbus )
 	gui? (
 		media-libs/fontconfig
-		media-libs/freetype:2
+		>=media-libs/freetype-2.13.1:2
 		media-libs/harfbuzz:=
 		media-libs/libjpeg-turbo:=
 		media-libs/libpng:=
@@ -146,6 +146,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-6.6.1-forkfd-childstack-size.patch
 	"${FILESDIR}"/${PN}-6.6.3-gcc14-avx512fp16.patch
 	"${FILESDIR}"/${PN}-6.8.2-cross.patch
+	"${FILESDIR}"/${PN}-6.9.0-no-direct-extern-access.patch
 )
 
 src_prepare() {

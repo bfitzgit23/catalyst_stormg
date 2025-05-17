@@ -1,8 +1,0 @@
-[Unit]
-Description=timer for start-failed.service 
-
-[Timer]
-OnBootSec=1min
-
-[Install]
-WantedBy=timers.target

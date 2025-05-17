@@ -1,9 +1,12 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+# Maintenance notes and explanations of GCC handling are on the wiki:
+# https://wiki.gentoo.org/wiki/Project:Toolchain/sys-devel/gcc
+
+PYTHON_COMPAT=( python3_{10..13} )
 TOOLCHAIN_PATCH_DEV="sam"
 TOOLCHAIN_HAS_TESTS=1
 PATCH_GCC_VER="13.2.0"

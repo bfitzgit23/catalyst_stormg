@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{10..13} )
 inherit cmake java-pkg-opt-2 python-single-r1
 
 DESCRIPTION="Translator library for raster geospatial data formats (includes OGR support)"
@@ -103,7 +103,7 @@ QA_CONFIG_IMPL_DECL_SKIP=(
 PATCHES=(
 	"${FILESDIR}"/${PN}-3.6.4-abseil-cpp-20230125.2-c++17.patch
 	"${FILESDIR}"/${PN}-3.9.1-poppler-24.12.patch
-	"${FILESDIR}"/${P}-poppler-25.02.patch
+	"${FILESDIR}"/${P}-poppler-25.0{2,5}.patch
 )
 
 pkg_setup() {
@@ -258,8 +258,19 @@ src_test() {
 	# 1. autotests (much larger, uses pytest)
 	# 2. Small set of fuzzing tests (no download needed)
 
-	# Missing file for test-unit?
-	cmake_src_test -E "(test-unit)"
+	CMAKE_SKIP_TESTS=(
+		# Missing file for test-unit?
+		"test-unit"
+		# requires pytest-benchmark
+		"autotest_benchmark"
+		# network sandbox
+		# TODO: granularly skip network sandbox breaking tests?
+		"autotest_gcore"
+		"autotest_gdrivers"
+		"autotest_utilities"
+	)
+
+	cmake_src_test
 }
 
 src_install() {

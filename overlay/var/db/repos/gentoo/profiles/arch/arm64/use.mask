@@ -4,13 +4,13 @@
 # Unmask the flag which corresponds to ARCH.
 -arm64
 
+# Paul Zander <negril.nx+gentoo@gmail.com> (2025-05-01)
+# media-libs/libspng only keyworded on amd64, arm64
+-spng
+
 # Sam James <sam@gentoo.org> (2025-02-19)
 # x11-drivers/xf86-input-wacom is available here
 -input_devices_wacom
-
-# Sam James <sam@gentoo.org> (2025-01-05)
-# Older targets don't have an old enough dev-lang/ada-bootstrap available
-ada_target_gnat_2021
 
 # Paul Zander <negril.nx+gentoo@gmail.com> (2024-03-28)
 # dev-libs/optix works on arm64
@@ -57,8 +57,6 @@ ada_target_gnat_2021
 
 # Sam James <sam@gentoo.org> (2020-10-08)
 # PyPy3 works on arm64
--python_targets_pypy3
--python_single_target_pypy3
 -python_targets_pypy3_11
 -python_single_target_pypy3_11
 
@@ -107,7 +105,6 @@ dmi
 # Stuff we don't want
 mpi
 lasi
-hardened
 pdfannotextractor
 mssql
 
@@ -128,6 +125,7 @@ snapcast
 
 # Unmask ARM-only video-cards
 -video_cards_amdgpu
+-video_cards_asahi
 -video_cards_d3d12
 -video_cards_exynos
 -video_cards_freedreno

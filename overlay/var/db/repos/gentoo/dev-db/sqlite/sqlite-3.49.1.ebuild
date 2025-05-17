@@ -24,7 +24,7 @@ else
 	"
 	S="${WORKDIR}/${PN}-src-${SRC_PV}"
 
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+	KEYWORDS="~alpha amd64 arm arm64 hppa ~loong ~m68k ~mips ~ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
 fi
 
 LICENSE="public-domain"
@@ -325,6 +325,9 @@ multilib_src_configure() {
 	if [[ ${CHOST} != *-darwin* ]] ; then
 		# set SONAME for the library
 		options+=( --soname=legacy )
+	else
+		# to allow install_name_tool id change
+		append-ldflags -headerpad_max_install_names
 	fi
 
 	# https://sqlite.org/forum/forumpost/4f4d06a9f6683bb9

@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Gentoo Authors
+# Copyright 2011-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -135,7 +135,6 @@ RDEPEND="${COMMON_DEPEND}
 	)
 	sysv-utils? (
 		!sys-apps/openrc[sysv-utils(-)]
-		!sys-apps/openrc-navi[sysv-utils(-)]
 		!sys-apps/sysvinit
 	)
 	!sysv-utils? ( sys-apps/sysvinit )
@@ -160,7 +159,7 @@ BDEPEND="
 	sys-devel/gettext
 	virtual/pkgconfig
 	bpf? (
-		dev-util/bpftool
+		>=dev-util/bpftool-7.0.0
 		sys-devel/bpf-toolchain
 	)
 	test? (
@@ -296,6 +295,7 @@ src_configure() {
 multilib_src_configure() {
 	local myconf=(
 		--localstatedir="${EPREFIX}/var"
+		-Ddocdir="share/doc/${PF}"
 		# default is developer, bug 918671
 		-Dmode=release
 		-Dsupport-url="https://gentoo.org/support/"
@@ -312,45 +312,45 @@ multilib_src_configure() {
 		-Ddebug-shell="${EPREFIX}/bin/sh"
 		-Ddefault-user-shell="${EPREFIX}/bin/bash"
 		# Optional components/dependencies
-		$(meson_native_use_bool acl)
-		$(meson_native_use_bool apparmor)
-		$(meson_native_use_bool audit)
-		$(meson_native_use_bool boot bootloader)
-		$(meson_native_use_bool bpf bpf-framework)
+		$(meson_native_use_feature acl)
+		$(meson_native_use_feature apparmor)
+		$(meson_native_use_feature audit)
+		$(meson_native_use_feature boot bootloader)
+		$(meson_native_use_feature bpf bpf-framework)
 		-Dbpf-compiler=gcc
-		$(meson_native_use_bool cryptsetup libcryptsetup)
-		$(meson_native_use_bool curl libcurl)
+		$(meson_native_use_feature cryptsetup libcryptsetup)
+		$(meson_native_use_feature curl libcurl)
 		$(meson_native_use_bool dns-over-tls dns-over-tls)
-		$(meson_native_use_bool elfutils)
-		$(meson_native_use_bool fido2 libfido2)
-		$(meson_use gcrypt)
-		$(meson_native_use_bool gnutls)
-		$(meson_native_use_bool homed)
-		$(meson_native_use_bool http microhttpd)
+		$(meson_native_use_feature elfutils)
+		$(meson_native_use_feature fido2 libfido2)
+		$(meson_feature gcrypt)
+		$(meson_native_use_feature gnutls)
+		$(meson_native_use_feature homed)
+		$(meson_native_use_feature http microhttpd)
 		$(meson_native_use_bool idn)
-		$(meson_native_use_bool importd)
-		$(meson_native_use_bool importd bzip2)
-		$(meson_native_use_bool importd zlib)
+		$(meson_native_use_feature importd)
+		$(meson_native_use_feature importd bzip2)
+		$(meson_native_use_feature importd zlib)
 		$(meson_native_use_bool kernel-install)
-		$(meson_native_use_bool kmod)
-		$(meson_use lz4)
-		$(meson_use lzma xz)
+		$(meson_native_use_feature kmod)
+		$(meson_feature lz4)
+		$(meson_feature lzma xz)
 		$(meson_use test tests)
-		$(meson_use zstd)
-		$(meson_native_use_bool iptables libiptc)
-		$(meson_native_use_bool openssl)
-		$(meson_use pam)
-		$(meson_native_use_bool pkcs11 p11kit)
-		$(meson_native_use_bool pcre pcre2)
-		$(meson_native_use_bool policykit polkit)
-		$(meson_native_use_bool pwquality)
-		$(meson_native_use_bool qrcode qrencode)
-		$(meson_native_use_bool seccomp)
-		$(meson_native_use_bool selinux)
-		$(meson_native_use_bool tpm tpm2)
-		$(meson_native_use_bool test dbus)
-		$(meson_native_use_bool ukify)
-		$(meson_native_use_bool xkb xkbcommon)
+		$(meson_feature zstd)
+		$(meson_native_use_feature iptables libiptc)
+		$(meson_native_use_feature openssl)
+		$(meson_feature pam)
+		$(meson_native_use_feature pkcs11 p11kit)
+		$(meson_native_use_feature pcre pcre2)
+		$(meson_native_use_feature policykit polkit)
+		$(meson_native_use_feature pwquality)
+		$(meson_native_use_feature qrcode qrencode)
+		$(meson_native_use_feature seccomp)
+		$(meson_native_use_feature selinux)
+		$(meson_native_use_feature tpm tpm2)
+		$(meson_native_use_feature test dbus)
+		$(meson_native_use_feature ukify)
+		$(meson_native_use_feature xkb xkbcommon)
 		-Dntp-servers="0.gentoo.pool.ntp.org 1.gentoo.pool.ntp.org 2.gentoo.pool.ntp.org 3.gentoo.pool.ntp.org"
 		# Breaks screen, tmux, etc.
 		-Ddefault-kill-user-processes=false
@@ -366,7 +366,7 @@ multilib_src_configure() {
 		$(meson_native_true hostnamed)
 		$(meson_native_true ldconfig)
 		$(meson_native_true localed)
-		$(meson_native_true man)
+		$(meson_native_enabled man)
 		$(meson_native_true networkd)
 		$(meson_native_true quotacheck)
 		$(meson_native_true randomseed)
@@ -402,9 +402,6 @@ multilib_src_test() {
 }
 
 multilib_src_install_all() {
-	# meson doesn't know about docdir
-	mv "${ED}"/usr/share/doc/{systemd,${PF}} || die
-
 	einstalldocs
 	dodoc "${FILESDIR}"/nsswitch.conf
 

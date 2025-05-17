@@ -155,14 +155,14 @@ COMMON_TARGET_DEPEND="${PYTHON_DEPS}
 		sys-libs/libcap
 	)
 	cec? (
-		>=dev-libs/libcec-4.0[-cubox]
+		>=dev-libs/libcec-4.0[-cubox(-)]
 	)
 	dbus? (
 		sys-apps/dbus
 	)
 	gbm? (
 		>=dev-libs/libinput-1.10.5:=
-		media-libs/libdisplay-info
+		media-libs/libdisplay-info:=
 		x11-libs/libxkbcommon
 	)
 	!gles? (
@@ -196,7 +196,7 @@ COMMON_TARGET_DEPEND="${PYTHON_DEPS}
 		>=net-fs/samba-3.4.6[smbclient(+)]
 	)
 	system-ffmpeg? (
-		=media-video/ffmpeg-6*:=[encode(+),soc(-)?,postproc,vaapi?,vdpau?,X?]
+		=media-video/ffmpeg-6*:=[encode(+),soc(-)?,postproc(-),vaapi?,vdpau?,X?]
 	)
 	!system-ffmpeg? (
 		app-arch/bzip2
@@ -232,7 +232,7 @@ COMMON_TARGET_DEPEND="${PYTHON_DEPS}
 	)
 	xslt? (
 		dev-libs/libxslt
-		>=dev-libs/libxml2-2.9.4
+		>=dev-libs/libxml2-2.9.4:=
 	)
 	zeroconf? (
 		net-dns/avahi[dbus]

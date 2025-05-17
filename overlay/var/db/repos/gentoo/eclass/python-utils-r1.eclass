@@ -39,9 +39,9 @@ inherit multiprocessing toolchain-funcs
 # @DESCRIPTION:
 # All supported Python implementations, most preferred last.
 _PYTHON_ALL_IMPLS=(
-	pypy3 pypy3_11
-	python3_13t
-	python3_{10..13}
+	pypy3_11
+	python3_{13..14}t
+	python3_{11..14}
 )
 readonly _PYTHON_ALL_IMPLS
 
@@ -51,9 +51,9 @@ readonly _PYTHON_ALL_IMPLS
 # All historical Python implementations that are no longer supported.
 _PYTHON_HISTORICAL_IMPLS=(
 	jython2_7
-	pypy pypy1_{8,9} pypy2_0
+	pypy pypy1_{8,9} pypy2_0 pypy3
 	python2_{5..7}
-	python3_{1..9}
+	python3_{1..10}
 )
 readonly _PYTHON_HISTORICAL_IMPLS
 
@@ -81,7 +81,7 @@ _python_verify_patterns() {
 	local impl pattern
 	for pattern; do
 		case ${pattern} in
-			-[23]|3.[89]|3.1[0-3])
+			-[23]|3.[89]|3.1[0-4])
 				continue
 				;;
 		esac
@@ -137,9 +137,9 @@ _python_set_impls() {
 			# please keep them in sync with _PYTHON_ALL_IMPLS
 			# and _PYTHON_HISTORICAL_IMPLS
 			case ${i} in
-				pypy3|pypy3_11|python3_9|python3_1[0-3]|python3_13t)
+				pypy3_11|python3_9|python3_1[1-4]|python3_1[3-4]t)
 					;;
-				jython2_7|pypy|pypy1_[89]|pypy2_0|python2_[5-7]|python3_[1-9])
+				jython2_7|pypy|pypy1_[89]|pypy2_0|pypy3|python2_[5-7]|python3_[1-9]|python3_10)
 					obsolete+=( "${i}" )
 					;;
 				*)
@@ -208,6 +208,8 @@ _python_impl_matches() {
 	local impl=${1/./_} pattern
 	shift
 
+	# note: do not add "return 1" below, the function is supposed
+	# to iterate until it matches something
 	for pattern; do
 		case ${pattern} in
 			-2|python2*|pypy)
@@ -228,11 +230,7 @@ _python_impl_matches() {
 				fi
 				return 0
 				;;
-			3.10)
-				[[ ${impl} == python${pattern/./_} || ${impl} == pypy3 ]] &&
-					return 0
-				;;
-			3.8|3.9|3.1[1-3])
+			3.[89]|3.1[0-4])
 				[[ ${impl%t} == python${pattern/./_} || ${impl} == pypy${pattern/./_} ]] &&
 					return 0
 				;;
@@ -449,9 +447,6 @@ _python_export() {
 					python*)
 						PYTHON_PKG_DEP="dev-lang/python:${impl#python}${PYTHON_REQ_USE:+[${PYTHON_REQ_USE}]}"
 						;;
-					pypy3)
-						PYTHON_PKG_DEP="dev-lang/pypy:3.10=[symlink${PYTHON_REQ_USE:+,${PYTHON_REQ_USE}}]"
-						;;
 					pypy3.*)
 						PYTHON_PKG_DEP="dev-lang/pypy:${impl#pypy}=${PYTHON_REQ_USE:+[${PYTHON_REQ_USE}]}"
 						;;
@@ -629,29 +624,11 @@ python_optimize() {
 	local jobs=$(makeopts_jobs)
 	local d
 	for d; do
-		# make sure to get a nice path without //
-		local instpath=${d#${D}}
-		instpath=/${instpath##/}
-
 		einfo "Optimize Python modules for ${instpath}"
-		case "${EPYTHON}" in
-			python3.8)
-				# both levels of optimization are separate since 3.5
-				"${PYTHON}" -m compileall -j "${jobs}" -q -f -d "${instpath}" "${d}"
-				"${PYTHON}" -O -m compileall -j "${jobs}" -q -f -d "${instpath}" "${d}"
-				"${PYTHON}" -OO -m compileall -j "${jobs}" -q -f -d "${instpath}" "${d}"
-				;;
-			python*|pypy3*)
-				# Python 3.9+
-				"${PYTHON}" -m compileall -j "${jobs}" -o 0 -o 1 -o 2 --hardlink-dupes -q -f -d "${instpath}" "${d}"
-				;;
-			pypy|jython2.7)
-				"${PYTHON}" -m compileall -q -f -d "${instpath}" "${d}"
-				;;
-			*)
-				die "${FUNCNAME}: unexpected EPYTHON=${EPYTHON}"
-				;;
-		esac
+		# NB: '-s' makes the path relative, so we need '-p /' to make it
+		# absolute again; https://github.com/python/cpython/issues/133503
+		"${PYTHON}" -m compileall -j "${jobs}" -o 0 -o 1 -o 2 \
+			--hardlink-dupes -q -f -s "${D}" -p / "${d}"
 	done
 }
 
@@ -1279,7 +1256,7 @@ _python_check_occluded_packages() {
 			)
 
 			if [[ -n ${diff} ]]; then
-				eqawarn "The directory ${fn} occludes package installed for ${EPYTHON}."
+				eqawarn "QA Notice: The directory ${fn} occludes package installed for ${EPYTHON}."
 				eqawarn "The installed package includes additional files:"
 				eqawarn
 				while IFS= read -r l; do
@@ -1481,7 +1458,7 @@ epytest() {
 # @FUNCTION: eunittest
 # @USAGE: [<args>...]
 # @DESCRIPTION:
-# Run unit tests using dev-python/unittest-or-fail, passing the standard
+# Run unit tests using unittest, passing the standard
 # set of options, followed by user-specified options.
 #
 # This command dies on failure and respects nonfatal.
@@ -1492,11 +1469,7 @@ eunittest() {
 	_python_check_occluded_packages
 
 	# unittest fails with "no tests" correctly since Python 3.12
-	local runner=unittest
-	if _python_impl_matches "${EPYTHON}" 3.{9..11}; then
-		runner=unittest_or_fail
-	fi
-	set -- "${EPYTHON}" -m "${runner}" discover -v "${@}"
+	set -- "${EPYTHON}" -m unittest discover -v "${@}"
 
 	echo "${@}" >&2
 	"${@}" || die -n "Tests failed with ${EPYTHON}"

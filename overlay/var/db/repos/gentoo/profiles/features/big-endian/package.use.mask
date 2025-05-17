@@ -16,6 +16,7 @@ media-libs/gexiv2 test
 
 # matoro <matoro_gentoo@matoro.tk> (2023-11-16)
 # media-libs/libvpx casualties (#700902)
+media-libs/opencv test
 media-video/ffmpeg vpx
 media-video/ffmpeg-compat vpx
 www-client/firefox system-libvpx
@@ -27,11 +28,10 @@ mail-client/thunderbird system-libvpx
 games-fps/eduke32 vpx
 media-plugins/gst-plugins-meta vpx
 net-p2p/ktorrent rss webengine
-net-irc/quassel urlpreview
 kde-apps/kalarm pim
-dev-python/qtpy pyqt5
 gnome-base/gnome extras
 games-engines/scummvm vpx
+net-libs/pjproject vpx
 
 # matoro <matoro_gentoo@matoro.tk> (2023-11-16)
 # media-libs/libaom casualties

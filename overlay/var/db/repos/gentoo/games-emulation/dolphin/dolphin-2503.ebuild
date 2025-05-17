@@ -48,7 +48,7 @@ else
 				-> mgba-${MGBA_COMMIT}.tar.gz
 		)
 	"
-	KEYWORDS="~amd64 ~arm64"
+	KEYWORDS="amd64 ~arm64"
 fi
 
 DESCRIPTION="Gamecube and Wii game emulator"
@@ -77,7 +77,7 @@ RDEPEND="
 	dev-libs/pugixml
 	dev-libs/xxhash
 	media-libs/cubeb
-	media-libs/libsfml:=
+	<media-libs/libsfml-3.0:=
 	media-libs/libspng
 	>=net-libs/enet-1.3.18:1.3=
 	net-libs/mbedtls:0=

@@ -20,15 +20,12 @@ else
 		https://ffmpeg.org/releases/ffmpeg-${PV}.tar.xz
 		verify-sig? ( https://ffmpeg.org/releases/ffmpeg-${PV}.tar.xz.asc )
 		${FFMPEG_SOC_PATCH:+"
-			soc? (
-				https://dev.gentoo.org/~chewi/distfiles/${FFMPEG_SOC_PATCH}
-				verify-sig? ( https://dev.gentoo.org/~chewi/distfiles/${FFMPEG_SOC_PATCH}.asc )
-			)
+			soc? ( https://dev.gentoo.org/~chewi/distfiles/${FFMPEG_SOC_PATCH} )
 		"}
 		https://dev.gentoo.org/~ionen/distfiles/ffmpeg-$(ver_cut 1-2)-patchset-1.tar.xz
 	"
-	S=${WORKDIR}/ffmpeg-${PV} # avoid ${P}
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~x64-macos"
+	S=${WORKDIR}/ffmpeg-${PV} # avoid ${P} for ffmpeg-compat
+	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv sparc x86 ~amd64-linux ~x86-linux ~arm64-macos ~x64-macos"
 fi
 
 DESCRIPTION="Complete solution to record/convert/stream audio and video"
@@ -160,7 +157,7 @@ REQUIRED_USE="
 	cuda? ( nvenc )
 	fribidi? ( truetype )
 	gmp? ( !librtmp )
-	libplacebo? ( || ( sdl vulkan ) )
+	libplacebo? ( vulkan )
 	npp? ( nvenc )
 	shaderc? ( vulkan )
 	libaribb24? ( gpl ) cdio? ( gpl ) frei0r? ( gpl ) postproc? ( gpl )
@@ -214,16 +211,16 @@ COMMON_DEPEND="
 	)
 	jack? ( virtual/jack[${MULTILIB_USEDEP}] )
 	jpeg2k? ( media-libs/openjpeg:2=[${MULTILIB_USEDEP}] )
-	jpegxl? ( media-libs/libjxl:=[$MULTILIB_USEDEP] )
+	jpegxl? ( media-libs/libjxl:=[${MULTILIB_USEDEP}] )
 	kvazaar? ( media-libs/kvazaar:=[${MULTILIB_USEDEP}] )
 	lame? ( media-sound/lame[${MULTILIB_USEDEP}] )
-	lcms? ( media-libs/lcms:2[$MULTILIB_USEDEP] )
+	lcms? ( media-libs/lcms:2[${MULTILIB_USEDEP}] )
 	libaom? ( media-libs/libaom:=[${MULTILIB_USEDEP}] )
 	libaribb24? ( media-libs/aribb24[${MULTILIB_USEDEP}] )
 	libass? ( media-libs/libass:=[${MULTILIB_USEDEP}] )
 	libcaca? ( media-libs/libcaca[${MULTILIB_USEDEP}] )
 	libilbc? ( media-libs/libilbc:=[${MULTILIB_USEDEP}] )
-	libplacebo? ( media-libs/libplacebo:=[$MULTILIB_USEDEP] )
+	libplacebo? ( media-libs/libplacebo:=[vulkan,${MULTILIB_USEDEP}] )
 	librtmp? ( media-video/rtmpdump[${MULTILIB_USEDEP}] )
 	libsoxr? ( media-libs/soxr[${MULTILIB_USEDEP}] )
 	libtesseract? ( app-text/tesseract:=[${MULTILIB_USEDEP}] )
@@ -247,7 +244,10 @@ COMMON_DEPEND="
 	rav1e? ( >=media-video/rav1e-0.5:=[capi] )
 	rubberband? ( media-libs/rubberband:=[${MULTILIB_USEDEP}] )
 	samba? ( net-fs/samba:=[client,${MULTILIB_USEDEP}] )
-	sdl? ( media-libs/libsdl2[sound(+),video(+),${MULTILIB_USEDEP}] )
+	sdl? (
+		media-libs/libsdl2[sound(+),video(+),${MULTILIB_USEDEP}]
+		libplacebo? ( media-libs/libsdl2[vulkan] )
+	)
 	shaderc? ( media-libs/shaderc[${MULTILIB_USEDEP}] )
 	snappy? ( app-arch/snappy:=[${MULTILIB_USEDEP}] )
 	sndio? ( media-sound/sndio:=[${MULTILIB_USEDEP}] )
@@ -320,14 +320,7 @@ BDEPEND="
 	"}
 "
 [[ ${PV} != 9999 ]] &&
-	BDEPEND+="
-		verify-sig? (
-			sec-keys/openpgp-keys-ffmpeg
-			${FFMPEG_SOC_PATCH:+"
-				soc? ( >=sec-keys/openpgp-keys-gentoo-developers-20240708 )
-			"}
-		)
-	"
+	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-ffmpeg )"
 
 DOCS=( CREDITS Changelog README.md doc/APIchanges )
 [[ ${PV} != 9999 ]] && DOCS+=( RELEASE_NOTES )
@@ -339,6 +332,15 @@ MULTILIB_WRAPPED_HEADERS=(
 PATCHES=(
 	"${WORKDIR}"/patches
 )
+
+pkg_pretend() {
+	# TODO: drop this after a few months
+	if has_version "${CATEGORY}/${PN}[mp3]" && use !lame; then #952971
+		ewarn "${PN}'s 'mp3' USE was renamed to 'lame', please enable it"
+		ewarn "if wish to keep the ability to encode using media-sound/lame."
+		ewarn "This is *not* needed if only want mp3 playback."
+	fi
+}
 
 pkg_setup() {
 	[[ ${MERGE_TYPE} != binary ]] || return
@@ -361,13 +363,9 @@ src_unpack() {
 	if [[ ${PV} == 9999 ]]; then
 		git-r3_src_unpack
 	else
-		if use verify-sig; then
+		use verify-sig &&
 			verify-sig_verify_detached "${DISTDIR}"/ffmpeg-${PV}.tar.xz{,.asc} \
 				"${BROOT}"/usr/share/openpgp-keys/ffmpeg.asc
-			in_iuse soc && use soc &&
-				verify-sig_verify_detached "${DISTDIR}"/${FFMPEG_SOC_PATCH}{,.asc} \
-					"${BROOT}"/usr/share/openpgp-keys/gentoo-developers.asc
-		fi
 		default
 	fi
 }

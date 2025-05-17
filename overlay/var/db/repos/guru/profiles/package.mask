@@ -18,146 +18,115 @@
 
 # New entries go on top.
 
-# Rahil Bhimjiani <me@rahil.rocks> (2025-03-17)
-# Not worth the hassle of maintaining
-# Removal on 2025-04-17
-www-apps/vaultwarden-web
+# Takuya Wakazono <pastalian46@gmail.com> (2025-05-05)
+# Upstream has been archived.
+# An active fork is packaged as x11-misc/pywal16.
+# Removal on 2025-06-05. Bug #955253.
+x11-misc/pywal
 
-# Rahil Bhimjiani <me@rahil.rocks> (2025-03-17)
-# Not worth the hassle of maintaining
-# Removal on 2025-04-17
-app-admin/bitwarden-cli
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
+# Archived repo on GitHub, no revdeps left.
+# Removal on 2025-06-01.
+dev-python/codecov
 
-# David Roman <davidroman96@gmail.com> (2025-03-12)
-# It's just a Windows .exe with a wine wrapper
-# HOMEPAGE just points to a Wikipedia article
-# Removal on 2025-04-12
-games-strategy/swine
-games-strategy/ground-control
-games-rpg/sacred-demo
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
+# No activity upstream, no revdeps left.
+# There is a compatible fork named stringcase-new on PyPI.
+# Removal on 2025-06-01.
+dev-python/stringcase
 
-# David Roman <davidroman96@gmail.com> (2025-03-12)
-# Uses deprecated EGO_SUM. Last release in 2019.
-# Unmaintained upstream + security vulnerabilities: 
-# 	- https://github.com/sqshq/sampler/issues/128
-# Removal on 2025-04-12
-sys-apps/sampler
-sys-apps/sampler-bin
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
+# No activity upstream, no revdeps left.
+# There is a fork named playsound3 on PyPI.
+# Removal on 2025-06-01.
+dev-python/playsound
+
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
+# No activity upstream, no revdeps left. Open bugs: #901147.
+# Removal on 2025-06-01.
+dev-python/aiopg
+
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
+# Dead upstream, no revdeps left.
+# Removal on 2025-06-01.
+dev-python/pyagentx
+
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
+# Unmaintained in GURU, no revdeps left. Open bugs: #856874.
+# Removal on 2025-06-01.
+dev-python/sse-starlette
+
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
+# Unmaintained in GURU, no revdeps left. Open bugs: #928254.
+# Removal on 2025-06-01.
+dev-python/graphene
+
+# David (stkw0) Roman <davidroman96@gmail.com> (2025-04-30)
+# Depends on removed dev-qt/qtwebengine:5, they should be moved to qtwebengine:6
+# Removal on 2025-06-30
+dev-vcs/gitqlient-gitserver-plugin
+dev-vcs/gitqlient-jenkins-plugin
+media-video/stremio
+sci-physics/openmodelica
+
+# David (stkw0) Roman <davidroman96@gmail.com> (2025-04-25)
+# No revdeps. PyQt5 is being deprecated
+# Removal on 2025-05-25.
+dev-python/PyQt5-stubs
+
+# David (stkw0) Roman <davidroman96@gmail.com> (2025-04-22)
+# Unmaintained in GURU. Last release on 2021
+# Removal on 2025-05-22.
+dev-util/reflex
+
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-04-21)
+# Unmaintained in GURU, no revdeps left.
+# Removal on 2025-05-21.
+dev-ml/bheap
+dev-ml/cdrom
+dev-ml/domain-name
+dev-ml/gmap
+dev-ml/pecu
+dev-ml/randomconv
+
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-04-21)
+# Unmaintained upstream, no revdeps left. Breaks dev-python/pytest-recording.
+# Removal on 2025-05-21.
+dev-python/pytest-vcr
+
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-04-21)
+# Unmaintained upstream, not compatible with Mastodon.py v2.
+# Removal on 2025-05-21.
+net-misc/fedigroup
+acct-user/fedigroup
+acct-group/fedigroup
+
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-04-21)
+# Unmaintained in GURU, no revdeps left.
+# Removal on 2025-05-21.
+dev-python/glicko2
+
+# Vivian Heisz (demize) <demize@unstable.systems> (2025-04-20)
+# Depends on ~dev-ruby/prawn-2.34.0, which was removed in
+# ::gentoo, making this unable to build.
+#
+# This update will likely happen in asciidoctor-pdf 3.0.0.
+# Please unmask when appropriate.
+# Bug #954116.
+dev-ruby/asciidoctor-pdf
+
+# Yuan Liao <liaoyuan@gmail.com> (2025-04-16)
+# No reverse dependencies left.  Was added only for
+# <gnome-extra/extension-manager-0.6.0; not widely used by
+# other applications.
+# Removal on 2025-05-16.
+gui-libs/text-engine
+
 
 # David Roman <davidroman96@gmail.com> (2025-03-12)
 # Uses deprecated EGO_SUM. Last release in 2023.
 # Removal on 2025-05-12
 www-misc/gorss
-
-# Eric Joldasov <bratishkaerik@landless-city.net> (2025-03-05)
-# Unbuildable now. Required Zig version diverged a lot, now seems like
-# it requires so called "Mach-nominated" version (somewhere between
-# stable and 9999). Gentoo does not provide such versions.
-# Removal on 2025-04-05.
-dev-debug/uscope
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU.
-# Removal on 2025-04-05.
-media-fonts/twemoji
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left. Open bugs: #901337.
-# Removal on 2025-04-05.
-net-libs/td
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU.
-# Removal on 2025-04-05.
-www-apps/snac
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left.
-# Removal on 2025-04-05.
-dev-python/zopfli
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left.
-# Removal on 2025-04-05.
-dev-python/webpy
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left.
-# Removal on 2025-04-05.
-dev-python/trailrunner
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left. Open bugs: #884687.
-# Removal on 2025-04-05.
-dev-python/stdlibs
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps.
-# Removal on 2025-04-05.
-dev-python/sphinx-argparse-cli
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left. Open bugs: #931931.
-# Removal on 2025-04-05.
-dev-python/pyodbc
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left.
-# Removal on 2025-04-05.
-dev-python/pykeepass
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left. Open bugs: #928257, #928265.
-# Removal on 2025-04-05.
-dev-python/pg8000
-dev-python/scramp
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps.
-# Removal on 2025-04-05.
-dev-python/opentype-sanitizer
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps.
-# Removal on 2025-04-05.
-dev-python/notion-client
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left. Open bugs: #921892.
-# Removal on 2025-04-05.
-dev-python/jupyter-sphinx
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left.
-# Removal on 2025-04-05.
-dev-python/baron
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left. Open bugs: #921776.
-# Removal on 2025-04-05.
-dev-python/asyncmy
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained in GURU, no revdeps left. Open bugs: #922914.
-# Removal on 2025-04-05.
-dev-python/aiomysql
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-03-05)
-# Unmaintained upstream, suggested replacement is dev-util/bump-my-version.
-# Open bugs: #945117.
-# Removal on 2025-04-05.
-dev-util/bump2version
-
-# Takuya Wakazono <pastalian46@gmail.com> (2025-02-24)
-# No reverse dependencies left. (The last one was removed in e17a1e7.)
-# One of its test dependencies, dev-python/zstd, is being removed.
-# Removal on 2025-03-24. Bug #928259.
-dev-python/pymemcache
-
-# David Roman <davidroman96@gmail.com> (2025-01-30)
-# Depends on qtpy[pyqt5] but pyqt5 USE has been removed from it
-# Removal on 2025-03-24
-app-misc/brightness-control
 
 # Julien Roy <julien@jroy.ca> (2024-03-21)
 # sys-libs/libucontext is masked in ::gentoo

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -17,7 +17,7 @@ PHP_EXT_NAME="dummy"
 PHP_EXT_OPTIONAL_USE="php"
 USE_PHP="php8-1 php8-2" # deps must be registered separately below
 
-POSTGRES_COMPAT=( 13 14 15 16 )
+POSTGRES_COMPAT=( 13 14 15 16 17 )
 
 MY_P="${P/_/-}"
 
@@ -72,6 +72,7 @@ for plugin in ${UWSGI_PLUGINS_OPT[@]}; do IUSE="${IUSE} uwsgi_plugins_${plugin}"
 IUSE="${IUSE} ${LANG_SUPPORT_SIMPLE[@]} ${LANG_SUPPORT_EXTENDED[@]}"
 
 REQUIRED_USE="
+	${PYTHON_REQUIRED_USE}
 	|| ( ${LANG_SUPPORT_SIMPLE[@]} ${LANG_SUPPORT_EXTENDED[@]} )
 	uwsgi_plugins_logcrypto? ( ssl )
 	uwsgi_plugins_sslrouter? ( ssl )
@@ -144,7 +145,10 @@ RDEPEND="
 	selinux? ( sec-policy/selinux-uwsgi )
 	uwsgi_plugins_rrdtool? ( net-analyzer/rrdtool )
 "
-BDEPEND="virtual/pkgconfig"
+BDEPEND="
+	${PYTHON_DEPS}
+	virtual/pkgconfig
+"
 
 pkg_setup() {
 	python_setup

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -41,7 +41,7 @@ BDEPEND="${LUA_DEPS}
 # new dependency bounds and so on on bumps (obviously adjust for right branch/tag).
 # List of required tree-sitter parsers is taken from cmake.deps/deps.txt
 DEPEND="${LUA_DEPS}
-	>=dev-lua/luv-1.45.0[${LUA_SINGLE_USEDEP}]
+	>=dev-lua/luv-1.50.0[${LUA_SINGLE_USEDEP}]
 	$(lua_gen_cond_dep '
 		dev-lua/lpeg[${LUA_USEDEP}]
 		dev-lua/mpack[${LUA_USEDEP}]
@@ -49,18 +49,18 @@ DEPEND="${LUA_DEPS}
 	$(lua_gen_cond_dep '
 		dev-lua/LuaBitOp[${LUA_USEDEP}]
 	' lua5-{1,2})
-	>=dev-libs/libutf8proc-2.9.0:=
-	>=dev-libs/libuv-1.46.0:=
+	>=dev-libs/libutf8proc-2.10.0:=[-cjk]
+	>=dev-libs/libuv-1.50.0:=
 	>=dev-libs/libvterm-0.3.3
 	>=dev-libs/msgpack-3.0.0:=
-	>=dev-libs/tree-sitter-0.24.3:=
+	>=dev-libs/tree-sitter-0.25.3:=
 	=dev-libs/tree-sitter-c-0.23*
-	=dev-libs/tree-sitter-lua-0.2*
-	=dev-libs/tree-sitter-markdown-0.3*
-	=dev-libs/tree-sitter-query-0.4*
-	=dev-libs/tree-sitter-vim-0.4*
+	=dev-libs/tree-sitter-lua-0.3*
+	=dev-libs/tree-sitter-markdown-0.4*
+	=dev-libs/tree-sitter-query-0.5*
+	=dev-libs/tree-sitter-vim-0.5*
 	=dev-libs/tree-sitter-vimdoc-3*
-	>=dev-libs/unibilium-2.0.0:0=
+	>=dev-libs/unibilium-2.1.2:0=
 "
 RDEPEND="
 	${DEPEND}

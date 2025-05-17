@@ -3,7 +3,7 @@
 
 EAPI=8
 
-USE_RUBY="ruby31 ruby32 ruby33"
+USE_RUBY="ruby31 ruby32 ruby33 ruby34"
 
 RUBY_FAKEGEM_RECIPE_TEST="sus"
 RUBY_FAKEGEM_EXTRADOC="readme.md"
@@ -17,7 +17,7 @@ SRC_URI="https://github.com/socketry/metrics/archive/refs/tags/v${PV}.tar.gz -> 
 
 LICENSE="MIT"
 SLOT="$(ver_cut 1)"
-KEYWORDS="~amd64 ~arm ~arm64 ~sparc ~x86"
+KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~ppc ~riscv ~sparc ~x86"
 IUSE="test"
 
 ruby_add_bdepend "test? ( dev-ruby/console )"

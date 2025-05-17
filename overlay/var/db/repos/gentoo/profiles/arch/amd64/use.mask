@@ -4,6 +4,15 @@
 # Unmask the flag which corresponds to ARCH.
 -amd64
 
+# Paul Zander <negril.nx+gentoo@gmail.com> (2025-05-01)
+# media-libs/libspng only keyworded on amd64, arm64
+-spng
+
+# Paul Zander <negril.nx+gentoo@gmail.com> (2025-05-01)
+# only keyworded on amd64, arm
+-openni
+-openni2
+
 # Thomas Bettler <thomas.bettler@gmail.com> (2024-11-04)
 # media-libs/tiff only keyworded on amd64
 -lerc
@@ -79,8 +88,6 @@
 
 # Michał Górny <mgorny@gentoo.org> (2014-03-30)
 # PyPy is keyworded on this arch.
--python_targets_pypy3
--python_single_target_pypy3
 -python_targets_pypy3_11
 -python_single_target_pypy3_11
 
@@ -147,6 +154,9 @@
 -video_cards_vesa
 -video_cards_vmware
 -video_cards_qxl
+
+# unmask video_cards with virtgpu DRM native-context support
+-video_cards_asahi
 
 # Simon Stelling <blubb@gentoo.org> (2007-02-16)
 # Since this profile forces >=portage-2.1.2, we can unmask all

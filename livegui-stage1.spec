@@ -1,14 +1,15 @@
 subarch: amd64
-version_stamp: stormg-04-24-2025
+version_stamp: stormg-05-10-2025
 target: livecd-stage1
-rel_type: default
+rel_type: 23.0-default
 profile: default/linux/amd64/23.0/desktop
-snapshot_treeish: bd6107dbebe71859f12618eb0669c5d110c9b076
-source_subpath: default/stage3-amd64-openrc-latest.tar.xz
+snapshot_treeish: 5618e53f3cbb024f1a75815bcd50ceaf98f5d97a
+source_subpath: 23.0-default/stage3-amd64-openrc-latest.tar.xz
 compression_mode: pixz
-portage_confdir: /home/ben/Desktop/catalyst_stormg/config/stages
-repos: /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/guru
-/home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/steam-overlay
+portage_confdir: /home/ben/Desktop/Backups/catalyst_stormg/config/stages
+repos: /home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/guru
+/home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/steam-overlay
+/home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/gentoo
 
 livecd/use:
 	-aac
@@ -23,17 +24,29 @@ livecd/use:
 	portaudio
 	pulseaudio
 	python
+	theora
 	vpx
 	xetex
-	compat
-	branding
-	plymouth
-        widgets
-	build
+	lvm
+	contrib
+	contribdnn
+	lock
+	ffmpeg
+	extra
+	geoclue
+	scripttools
+	-webengine
+	positioning
+	uitools
+	quick
+	-caja
+	flatpak
+	dkms
+	sysprof
+	-gnome
+	-kde
 
 livecd/packages:
-	app-accessibility/brltty
-	app-accessibility/espeakup
 	app-admin/hddtemp
 	app-admin/sudo
 	app-admin/syslog-ng
@@ -54,8 +67,9 @@ livecd/packages:
 	app-crypt/chntpw
 	app-crypt/gnupg
 	app-crypt/pinentry
+	app-editors/mg
 	app-editors/nano
-	app-emacs/ebuild-mode
+	app-editors/vim
 	app-emulation/cloud-init
 	app-emulation/spice-vdagent
 #	Fails to build...
@@ -65,6 +79,8 @@ livecd/packages:
 	app-misc/livecd-tools
 	app-misc/mc
 	app-misc/pax-utils
+	app-misc/screen
+	app-misc/tmux
 	app-misc/wipe
 	app-portage/cpuid2cpuflags
 	app-portage/eix
@@ -84,15 +100,16 @@ livecd/packages:
 	app-text/tree
 	app-text/wgetpaste
 	app-text/xournalpp
+	app-vim/gentoo-syntax
 	dev-debug/strace
 	dev-lang/perl
 	dev-lang/python
 #	Gone until it supports python3_10
-#	dev-util/kdevelop-python
 	dev-vcs/git
 	dev-vcs/subversion
+	media-gfx/gimp
 	media-sound/alsa-utils
-	media-video/mpv
+	media-video/vlc
 	net-analyzer/iptraf-ng
 	net-analyzer/nmap
 	net-analyzer/openbsd-netcat
@@ -108,7 +125,8 @@ livecd/packages:
 	net-fs/nfs-utils
 	net-ftp/ftp
 	net-ftp/ncftp
-	net-misc/chrony
+	net-im/pidgin
+	net-irc/hexchat
 	net-misc/chrony
 	net-misc/dhcpcd
 	net-misc/iputils
@@ -120,12 +138,11 @@ livecd/packages:
 	net-misc/vconfig
 	net-misc/wget
 	net-misc/whois
-	net-proxy/dante
-	net-proxy/tsocks
 	net-vpn/networkmanager-openvpn
 	net-vpn/networkmanager-pptp
 	net-vpn/openfortivpn
 	net-vpn/openvpn
+	net-vpn/tor
 	net-wireless/b43-fwcutter
 	net-wireless/iw
 	net-wireless/wireless-tools
@@ -145,7 +162,6 @@ livecd/packages:
 	sys-apps/ethtool
 	sys-apps/file
 	sys-apps/findutils
-	sys-apps/flashrom
 	sys-apps/fxload
 	sys-apps/gawk
 	sys-apps/gptfdisk
@@ -164,6 +180,7 @@ livecd/packages:
 	sys-apps/netplug
 	sys-apps/nvme-cli
 	sys-apps/pciutils
+	sys-apps/pcmciautils
 	sys-apps/pv
 	sys-apps/sdparm
 	sys-apps/sed
@@ -225,38 +242,27 @@ livecd/packages:
 	sys-process/psmisc
 	www-client/firefox-bin
 	x11-misc/lightdm-gtk-greeter
-	x11-misc/lightdm
-  	sys-auth/polkit
-   	gnome-extra/polkit-kde
-	x11-misc/xdg-user-dirs
-	sys-process/htop
-	sys-process/cronie
-	net-wireless/bluez
-	net-print/cups
-	net-print/gutenprint
-	net-print/hplip
-	app-admin/system-config-printer
-	net-misc/ntp
-	net-fs/samba
-	media-sound/pavucontrol
-	media-fonts/terminus-font
-	gnome-base/gvfs
-	app-admin/syslog-ng
-	media-video/vlc
-	x11-themes/gtk-engines-adwaita
- 	media-gfx/flameshot
-	net-wireless/broadcom-sta
-	app-emulation/spice-vdagent
-	dev-qt/qtwebengine
+	x11-misc/lightdmd
+	gnome-extra/nm-applet
+	net-print/epson-inkjet-printer-escpr
+        xfce-base/xfce4-meta
+        xfce-extra/xfce4-docklike-plugin
+        xfce-extra/xfce4-weather-plugin
+        xfce-extra/xfce4-panel-profiles
+        xfce-extra/xfce4-whiskermenu-plugin
+        xfce-extra/xfce4-pulseaudio-plugin
+        xfce-base/xfce4-power-manager
+        app-arch/engrampa
+        x11-themes/adw-gtk3
+        x11-themes/papirus-icon-theme
+        x11-themes/tela-icon-theme
+        x11-misc/qt5ct
+        gui-apps/qt6ct
+        x11-themes/kvantum
+        app-editors/mousepad
+	gnome-extra/gnome-software
+	xfce-extra/thunar-archive-plugin
+	sys-boot/plymouth
 	app-misc/fastfetch
-	app-admin/calamares
-	media-fonts/corefonts
-	x11-themes/gentoo10-backgrounds
-	x11-themes/gentoo-xcursors
-	x11-themes/gentoo-artwork
-	gnome-extra/yad
-	gnome-extra/zenity
-	sys-libs/kpmcore
-	sys-fs/jfsutils
-	net-print/epson-inket-printer-escpr
-	kde-plasma/plasma-meta
+	media-fonts/jetbrains-mono
+	sys-power/upower

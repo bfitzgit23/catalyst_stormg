@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,12 +6,12 @@ EAPI=8
 inherit cmake flag-o-matic linux-info toolchain-funcs
 
 DESCRIPTION="Collection of high-performance ray tracing kernels"
-HOMEPAGE="https://github.com/embree/embree"
-SRC_URI="https://github.com/embree/embree/archive/v${PV}.tar.gz -> ${P}.tar.gz"
+HOMEPAGE="https://github.com/RenderKit/embree"
+SRC_URI="https://github.com/RenderKit/embree/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="Apache-2.0"
 SLOT="3"
-KEYWORDS="-* ~amd64 ~arm64"
+KEYWORDS="-* amd64 ~arm64"
 X86_CPU_FLAGS=( sse2 sse4_2 avx avx2 avx512dq )
 CPU_FLAGS=( cpu_flags_arm_neon ${X86_CPU_FLAGS[@]/#/cpu_flags_x86_} )
 IUSE="+compact-polys ispc +raymask ssp +tbb tutorial ${CPU_FLAGS[@]}"
@@ -59,7 +59,7 @@ src_prepare() {
 src_configure() {
 	# -Werror=odr
 	# https://bugs.gentoo.org/859838
-	# https://github.com/embree/embree/issues/481
+	# https://github.com/RenderKit/embree/issues/481
 	filter-lto
 
 	# NOTE: You can make embree accept custom CXXFLAGS by turning off
@@ -68,7 +68,7 @@ src_configure() {
 	# different supported ISAs and picks the correct one at runtime.
 	# "m*" will pull in cpu instructions that shouldn't be in specific modules
 	# and it fails to link properly.
-	# https://github.com/embree/embree/issues/115
+	# https://github.com/RenderKit/embree/issues/115
 
 	filter-flags -m*
 

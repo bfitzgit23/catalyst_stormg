@@ -1,129 +1,37 @@
 subarch: amd64
-version_stamp: stormg-04-24-2025
+version_stamp: stormg-05-10-2025
 target: livecd-stage2
-rel_type: default
-profile: default/linux/amd64/23.0/desktop/plasma
-snapshot_treeish: bd6107dbebe71859f12618eb0669c5d110c9b076
-source_subpath: default/livecd-stage1-amd64-stormg-04-24-2025
-portage_confdir: /home/ben/Desktop/catalyst_stormg/config/stages
-repos: /home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/guru
-/home/ben/Desktop/catalyst_stormg/overlay/var/db/repos/steam-overlay
+rel_type: 23.0-default
+profile: default/linux/amd64/23.0/desktop
+snapshot_treeish: 5618e53f3cbb024f1a75815bcd50ceaf98f5d97a
+source_subpath: 23.0-default/livecd-stage1-amd64-stormg-05-10-2025
+portage_confdir: /home/ben/Desktop/Backups/catalyst_stormg/config/stages
+repos: /home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/guru
+/home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/steam-overlay
+/home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/gentoo
 
 
 livecd/bootargs: overlayfs nodhcp dokeymap dodetect dousb quiet splash zram.num_devices=1
 livecd/depclean: no
 livecd/fstype: squashfs
-livecd/iso: StormG_latest_plasma_04-24-2025.iso
+livecd/iso: StormG_latest_xfce_05-10-2025.iso
 livecd/type: gentoo-release-livecd
-livecd/volid: StormGenZ_LiveDVD_04-24-2025
-livecd/readme: Welcome to StormG, making Gentoo GNU/Linux easy for anyone, pro or newbie! Containing the famous calamares installer, a highly customized PLASMA desktop, bash aliases in the users .bashrc in their home directory, oh-my-bash to simplify bash usage and more!
+livecd/volid: StormGenZ_LiveDVD_05-10-2025
+livecd/readme: Welcome to StormG, making Gentoo GNU/Linux easy for anyone, pro or newbie! Containing the famous calamares installer, a highly customized xfce desktop, bash aliases in the users .bashrc in their home directory, oh-my-bash to simplify bash usage and more!
 livecd/motd: "Welcome to StormG"
 livecd/users: gentoo
-livecd/root_overlay: /home/ben/Desktop/catalyst_stormg/root_overlay
-livecd/overlay: /home/ben/Desktop/catalyst_stormg/overlay
+livecd/root_overlay: /home/ben/Desktop/Backups/catalyst_stormg/root_overlay
+livecd/overlay: /home/ben/Desktop/Backups/catalyst_stormg/overlay
+livecd/gk_mainargs: --plymouth --plymouth-theme=spinfinity
 
-livecd/fsscript: /home/ben/Desktop/catalyst_stormg//stage2.sh
-livecd/rcadd: udev|sysinit udev-mount|sysinit acpid|default dbus|default gpm|default NetworkManager|default bluetooth|default elogind|boot alsasound|boot ntpd|default display-manager|default cupsd|default sshd|default ntpd|default syslog-ng|default cronie|default bluetooth|&lt;/nowikidefault samba&lt;nowiki&gt;|default
-boot/kernel/gentoo/use: atm png truetype usb plymouth -systemd elogind
+livecd/fsscript: /home/ben/Desktop/Backups/catalyst_stormg/stage2.sh
+livecd/rcadd: udev|sysinit udev-mount|sysinit acpid|default dbus|default gpm|default NetworkManager|default bluetooth|default elogind|boot alsasound|boot ntpd|default display-manager|default cupsd|default sshd|default ntpd|default syslog-ng|default cronie|default bluetooth|default samba|default
 livecd/empty:
 	/var/db/repos
 	/usr/src
 
 boot/kernel: gentoo
 
-boot/kernel/gentoo/distkernel: yes
-boot/kernel/gentoo/dracut_args: --xz --no-hostonly -a dmsquash-live -a mdraid -o btrfs -o crypt -o i18n -o usrmount -o lunmask -o qemu -o qemu-net -o nvdimm -o multipath -o plymouth -i /lib/keymaps /lib/keymaps -I busybox
+boot/kernel/gentoo/sources: gentoo-sources
+boot/kernel/gentoo/config: /home/ben/Desktop/Backups/catalyst_stormg/kconfig/livegui-amd64-5.15.23.config
 boot/kernel/gentoo/packages: net-wireless/broadcom-sta
-
-livecd/empty:
-	/boot
-	/etc/cron.daily
-	/etc/cron.hourly
-	/etc/cron.monthly
-	/etc/cron.weekly
-	/etc/kernel/config.d
-	/etc/logrotate.d
-	/etc/modules.autoload.d
-	/etc/rsync
-	/etc/runlevels/single
-	/etc/skel
-	/root/.ccache
-	/tmp
-	/usr/include
-	/usr/local
-	/usr/share/aclocal
-	/usr/share/baselayout
-	/usr/share/binutils-data
-	/usr/share/consolefonts/partialfonts
-	/usr/share/consoletrans
-	/usr/share/dict
-	/usr/share/doc
-	/usr/share/emacs
-	/usr/share/et
-	/usr/share/gcc-data
-	/usr/share/gettext
-	/usr/share/glib-2.0
-	/usr/share/gnuconfig
-	/usr/share/gtk-doc
-	/usr/share/i18n
-	/usr/share/info
-	/usr/share/lcms
-	/usr/share/libtool
-	/usr/share/man
-	/usr/share/rfc
-	/usr/share/ss
-	/usr/share/state
-	/usr/share/texinfo
-	/usr/share/unimaps
-	/usr/share/zoneinfo
-	/usr/src
-	/var/cache
-	/var/empty
-	/var/lib/portage
-	/var/log
-	/var/spool
-	/var/state
-	/var/tmp
-
-livecd/rm:
-	/etc/*-
-	/etc/*.old
-	/etc/default/audioctl
-	/etc/dispatch-conf.conf
-	/etc/etc-update.conf
-	/etc/hosts.bck
-	/etc/issue*
-	/etc/man.conf
-	/etc/resolv.conf
-	/root/.bash_history
-	/root/.viminfo
-	/usr/bin/*.static
-	/usr/bin/fsck.cramfs
-	/usr/bin/fsck.minix
-	/usr/bin/mkfs.bfs
-	/usr/bin/mkfs.cramfs
-	/usr/bin/mkfs.minix
-	/usr/bin/addr2line
-	/usr/share/consolefonts/1*
-	/usr/share/consolefonts/7*
-	/usr/share/consolefonts/8*
-	/usr/share/consolefonts/9*
-	/usr/share/consolefonts/A*
-	/usr/share/consolefonts/C*
-	/usr/share/consolefonts/E*
-	/usr/share/consolefonts/G*
-	/usr/share/consolefonts/L*
-	/usr/share/consolefonts/M*
-	/usr/share/consolefonts/R*
-	/usr/share/consolefonts/a*
-	/usr/share/consolefonts/c*
-	/usr/share/consolefonts/dr*
-	/usr/share/consolefonts/g*
-	/usr/share/consolefonts/i*
-	/usr/share/consolefonts/k*
-	/usr/share/consolefonts/l*
-	/usr/share/consolefonts/r*
-	/usr/share/consolefonts/s*
-	/usr/share/consolefonts/t*
-	/usr/share/consolefonts/v*
-	/usr/share/misc/*.old

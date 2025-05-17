@@ -1,9 +1,0 @@
-DEFINED_PHASES=install
-DESCRIPTION=Renesas uPD720201 / uPD720202 USB 3.0 chipsets firmware
-EAPI=7
-HOMEPAGE=https://github.com/denisandroid/uPD72020x-Firmware
-KEYWORDS=amd64 x86
-LICENSE=RENESAS
-SLOT=0
-SRC_URI=https://github.com/denisandroid/uPD72020x-Firmware/archive/refs/tags/1.0.0.tar.gz -> upd72020x-firmware-1.0.0.tar.gz
-_md5_=339a1a12058bab9487faa3b659da0b79

@@ -1,5 +1,0 @@
-{
-    "regex": ">sdx-([0-9]+)\\.kit</a>",
-    "type": "regex",
-    "url": "https://chiselapp.com/user/aspect/repository/sdx/home"
-}

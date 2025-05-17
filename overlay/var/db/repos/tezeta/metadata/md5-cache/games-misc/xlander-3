@@ -1,9 +1,0 @@
-DEFINED_PHASES=install prepare
-DEPEND=x11-base/xorg-server
-DESCRIPTION=A lunar landing simulation for X
-EAPI=7
-KEYWORDS=x86 amd64
-LICENSE=xlander
-SLOT=0
-SRC_URI=https://mirrors.slackware.com/slackware/slackware-14.2/source/xap/xgames/xlander.tar.gz
-_md5_=4ae282e1fd45e7370337732ab2113a48

@@ -2,8 +2,8 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="person">
-		<email>zdanevich.vitaly@ya.ru</email>
-		<name>Vitaly Zdanevich</name>
+		<name>demize</name>
+		<email>demize@unstable.systems</email>
 	</maintainer>
 	<longdescription lang="en">
 	direnv is an extension for your shell. It augments existing shells with

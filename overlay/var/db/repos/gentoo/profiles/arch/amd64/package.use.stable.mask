@@ -17,6 +17,13 @@
 
 #--- END OF EXAMPLES ---
 
+# Sam James <sam@gentoo.org> (2025-04-20)
+# Needs dev-python/scipy for tests which often ends up destabled on arches
+# even if it was previously stable there, as its own test results vary a lot.
+# Just avoid tests for liblc3 in general and unmask in a few places where
+# scipy will surely be around in future.
+media-sound/liblc3 -test
+
 # Ionen Wolkens <ionen@gentoo.org> (2025-03-10)
 # dev-util/nvidia-cuda-toolkit may never be stabilized
 media-video/ffmpeg npp
@@ -29,10 +36,6 @@ sys-fs/mdadm -corosync
 # Sam James <sam@gentoo.org> (2025-02-09)
 # dev-libs/rocdbgapi is not yet marked stable
 dev-debug/gdb rocm
-
-# Matt Jolly <kangie@gentoo.org> (2025-01-11)
-# Stable-mask until mrustc is stabilised
-dev-lang/rust mrustc-bootstrap
 
 # Ionen Wolkens <ionen@gentoo.org> (2024-09-27)
 # dev-qt/qtremoteobjects:6 has not been stabilized yet.
@@ -76,13 +79,7 @@ llvm-runtimes/openmp llvm_targets_AMDGPU
 
 # Sam James <sam@gentoo.org> (2022-12-11)
 # net-libs/rustls-ffi is not yet marked stable
-net-misc/curl rustls curl_ssl_rustls
-
-# Sam James <sam@gentoo.org> (2022-12-07)
-# Needs unstable media-libs/libvpl
-media-video/ffmpeg qsv
-media-video/ffmpeg-compat qsv
-media-video/handbrake qsv
+net-misc/curl rustls curl_ssl_rustls ech
 
 # Adel Kara Slimane <adel.ks@zegrapher.com> (2022-03-14)
 # needs stabilizing
@@ -129,10 +126,6 @@ media-radio/wsjtx doc
 # Pulls too much unstable ruby deps (some are not even keyworded)
 net-misc/chrony html
 
-# Adam Feldman <NP-Hardass@gentoo.org> (2017-09-27)
-# patchset variants are not stable
-virtual/wine staging
-
 # Tim Harder <radhermit@gentoo.org> (2017-09-11)
 # Pulls in dev-ruby/asciidoctor which has too large of a ruby testing
 # dep tree to be stabilized at this time.
@@ -155,5 +148,4 @@ gnustep-base/gnustep-make libobjc2
 # Michał Górny <mgorny@gentoo.org> (2014-03-30)
 # Don't apply stable masks to python-exec since we're forcing every
 # impl there anyway. Please keep this in sync with use.stable.mask.
-dev-lang/python-exec -python_targets_pypy3
 dev-lang/python-exec -python_targets_pypy3_11

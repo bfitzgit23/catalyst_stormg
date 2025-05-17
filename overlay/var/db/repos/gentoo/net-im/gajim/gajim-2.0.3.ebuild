@@ -18,7 +18,7 @@ SLOT="0"
 
 # Rekeyword for ~long, ~x86 and ~riscv, when https://bugs.gentoo.org/937582 is fixed.
 # KEYWORDS="~amd64 ~arm64 ~loong ~riscv ~x86"
-KEYWORDS="~amd64 ~arm64 ~loong ~riscv"
+KEYWORDS="amd64 ~arm64 ~loong ~riscv"
 IUSE="voice"
 
 # Same order as in upstream pyproject.toml please for the python dependencies
@@ -97,7 +97,8 @@ pkg_postinst() {
 	#optfeature "Sentry error reporting to dev.gajim.org" dev-python/sentry-sdk
 	optfeature "keyring support" app-crypt/libsecret[introspection]
 	optfeature "spellchecking support" "app-text/hunspell app-text/libspelling:1"
-	optfeature "better NAT traversing" net-libs/gupnp:1.6[introspection]
+	# https://dev.gajim.org/gajim/gajim/-/issues/11578
+	#optfeature "better NAT traversing" net-libs/gupnp:1.6[introspection]
 	optfeature "network lose detection" net-misc/networkmanager[introspection]
 	optfeature "sharing your location" app-misc/geoclue:2.0[introspection]
 	optfeature "notifcation sound support" media-libs/gsound[introspection]
