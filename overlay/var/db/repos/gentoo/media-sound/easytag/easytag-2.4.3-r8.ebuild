@@ -11,7 +11,7 @@ HOMEPAGE="https://wiki.gnome.org/Apps/EasyTAG"
 
 LICENSE="GPL-2 GPL-2+ LGPL-2 LGPL-2+ LGPL-2.1+"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~ppc ~ppc64 ~riscv ~x86 ~amd64-linux ~x86-linux ~ppc-macos"
+KEYWORDS="~amd64 ~arm ~ppc ~ppc64 ~riscv ~x86"
 IUSE="flac mp3 mp4 opus speex test vorbis wavpack"
 # Disable nautilus support until https://gitlab.gnome.org/GNOME/easytag/-/issues/78
 # is solved
@@ -29,7 +29,7 @@ RDEPEND="
 	>=x11-libs/gtk+-3.10:3
 	flac? ( >=media-libs/flac-1.3:= )
 	mp3? (
-		>=media-libs/id3lib-3.8.3-r8
+		>=media-libs/id3lib-3.8.3-r11
 		>=media-libs/libid3tag-0.15.1b-r4:=
 	)
 	mp4? ( media-libs/taglib:=[mp4(+)] )
@@ -67,8 +67,8 @@ PATCHES=(
 )
 
 src_configure() {
-	# bug #949814
-	filter-lto
+	# bug #940245
+	use mp3 && filter-lto
 
 	gnome2_src_configure \
 		--disable-Werror \

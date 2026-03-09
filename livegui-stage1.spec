@@ -1,15 +1,15 @@
 subarch: amd64
-version_stamp: stormg-05-10-2025
+version_stamp: stormg-03-09-2026
 target: livecd-stage1
 rel_type: 23.0-default
 profile: default/linux/amd64/23.0/desktop
-snapshot_treeish: 5618e53f3cbb024f1a75815bcd50ceaf98f5d97a
+snapshot_treeish: b11812afa107052d72ed03fae60484d90444b091
 source_subpath: 23.0-default/stage3-amd64-openrc-latest.tar.xz
 compression_mode: pixz
-portage_confdir: /home/ben/Desktop/Backups/catalyst_stormg/config/stages
-repos: /home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/guru
-/home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/steam-overlay
-/home/ben/Desktop/Backups/catalyst_stormg/overlay/var/db/repos/gentoo
+portage_confdir: /home/bennji/catalyst_stormg/config/stages
+repos: /home/bennji/catalyst_stormg/overlay/var/db/repos/guru
+/home/bennji/catalyst_stormg/overlay/var/db/repos/steam-overlay
+/home/bennji/catalyst_stormg/overlay/var/db/repos/gentoo
 
 livecd/use:
 	-aac
@@ -35,7 +35,6 @@ livecd/use:
 	extra
 	geoclue
 	scripttools
-	-webengine
 	positioning
 	uitools
 	quick
@@ -45,6 +44,7 @@ livecd/use:
 	sysprof
 	-gnome
 	-kde
+	-harfbuzz
 
 livecd/packages:
 	app-admin/hddtemp
@@ -242,27 +242,34 @@ livecd/packages:
 	sys-process/psmisc
 	www-client/firefox-bin
 	x11-misc/lightdm-gtk-greeter
-	x11-misc/lightdmd
+	x11-misc/lightdm
 	gnome-extra/nm-applet
 	net-print/epson-inkjet-printer-escpr
-        xfce-base/xfce4-meta
-        xfce-extra/xfce4-docklike-plugin
-        xfce-extra/xfce4-weather-plugin
-        xfce-extra/xfce4-panel-profiles
-        xfce-extra/xfce4-whiskermenu-plugin
-        xfce-extra/xfce4-pulseaudio-plugin
-        xfce-base/xfce4-power-manager
-        app-arch/engrampa
-        x11-themes/adw-gtk3
-        x11-themes/papirus-icon-theme
-        x11-themes/tela-icon-theme
-        x11-misc/qt5ct
-        gui-apps/qt6ct
-        x11-themes/kvantum
-        app-editors/mousepad
-	gnome-extra/gnome-software
-	xfce-extra/thunar-archive-plugin
-	sys-boot/plymouth
-	app-misc/fastfetch
-	media-fonts/jetbrains-mono
-	sys-power/upower
+    xfce-base/xfce4-meta
+    xfce-extra/xfce4-docklike-plugin
+    xfce-extra/xfce4-weather-plugin
+    xfce-extra/xfce4-panel-profiles
+    xfce-extra/xfce4-whiskermenu-plugin
+    xfce-extra/xfce4-pulseaudio-plugin
+    xfce-base/xfce4-power-manager
+    app-arch/engrampa
+    x11-themes/adw-gtk3
+    x11-themes/papirus-icon-theme
+    x11-themes/tela-icon-theme
+    x11-misc/qt5ct
+    gui-apps/qt6ct
+    x11-themes/kvantum
+    app-editors/mousepad
+    gnome-extra/gnome-software
+    xfce-extra/thunar-archive-plugin
+    sys-boot/plymouth
+    app-misc/fastfetch
+    media-fonts/jetbrains-mono
+    sys-power/upower
+    dev-python/pyqt5
+    acct-group/polkitd
+    acct-user/polkitd
+    acct-group/netdev
+    app-admin/calamares
+    app-misc/calamares-gentoo-livecd
+    sys-boot/grub-themes-gentoo

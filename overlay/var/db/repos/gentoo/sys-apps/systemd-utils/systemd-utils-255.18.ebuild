@@ -1,4 +1,4 @@
-# Copyright 2022-2025 Gentoo Authors
+# Copyright 2022-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -27,7 +27,7 @@ SRC_URI+=" elibc_musl? ( https://dev.gentoo.org/~floppym/dist/${MUSL_PATCHSET}.t
 
 LICENSE="GPL-2 LGPL-2.1 MIT public-domain"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86"
 IUSE="+acl boot +kmod kernel-install selinux split-usr sysusers +tmpfiles test +udev ukify"
 REQUIRED_USE="
 	|| ( kernel-install tmpfiles sysusers udev )
@@ -106,7 +106,6 @@ BDEPEND="
 	virtual/pkgconfig
 	$(python_gen_cond_dep "
 		dev-python/jinja2[\${PYTHON_USEDEP}]
-		dev-python/lxml[\${PYTHON_USEDEP}]
 		boot? (
 			>=dev-python/pyelftools-0.30[\${PYTHON_USEDEP}]
 			test? ( ${PEFILE_DEPEND} )
@@ -133,6 +132,7 @@ pkg_setup() {
 src_prepare() {
 	local PATCHES=(
 		"${FILESDIR}/systemd-utils-255-musl-fgetxxent.patch"
+		"${FILESDIR}/systemd-256-test-echo.patch"
 	)
 
 	if use elibc_musl; then

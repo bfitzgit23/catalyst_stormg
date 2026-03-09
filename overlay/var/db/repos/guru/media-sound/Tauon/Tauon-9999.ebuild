@@ -4,7 +4,7 @@
 EAPI=8
 PLOCALES="cs de es fr_FR hu id it ja_JP nb_NO pl pt pt_BR pt_PT ru sv tr zh_CN"
 
-PYTHON_COMPAT=( python3_{12..13} )
+PYTHON_COMPAT=( python3_{12..14} )
 DISTUTILS_EXT=1
 DISTUTILS_USE_PEP517=setuptools
 
@@ -27,7 +27,7 @@ SLOT="0"
 
 PHAZOR_DEPS="
 	dev-libs/miniaudio
-	media-libs/flac
+	media-libs/flac:=
 	media-libs/game-music-emu
 	media-libs/libopenmpt
 	media-libs/opus
@@ -45,6 +45,7 @@ DEPEND="
 	dev-python/musicbrainzngs[${PYTHON_USEDEP}]
 	dev-python/natsort[${PYTHON_USEDEP}]
 	dev-python/pillow[${PYTHON_USEDEP}]
+	dev-python/pyopengl[${PYTHON_USEDEP}]
 	dev-python/pysdl3[${PYTHON_USEDEP}]
 	dev-python/requests[${PYTHON_USEDEP}]
 	dev-python/setproctitle[${PYTHON_USEDEP}]
@@ -69,7 +70,7 @@ BDEPEND="sys-devel/gettext"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-7.9.0-phazor-build.patch"
-	"${FILESDIR}/${PN}-8.0.1-fix-locale-path.patch"
+	"${FILESDIR}/${PN}-8.1.0-fix-locale-path.patch"
 )
 
 src_compile() {
@@ -92,6 +93,7 @@ python_install() {
 
 	plocale_for_each_locale install_locale
 
+	sed -i 's/Exec=tauon/Exec=tauonmb/g' extra/tauonmb.desktop || die
 	domenu extra/tauonmb.desktop
 	doicon -s scalable extra/tauonmb.svg
 
@@ -102,6 +104,7 @@ pkg_postinst() {
 	optfeature "last fm support" dev-python/pylast
 	optfeature "PLEX support" dev-python/plexapi
 	optfeature "Spotify support" dev-python/tekore
+	optfeature "Discord Rich Presence support" dev-python/pypresence
 
 	xdg_pkg_postinst
 }

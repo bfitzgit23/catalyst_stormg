@@ -5,4 +5,8 @@
 	<email>prefix@gentoo.org</email>
 	<name>Gentoo Prefix</name>
 </maintainer>
+<upstream>
+	<remote-id type="savannah">gnulib</remote-id>
+	<remote-id type="codeberg">gnulib/gnulib</remote-id>
+</upstream>
 </pkgmetadata>

@@ -26,13 +26,19 @@ RDEPEND="net-dns/djbdns"
 
 PATCHES=(
 	"${FILESDIR}"/${P}-gentoo.patch
-	"${FILESDIR}"/${P}-fix-clang16-build.patch
+	"${FILESDIR}"/${P}-fix-build-for-clang21-gcc15.patch
 )
 
 src_configure() {
+	append-cflags -std=gnu17 # XXX https://bugs.gentoo.org/946519, workaround for gcc15
+
 	echo "$(tc-getCC) ${CFLAGS} ${ASFLAGS}" > conf-cc || die
 	use static && append-ldflags -static
 	echo "$(tc-getCC) ${LDFLAGS}" > conf-ld || die
+	sed -i \
+		-e "s:^echo 'ar cr :echo '$(tc-getAR) cr :g" \
+		-e "s:^  echo 'ranlib :  echo '$(tc-getRANLIB) :g" \
+		make-makelib.sh || die
 }
 
 src_install() {

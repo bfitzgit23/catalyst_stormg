@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -16,13 +16,21 @@ else
 	# Keep for _rc compability
 	MY_P="${P/_/-}"
 
-	SRC_URI="https://github.com/${PN}/${PN}/releases/download/${PV/_/-}/${MY_P}.tar.xz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x64-solaris"
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/irssi.asc
+	inherit verify-sig
+
+	SRC_URI="
+		https://github.com/${PN}/${PN}/releases/download/${PV/_/-}/${MY_P}.tar.xz
+		verify-sig? ( https://github.com/${PN}/${PN}/releases/download/${PV/_/-}/${MY_P}.tar.xz.asc )
+	"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~x64-macos ~x64-solaris"
+
+	BDEPEND=" verify-sig? ( sec-keys/openpgp-keys-irssi )"
 fi
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="otr +perl selinux +proxy"
+IUSE="otr +perl selinux +proxy ${GENTOO_PERL_USESTRING}"
 
 RDEPEND="
 	>=dev-libs/glib-2.6.0
@@ -32,10 +40,14 @@ RDEPEND="
 		>=dev-libs/libgcrypt-1.2.0:=
 		>=net-libs/libotr-4.1.0
 	)
-	perl? ( dev-lang/perl:= )
+	perl? (
+		${GENTOO_PERL_DEPSTRING}
+		dev-lang/perl:=
+	)
 "
 DEPEND="${RDEPEND}"
-BDEPEND="dev-lang/perl
+BDEPEND+="
+	dev-lang/perl
 	virtual/pkgconfig"
 RDEPEND+=" selinux? ( sec-policy/selinux-irc )"
 

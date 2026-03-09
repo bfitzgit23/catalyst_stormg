@@ -3,7 +3,7 @@
 
 EAPI=8
 
-USE_RUBY="ruby31 ruby32 ruby33"
+USE_RUBY="ruby31 ruby32 ruby33 ruby34"
 
 RUBY_FAKEGEM_GEMSPEC="puma.gemspec"
 
@@ -18,7 +18,7 @@ SRC_URI="https://github.com/puma/puma/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="3"
-KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~ppc ~ppc64 ~riscv ~sparc ~x86"
+KEYWORDS="amd64 ~arm ~arm64 ~hppa ~ppc ~ppc64 ~riscv ~sparc ~x86"
 
 DEPEND="dev-libs/openssl:0 test? ( net-misc/curl )"
 RDEPEND="dev-libs/openssl:0="
@@ -27,7 +27,7 @@ ruby_add_bdepend "virtual/ruby-ssl
 	test? (
 		dev-ruby/concurrent-ruby
 		dev-ruby/localhost
-		dev-ruby/rack:3.0
+		|| ( dev-ruby/rack:3.1 dev-ruby/rack:3.0 )
 		dev-ruby/rackup
 		>=dev-ruby/minitest-5.9:5
 		>=dev-ruby/test-unit-3.0:2
@@ -38,7 +38,6 @@ ruby_add_rdepend "dev-ruby/nio4r:2"
 all_ruby_prepare() {
 	sed -e '/\(pride\|prove\|stub_const\)/ s:^:#:' \
 		-e '/require_relative.*verbose/ s:^:#:' \
-		-e '/securerandom/arequire "rack/handler"' \
 		-i test/helper.rb || die
 
 	# Avoid tests failing inconsistently
@@ -67,6 +66,11 @@ all_ruby_prepare() {
 	#sed -e '/test_systemd_notify_usr1_phased_restart_cluster/askip "Flaky test"' \
 	#	-i test/test_plugin_systemd.rb || die
 
+	# Avoid a test that fails on systemd systems due to the pluging
+	# getting autoloaded there, bug #954180
+	sed -e '/test_plugins/askip "Fails on a systemd system"' \
+		-i test/test_cli.rb || die
+
 	# Tries to call 'rackup' directly
 	sed -i -e '/def test_bin/,/^    end/ s:^:#:' test/test_rack_handler.rb || die
 
@@ -77,6 +81,7 @@ all_ruby_prepare() {
 
 each_ruby_test() {
 	einfo "Running test suite"
+
 	MT_NO_PLUGINS=true ${RUBY} -Ilib:.:test \
 		-e "require 'minitest/autorun'; Dir['test/**/*test_*.rb'].each{require _1}" || die
 }

@@ -6,12 +6,12 @@ EAPI=8
 inherit autotools
 
 DESCRIPTION="Creation/expansion of ISO-9660 filesystems on CD/DVD media supported by libburn"
-HOMEPAGE="https://dev.lovelyhq.com/libburnia/web/wiki/Libisoburn"
+HOMEPAGE="https://dev.lovelyhq.com/libburnia/web/wiki/Libisoburn https://dev.lovelyhq.com/libburnia/libisoburn"
 SRC_URI="https://files.libburnia-project.org/releases/${P}.tar.gz"
 
 LICENSE="GPL-2 GPL-3"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 hppa ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 ~sparc x86"
 IUSE="acl debug external-filters external-filters-setuid frontend-optional
 	launch-frontend launch-frontend-setuid libedit readline static-libs xattr zlib"
 
@@ -29,7 +29,7 @@ RDEPEND="
 	)
 	acl? ( virtual/acl )
 	xattr? ( sys-apps/attr )
-	zlib? ( sys-libs/zlib )
+	zlib? ( virtual/zlib:= )
 	launch-frontend? (
 		dev-lang/tcl:0
 		dev-lang/tk:0

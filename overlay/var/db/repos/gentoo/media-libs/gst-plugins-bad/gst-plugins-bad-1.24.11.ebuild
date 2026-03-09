@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -21,7 +21,7 @@ RDEPEND="
 
 	>=media-libs/gstreamer-${PV}:${SLOT}[${MULTILIB_USEDEP},introspection?]
 	>=media-libs/gst-plugins-base-${PV}:${SLOT}[${MULTILIB_USEDEP},introspection?]
-	introspection? ( >=dev-libs/gobject-introspection-1.31.1:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 
 	bzip2? ( >=app-arch/bzip2-1.0.6-r4[${MULTILIB_USEDEP}] )
 	vnc? ( X? ( x11-libs/libX11[${MULTILIB_USEDEP}] ) )
@@ -39,7 +39,10 @@ RDEPEND="
 	)
 "
 DEPEND="${RDEPEND}"
-BDEPEND="dev-util/glib-utils"
+BDEPEND="
+	dev-util/glib-utils
+	wayland? ( dev-util/wayland-scanner )
+"
 
 DOCS=( AUTHORS ChangeLog NEWS README.md RELEASE )
 

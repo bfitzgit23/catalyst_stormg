@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -6,12 +6,12 @@ EAPI=7
 inherit xdg
 
 DESCRIPTION="GTK+ based algebraic and RPN calculator"
-HOMEPAGE="http://galculator.mnim.org/"
+HOMEPAGE="https://github.com/galculator/galculator"
 SRC_URI="http://galculator.mnim.org/downloads/${P}.tar.bz2"
 
 LICENSE="GPL-2+"
 SLOT="0"
-KEYWORDS="~alpha amd64 ~arm ~arm64 ~ppc ~x86 ~amd64-linux ~x86-linux ~ppc-macos"
+KEYWORDS="~alpha amd64 ~arm ~arm64 ~ppc ~x86"
 
 RDEPEND="
 	dev-libs/glib:2

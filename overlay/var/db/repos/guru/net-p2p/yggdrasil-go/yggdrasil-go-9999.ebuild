@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -24,8 +24,8 @@ SLOT="0"
 
 RESTRICT="mirror"
 
-BDEPEND=">=dev-lang/go-1.23"
-DEPEND="
+BDEPEND=">=dev-lang/go-1.24"
+RDEPEND="
 	acct-user/yggdrasil
 	acct-group/yggdrasil
 "
@@ -64,13 +64,13 @@ src_compile() {
 
 	local go_ldflags="-s -linkmode external -extldflags \"${LDFLAGS}\" ${custom_name_version_flags}"
 
-	for cmd in yggdrasil{,ctl}; do
+	for cmd in yggdrasil{,ctl} genkeys; do
 		ego build ${GOFLAGS} -ldflags="${go_ldflags}" ./cmd/${cmd}
 	done
 }
 
 src_install() {
-	dobin yggdrasil{,ctl}
+	dobin yggdrasil{,ctl} genkeys
 	einstalldocs
 
 	systemd_dounit "contrib/systemd/yggdrasil.service"

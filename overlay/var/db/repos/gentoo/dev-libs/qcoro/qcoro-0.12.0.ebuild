@@ -10,7 +10,7 @@ if [[ ${PV} == *9999* ]]; then
 	EGIT_REPO_URI="https://github.com/danvratil/${PN}"
 else
 	SRC_URI="https://github.com/danvratil/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
+	KEYWORDS="amd64 arm64 ~loong ~ppc64 ~riscv ~x86"
 fi
 
 DESCRIPTION="C++ Coroutine Library for Qt"
@@ -35,6 +35,8 @@ DEPEND="${RDEPEND}
 	examples? ( dev-qt/qtbase:6[concurrent,network,widgets] )
 	test? ( dev-qt/qtbase:6[concurrent] )
 "
+
+PATCHES=( "${FILESDIR}/${P}-qt-6.10-testfix.patch" ) # bug 966347
 
 src_configure() {
 	local mycmakeargs=(

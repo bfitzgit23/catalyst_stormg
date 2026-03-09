@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -12,8 +12,15 @@ if [[ ${PV} == 9999 ]] ; then
 	inherit git-r3
 	EGIT_REPO_URI="https://pagure.io/libaio.git"
 else
-	SRC_URI="https://releases.pagure.org/${PN}/${P}.tar.gz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
+	SRC_URI="https://releases.pagure.org/${PN}/${P%_p*}.tar.gz"
+	# Take Debian's patchset as upstream is dead and there's a lot of valuable
+	# portability fixes in there.
+	if [[ ${PV} == *_p* ]] ; then
+		SRC_URI+=" mirror://debian/pool/main/liba/${PN}/${PN}_${PV/_p/-}.debian.tar.xz"
+	fi
+	S="${WORKDIR}"/${P%_p*}
+
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 fi
 
 LICENSE="LGPL-2"
@@ -21,17 +28,24 @@ SLOT="0"
 IUSE="static-libs test"
 RESTRICT="!test? ( test )"
 
-PATCHES=(
-	"${FILESDIR}"/${PN}-0.3.112-cppflags.patch
-	"${FILESDIR}"/${PN}-0.3.113-respect-LDFLAGS.patch
-)
-
 src_prepare() {
+	if [[ ${PV} == *_p* ]] ; then
+		local i
+		# Exclude patches from Debian which add time64 APIs which
+		# aren't yet merged upstream.
+		for i in $(sed \
+				-e '/^#/d' \
+				-e '/gitignore/d' \
+				-e '/SONAME/d' \
+				-e '/time64/d' \
+				-e '/Fix-io_pgetevents-syscall-wrapper/d' "${WORKDIR}"/debian/patches/series) ; do
+			PATCHES+=( "${WORKDIR}"/debian/patches/${i} )
+		done
+	fi
+
 	default
 
 	local sed_args=(
-		-e "/^prefix=/s:/usr:${EPREFIX}/usr:"
-		-e '/^libdir=/s:lib$:$(ABI_LIBDIR):'
 		-e 's:-Werror ::'
 	)
 	if ! use static-libs; then
@@ -45,9 +59,6 @@ src_prepare() {
 }
 
 multilib_src_configure() {
-	# Upstream aren't interested in fixing: bug #855698
-	filter-lto
-
 	if use arm ; then
 		# When building for thumb, we can't allow frame pointers.
 		# http://crbug.com/464517
@@ -57,28 +68,32 @@ multilib_src_configure() {
 	fi
 }
 
-_emake() {
-	CC="$(tc-getCC)" \
-	AR="$(tc-getAR)" \
-	RANLIB="$(tc-getRANLIB)" \
-	ABI_LIBDIR="$(get_libdir)" \
-	CFLAGS_WERROR= \
-	emake "$@"
+libaio_emake() {
+	emake \
+		CC="$(tc-getCC)" \
+		AR="$(tc-getAR)" \
+		RANLIB="$(tc-getRANLIB)" \
+		CFLAGS="${CFLAGS}" \
+		CFLAGS_WERROR= \
+		LDFLAGS="${LDFLAGS}" \
+		prefix="${EPREFIX}/usr" \
+		libdir="${EPREFIX}/usr/$(get_libdir)" \
+		"$@"
 }
 
 multilib_src_compile() {
-	_emake
+	libaio_emake
 }
 
 multilib_src_test() {
 	mkdir -p testdir || die
 
 	# 'make check' breaks with sandbox, 'make partcheck' works
-	_emake partcheck prefix="${S}/src" libdir="${S}/src"
+	libaio_emake -Onone partcheck prefix="${S}/src" libdir="${S}/src"
 }
 
 multilib_src_install() {
-	_emake install DESTDIR="${D}"
+	libaio_emake install DESTDIR="${D}"
 }
 
 multilib_src_install_all() {

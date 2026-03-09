@@ -1,13 +1,13 @@
-# Copyright 2022-2025 Gentoo Authors
+# Copyright 2022-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit optfeature python-any-r1 readme.gentoo-r1 toolchain-funcs wine
 
 WINE_GECKO=2.47.4
-WINE_MONO=10.0.0
+WINE_MONO=10.4.1
 WINE_PV=$(ver_rs 2 -)
 
 if [[ ${PV} == 9999 ]]; then
@@ -31,10 +31,14 @@ SLOT="${PV}"
 IUSE="
 	+X +alsa crossdev-mingw +dbus ffmpeg +fontconfig +gecko +gstreamer
 	llvm-libunwind +mono nls perl pulseaudio +sdl selinux +ssl udev
-	+unwind usb v4l wayland video_cards_amdgpu +xcomposite xinerama
+	+unwind usb v4l wayland video_cards_amdgpu xinerama
 "
-# headless is not really supported with wine-proton, use normal Wine
-REQUIRED_USE="|| ( X wayland )"
+# headless is not really supported here, and udev needs sdl due to Valve's
+# changes (bug #959263), use normal wine instead if need to avoid these
+REQUIRED_USE="
+	|| ( X wayland )
+	udev? ( sdl )
+"
 
 # tests are non-trivial to run, can hang easily, don't play well with
 # sandbox, and several need real opengl/vulkan or network access
@@ -47,13 +51,13 @@ WINE_DLOPEN_DEPEND="
 	media-libs/libglvnd[X?,${WINE_USEDEP}]
 	media-libs/vulkan-loader[X?,wayland?,${WINE_USEDEP}]
 	X? (
+		x11-libs/libXcomposite[${WINE_USEDEP}]
 		x11-libs/libXcursor[${WINE_USEDEP}]
 		x11-libs/libXfixes[${WINE_USEDEP}]
 		x11-libs/libXi[${WINE_USEDEP}]
 		x11-libs/libXrandr[${WINE_USEDEP}]
 		x11-libs/libXrender[${WINE_USEDEP}]
 		x11-libs/libXxf86vm[${WINE_USEDEP}]
-		xcomposite? ( x11-libs/libXcomposite[${WINE_USEDEP}] )
 		xinerama? ( x11-libs/libXinerama[${WINE_USEDEP}] )
 	)
 	dbus? ( sys-apps/dbus[${WINE_USEDEP}] )
@@ -98,7 +102,11 @@ RDEPEND="
 		app-emulation/wine-gecko:${WINE_GECKO}[${WINE_USEDEP}]
 		wow64? ( app-emulation/wine-gecko[abi_x86_32] )
 	)
-	gstreamer? ( media-plugins/gst-plugins-meta:1.0[${WINE_USEDEP}] )
+	gstreamer? (
+		media-libs/gst-plugins-bad:1.0[${WINE_USEDEP}]
+		media-plugins/gst-plugins-libav:1.0[${WINE_USEDEP}]
+		media-plugins/gst-plugins-meta:1.0[${WINE_USEDEP}]
+	)
 	mono? ( app-emulation/wine-mono:${WINE_MONO} )
 	perl? (
 		dev-lang/perl
@@ -156,9 +164,6 @@ src_prepare() {
 			-i dlls/{ntdll,winevulkan}/Makefile.in || die
 	fi
 
-	# similarly to staging, append to `wine --version` for identification
-	sed -i "s/wine_build[^1]*1/& (Proton-${WINE_PV})/" configure.ac || die
-
 	# proton variant also needs specfiles and vulkan
 	tools/make_specfiles || die # perl
 	dlls/winevulkan/make_vulkan -X video.xml -x vk.xml || die # python
@@ -209,7 +214,6 @@ src_configure() {
 		$(use_with usb)
 		$(use_with v4l v4l2)
 		$(use_with wayland)
-		$(use_with xcomposite)
 		$(use_with xinerama)
 
 		--without-piper # unpackaged, for tts but unusable without steam

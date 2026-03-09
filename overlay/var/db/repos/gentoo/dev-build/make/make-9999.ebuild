@@ -10,7 +10,6 @@ inherit flag-o-matic unpacker verify-sig guile-single
 DESCRIPTION="Standard tool to compile source trees"
 HOMEPAGE="https://www.gnu.org/software/make/make.html"
 if [[ ${PV} == 9999 ]] ; then
-	EGIT_REPO_URI="https://git.savannah.gnu.org/git/make.git"
 	inherit autotools git-r3
 elif [[ $(ver_cut 3) -ge 90 || $(ver_cut 4) -ge 90 ]] ; then
 	SRC_URI="https://alpha.gnu.org/gnu/make/${P}.tar.lz"
@@ -18,7 +17,7 @@ elif [[ $(ver_cut 3) -ge 90 || $(ver_cut 4) -ge 90 ]] ; then
 else
 	SRC_URI="mirror://gnu/make/${P}.tar.lz"
 	SRC_URI+=" verify-sig? ( mirror://gnu/make/${P}.tar.lz.sig )"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~arm64-macos ~x64-macos ~x64-solaris"
 fi
 
 LICENSE="GPL-3+"
@@ -50,6 +49,15 @@ PATCHES=(
 
 src_unpack() {
 	if [[ ${PV} == 9999 ]] ; then
+		EGIT_REPO_URI=("https://git.savannah.gnu.org/git/make.git")
+		git-r3_src_unpack
+
+		EGIT_REPO_URI=(
+			"https://github.com/coreutils/gnulib/"
+			"https://git.savannah.gnu.org/git/gnulib.git"
+		)
+		EGIT_BRANCH=$(. "${S}/bootstrap.conf" && echo "${GNULIB_REVISION}" || die)
+		EGIT_CHECKOUT_DIR=${S}/gnulib
 		git-r3_src_unpack
 
 		cd "${S}" || die

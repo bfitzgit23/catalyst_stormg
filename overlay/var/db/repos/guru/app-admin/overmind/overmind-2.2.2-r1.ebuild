@@ -47,7 +47,7 @@ RDEPEND="
 	app-misc/tmux"
 
 src_compile() {
-	go build -ldflags "-s -w" || die "go build failed"
+	ego build -ldflags "-s -w" || die "go build failed"
 }
 
 src_install() {

@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit cmake flag-o-matic toolchain-funcs udev xdg
+inherit cmake dot-a udev xdg
 
 DESCRIPTION="Advanced Digital DJ tool based on Qt"
 HOMEPAGE="https://mixxx.org/"
@@ -22,7 +22,7 @@ LICENSE="GPL-2"
 SLOT="0"
 # gles2-only: at least not before 2.6 for keyworded ebuild
 IUSE="aac benchmark experimental ffmpeg gles2-only keyfinder lv2 midi modplug mp3 mp4 opus"
-IUSE+=" qtkeychain rubberband shout test upower wavpack"
+IUSE+=" qtkeychain rubberband shout test upower wavpack +X"
 REQUIRED_USE="
 	benchmark? ( test )
 	qtkeychain? ( shout )
@@ -33,17 +33,17 @@ RESTRICT="!test? ( test )"
 RDEPEND="
 	dev-db/sqlite:3
 	dev-cpp/abseil-cpp:=
-	dev-libs/hidapi
+	>=dev-libs/hidapi-0.14.0
 	dev-libs/protobuf:=
 	dev-qt/qt5compat:6
-	dev-qt/qtbase:6[concurrent,dbus,gles2-only=,gui,icu,network,opengl,sql,sqlite,ssl,widgets,xml,X]
+	dev-qt/qtbase:6[concurrent,dbus,gles2-only=,gui,icu,network,opengl,sql,sqlite,ssl,widgets,xml,X?]
 	dev-qt/qtdeclarative:6
 	dev-qt/qtshadertools:6
 	dev-qt/qtsvg:6
 	media-libs/chromaprint:=
 	media-libs/flac:=
 	media-libs/libebur128:=
-	media-libs/libglvnd[X]
+	media-libs/libglvnd[X?]
 	media-libs/libogg
 	media-libs/libsndfile
 	media-libs/libsoundtouch:=
@@ -53,7 +53,6 @@ RDEPEND="
 	media-sound/lame
 	virtual/libusb:1
 	virtual/udev
-	x11-libs/libX11
 	aac? (
 		media-libs/faad2
 		media-libs/libmp4v2
@@ -86,18 +85,14 @@ RDEPEND="
 		sys-power/upower:=
 	)
 	wavpack? ( media-sound/wavpack )
+	X? ( x11-libs/libX11 )
 "
-DEPEND="${RDEPEND}
+DEPEND="
+	${RDEPEND}
 	dev-cpp/gtest
 	dev-cpp/ms-gsl
 "
 BDEPEND="virtual/pkgconfig"
-
-PATCHES=(
-	# Fix strict-aliasing violations in vendored katai_cpp_stl_runtime
-	# https://github.com/kaitai-io/kaitai_struct_cpp_stl_runtime/commit/c01f530.patch
-	"${FILESDIR}"/${PN}-2.5.0-fix-strict-aliasing-kaitai.patch
-)
 
 CMAKE_SKIP_TESTS=(
 	# need HID controller
@@ -109,7 +104,7 @@ CMAKE_SKIP_TESTS=(
 
 src_configure() {
 	# prevent ld error as package builds static libs.
-	tc-is-lto && append-flags $(test-flags -ffat-lto-objects)
+	lto-guarantee-fat
 
 	local mycmakeargs=(
 		-DBATTERY="$(usex upower)"
@@ -119,6 +114,7 @@ src_configure() {
 		-DBUILD_BENCH="$(usex benchmark)"
 		# prevent duplicate call
 		-DCCACHE_SUPPORT=OFF
+		-DCMAKE_DISABLE_FIND_PACKAGE_X11=$(usex !X)
 		-DENGINEPRIME=OFF
 		-DFAAD="$(usex aac)"
 		-DFFMPEG="$(usex ffmpeg)"

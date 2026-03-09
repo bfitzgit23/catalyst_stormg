@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
   <maintainer type="person">
     <email>sighunter@gmx.de</email>
     <name>Sebastian Engel</name>
   </maintainer>
   <upstream>
-    <remote-id type="github">medusalix/xone</remote-id>
+    <remote-id type="github">dlundqvist/xone</remote-id>
   </upstream>
   <longdescription>
     xone is a Linux kernel driver for Xbox One and Xbox Series X|S

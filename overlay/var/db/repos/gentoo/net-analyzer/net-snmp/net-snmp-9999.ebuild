@@ -4,10 +4,10 @@
 EAPI=8
 
 GENTOO_DEPEND_ON_PERL=no
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 WANT_AUTOMAKE=none
 
-inherit autotools python-single-r1 perl-module systemd
+inherit autotools python-single-r1 libtool perl-module systemd
 
 DESCRIPTION="Software for generating and retrieving SNMP data"
 HOMEPAGE="https://www.net-snmp.org/"
@@ -28,25 +28,28 @@ LICENSE="HPND BSD GPL-2"
 SLOT="0/40"
 IUSE="
 	X bzip2 doc elf kmem ipv6 lm-sensors mfd-rewrites minimal mysql
-	netlink pcap pci pcre perl python rpm selinux smux ssl tcpd ucd-compat valgrind zlib
+	pcap pci pcre perl python rpm selinux smux ssl tcpd ucd-compat valgrind zlib
+	${GENTOO_PERL_USESTRING}
 "
 REQUIRED_USE="
 	python? ( ${PYTHON_REQUIRED_USE} )
 	rpm? ( bzip2 zlib )
 "
-RESTRICT="test"
 
 COMMON_DEPEND="
+	dev-libs/libnl:3
 	virtual/libcrypt:=
 	bzip2? ( app-arch/bzip2 )
 	elf? ( dev-libs/elfutils )
 	lm-sensors? ( sys-apps/lm-sensors )
 	mysql? ( dev-db/mysql-connector-c:0= )
-	netlink? ( dev-libs/libnl:3 )
 	pcap? ( net-libs/libpcap )
 	pci? ( sys-apps/pciutils )
 	pcre? ( dev-libs/libpcre2 )
-	perl? ( dev-lang/perl:= )
+	perl? (
+		${GENTOO_PERL_DEPSTRING}
+		dev-lang/perl:=
+	)
 	python? (
 		$(python_gen_cond_dep '
 			dev-python/setuptools[${PYTHON_USEDEP}]
@@ -61,7 +64,7 @@ COMMON_DEPEND="
 		>=dev-libs/openssl-0.9.6d:0=
 	)
 	tcpd? ( >=sys-apps/tcp-wrappers-7.6 )
-	zlib? ( >=sys-libs/zlib-1.1.4 )
+	zlib? ( >=virtual/zlib-1.1.4:= )
 "
 BDEPEND="doc? ( app-text/doxygen )"
 DEPEND="
@@ -73,13 +76,9 @@ RDEPEND="
 	perl? (
 		X? ( dev-perl/Tk )
 		!minimal? (
-			virtual/perl-Carp
-			virtual/perl-Data-Dumper
-			virtual/perl-Getopt-Long
 			dev-perl/JSON
 			dev-perl/Mail-Sender
 			dev-perl/TermReadKey
-			virtual/perl-Term-ReadLine
 		)
 	)
 	selinux? ( sec-policy/selinux-snmp )
@@ -111,9 +110,13 @@ src_prepare() {
 	mv "${WORKDIR}"/patches/0005-Respect-LDFLAGS-properly.patch{,.disabled} || die
 	eapply "${WORKDIR}"/patches/*.patch
 
+	# Fails because of our eautoconf call
+	rm testing/fulltests/default/T000configure_simple || die
+
 	default
 
 	eautoconf
+	elibtoolize
 }
 
 src_configure() {
@@ -137,7 +140,7 @@ src_configure() {
 		$(use_with elf) \
 		$(use_with kmem kmem-usage) \
 		$(use_with mysql) \
-		$(use_with netlink nl) \
+		--with-nl \
 		$(use_with pcap) \
 		$(use_with pci) \
 		$(use_with pcre pcre2-8) \
@@ -169,7 +172,14 @@ src_compile() {
 	use doc && emake docsdox
 }
 
+src_test() {
+	emake -Onone test
+}
+
 src_install() {
+	# https://github.com/net-snmp/net-snmp/issues/1035 (bug #967912)
+	sed -i -e 's:-Werror=declaration-after-statement ::' net-snmp-config || die
+
 	# bug #317965
 	emake -j1 DESTDIR="${D}" install
 

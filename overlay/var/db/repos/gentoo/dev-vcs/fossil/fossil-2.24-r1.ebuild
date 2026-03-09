@@ -17,7 +17,7 @@ SRC_URI="https://fossil-scm.org/home/tarball/${MY_TAG}/fossil-src-${PV}.tar.gz -
 S="${WORKDIR}/fossil-src-${PV}"
 LICENSE="BSD-2"
 SLOT="0"
-KEYWORDS="amd64 arm ~ppc ppc64 ~riscv x86"
+KEYWORDS="amd64 arm ppc ppc64 ~riscv x86"
 IUSE="debug fusefs json system-sqlite +ssl static tcl tcl-stubs
 	  tcl-private-stubs test th1-docs th1-hooks"
 RESTRICT="!test? ( test )"
@@ -25,7 +25,7 @@ RESTRICT="!test? ( test )"
 # Please check sqlite minimum version on every release. This can be done with:
 #     ./configure --print-minimum-sqlite-version
 RDEPEND="
-	sys-libs/zlib
+	virtual/zlib:=
 	|| (
 		sys-libs/readline:0
 		dev-libs/libedit

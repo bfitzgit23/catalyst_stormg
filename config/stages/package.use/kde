@@ -1,2 +1,13 @@
-kde-plasma/plasma-meta -discover -sddm -grub -sdk display-manager -webengine wacom
-kde-apps/kde-apps-meta -multimediaa -games -education -admin -graphics
+kde-apps/kde-apps-meta pim -education -games
+
+#for www-client/falkon
+dev-python/pyside2 webengine
+
+#for kde-apps/kdenlive
+media-video/ffmpeg libass
+
+#for kde-misc/kweather
+dev-qt/qtpositioning geoclue
+
+#for kde-apps/akonadi
+dev-qt/qtbase mysql

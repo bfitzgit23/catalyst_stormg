@@ -1,18 +1,24 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit autotools systemd linux-info tmpfiles
+inherit autotools dot-a systemd linux-info tmpfiles toolchain-funcs
 
 DESCRIPTION="Robust and highly flexible tunneling application compatible with many OSes"
-HOMEPAGE="https://openvpn.net/"
+HOMEPAGE="https://community.openvpn.net/ https://openvpn.net"
 
 if [[ ${PV} == "9999" ]]; then
 	EGIT_REPO_URI="https://github.com/OpenVPN/${PN}.git"
 	inherit git-r3
 else
-	SRC_URI="https://build.openvpn.net/downloads/releases/${P}.tar.gz"
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/openvpn.asc
+	inherit verify-sig
+
+	SRC_URI="
+		https://build.openvpn.net/downloads/releases/${P}.tar.gz
+		verify-sig? ( https://build.openvpn.net/downloads/releases/${P}.tar.gz.asc )
+	"
 	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86"
 fi
 
@@ -37,7 +43,7 @@ COMMON_DEPEND="
 	)
 	lz4? ( app-arch/lz4 )
 	lzo? ( >=dev-libs/lzo-1.07 )
-	mbedtls? ( net-libs/mbedtls:0= )
+	mbedtls? ( net-libs/mbedtls:3= )
 	openssl? ( >=dev-libs/openssl-1.0.2:0= )
 	pam? ( sys-libs/pam )
 	pkcs11? ( >=dev-libs/pkcs11-helper-1.11 )
@@ -63,7 +69,13 @@ RDEPEND="
 
 if [[ ${PV} = "9999" ]]; then
 	BDEPEND+=" dev-python/docutils"
+else
+	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-openvpn )"
 fi
+
+PATCHES=(
+	"${FILESDIR}"/${PN}-2.6.17-tests-no-lto.patch
+)
 
 pkg_setup() {
 	local CONFIG_CHECK="~TUN"
@@ -79,10 +91,19 @@ src_prepare() {
 src_configure() {
 	local -a myeconfargs
 
+	# See tests-no-lto.patch (done unconditionally to not have the build
+	# vary with and without tests)
+	lto-guarantee-fat
+
+	local MBEDTLS_CFLAGS
+	local MBEDTLS_LIBS
 	if ! use mbedtls; then
 		myeconfargs+=(
 			$(use_enable pkcs11)
 		)
+	else
+		MBEDTLS_CFLAGS="$($(tc-getPKG_CONFIG) --cflags mbedtls-3 mbedcrypto-3 mbedx509-3)"
+		MBEDTLS_LIBS="$($(tc-getPKG_CONFIG) --libs mbedtls-3 mbedcrypto-3 mbedx509-3)"
 	fi
 
 	myeconfargs+=(
@@ -101,6 +122,8 @@ src_configure() {
 	SYSTEMD_UNIT_DIR=$(systemd_get_systemunitdir) \
 		TMPFILES_DIR="/usr/lib/tmpfiles.d" \
 		IPROUTE=$(usex iproute2 '/bin/ip' '') \
+		MBEDTLS_CFLAGS="${MBEDTLS_CFLAGS}" \
+		MBEDTLS_LIBS="${MBEDTLS_LIBS}" \
 		econf "${myeconfargs[@]}"
 }
 
@@ -144,34 +167,32 @@ src_install() {
 
 	# https://bugs.gentoo.org/755680#c3
 	doman doc/openvpn.8
+
+	# https://github.com/OpenVPN/openvpn/issues/482 (bug #857648)
+	newtmpfiles distro/systemd/tmpfiles-openvpn.conf openvpn.conf
 }
 
 pkg_postinst() {
 	tmpfiles_process openvpn.conf
 
-	if use x64-macos ; then
-		elog "You might want to install tuntaposx for TAP interface support:"
-		elog "http://tuntaposx.sourceforge.net"
-	fi
-
 	if systemd_is_booted || has_version sys-apps/systemd ; then
 		elog "In order to use OpenVPN with systemd please use the correct systemd service file."
-		elog  ""
+		elog
 		elog "server:"
-		elog ""
+		elog
 		elog "- Place your server configuration file in /etc/openvpn/server"
 		elog "- Use the openvpn-server@.service like so"
 		elog "systemctl start openvpn-server@{Server-config}"
-		elog ""
+		elog
 		elog "client:"
-		elog ""
+		elog
 		elog "- Place your client configuration file in /etc/openvpn/client"
 		elog "- Use the openvpn-client@.service like so:"
 		elog "systemctl start openvpn-client@{Client-config}"
 	else
 		elog "The openvpn init script expects to find the configuration file"
 		elog "openvpn.conf in /etc/openvpn along with any extra files it may need."
-		elog ""
+		elog
 		elog "To create more VPNs, simply create a new .conf file for it and"
 		elog "then create a symlink to the openvpn init script from a link called"
 		elog "openvpn.newconfname - like so"
@@ -179,13 +200,13 @@ pkg_postinst() {
 		elog "	 ${EDITOR##*/} foo.conf"
 		elog "	 cd /etc/init.d"
 		elog "	 ln -s openvpn openvpn.foo"
-		elog ""
+		elog
 		elog "You can then treat openvpn.foo as any other service, so you can"
 		elog "stop one vpn and start another if you need to."
 	fi
 
 	if grep -Eq "^[ \t]*(up|down)[ \t].*" "${ROOT}/etc/openvpn"/*.conf 2>/dev/null ; then
-		ewarn ""
+		ewarn
 		ewarn "WARNING: If you use the remote keyword then you are deemed to be"
 		ewarn "a client by our init script and as such we force up,down scripts."
 		ewarn "These scripts call /etc/openvpn/\$SVCNAME-{up,down}.sh where you"
@@ -193,7 +214,7 @@ pkg_postinst() {
 	fi
 
 	if use plugins ; then
-		einfo ""
+		einfo
 		einfo "plugins have been installed into /usr/$(get_libdir)/${PN}/plugins"
 	fi
 }

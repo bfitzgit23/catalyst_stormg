@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -13,7 +13,9 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://github.com/swaywm/${PN}.git"
 else
 	MY_PV=${PV/_rc/-rc}
-	SRC_URI="https://github.com/swaywm/${PN}/archive/${MY_PV}.tar.gz -> ${P}.tar.gz"
+	inherit verify-sig
+	SRC_URI="https://github.com/swaywm/${PN}/releases/download/${PV}/${P}.tar.gz -> ${P}.gh.tar.gz
+		https://github.com/swaywm/${PN}/releases/download/${PV}/${P}.tar.gz.sig -> ${P}.gh.tar.gz.sig"
 	KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
 	S="${WORKDIR}/${PN}-${MY_PV}"
 fi
@@ -28,9 +30,11 @@ DEPEND="
 	>=dev-libs/libinput-1.26.0:0=
 	virtual/libudev
 	sys-auth/seatd:=
+	dev-libs/libevdev
 	dev-libs/libpcre2
 	>=dev-libs/wayland-1.21.0
 	x11-libs/cairo
+	x11-libs/libdrm
 	>=x11-libs/libxkbcommon-1.5.0:0=
 	x11-libs/pango
 	x11-libs/pixman
@@ -49,23 +53,28 @@ DEPEND="
 "
 # x11-libs/xcb-util-wm needed for xcb-iccm
 if [[ ${PV} == 9999 ]]; then
-	DEPEND+="~gui-libs/wlroots-9999:=[X?]"
+	DEPEND+="~gui-libs/wlroots-9999:=[X=]"
 else
 	DEPEND+="
-		>=gui-libs/wlroots-0.19:=[X?]
-		<gui-libs/wlroots-0.20:=[X?]
+		gui-libs/wlroots:0.19[X=]
 	"
 fi
 RDEPEND="
-	x11-misc/xkeyboard-config
 	${DEPEND}
+	x11-misc/xkeyboard-config
 "
 BDEPEND="
 	>=dev-libs/wayland-protocols-1.24
 	>=dev-build/meson-1.3
 	virtual/pkgconfig
-	man? ( >=app-text/scdoc-1.11.3 )
 "
+if [[ ${PV} == 9999 ]]; then
+	BDEPEND+="man? ( ~app-text/scdoc-9999 )"
+else
+	BDEPEND+="man? ( >=app-text/scdoc-1.11.3 )
+		verify-sig? ( sec-keys/openpgp-keys-emersion )"
+	VERIFY_SIG_OPENPGP_KEY_PATH="/usr/share/openpgp-keys/emersion.asc"
+fi
 
 FILECAPS=(
 	cap_sys_nice usr/bin/${PN} # bug 919298

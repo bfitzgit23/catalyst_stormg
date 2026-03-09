@@ -1,8 +1,9 @@
-# Copyright 2021-2024 Gentoo Authors
+# Copyright 2021-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
+QT6_HAS_STATIC_LIBS=1
 inherit qt6-build
 
 DESCRIPTION="Qt module and API for defining 3D content in Qt QuickTools"
@@ -21,7 +22,7 @@ RDEPEND="
 	~dev-qt/qtquicktimeline-${PV}:6
 	~dev-qt/qtshadertools-${PV}:6
 	media-libs/assimp:=
-	sys-libs/zlib:=
+	virtual/zlib:=
 "
 DEPEND="
 	${RDEPEND}
@@ -32,15 +33,16 @@ BDEPEND="
 	~dev-qt/qtshadertools-${PV}:6
 "
 
-PATCHES=(
-	"${FILESDIR}"/${PN}-6.6.2-gcc14.patch
-	"${FILESDIR}"/${PN}-6.6.2-x32abi.patch
-)
-
 CMAKE_SKIP_TESTS=(
 	# needs off-by-default assimp[collada] that is masked on some profiles,
 	# not worth the extra trouble
 	tst_qquick3dassetimport
+)
+
+PATCHES=(
+	"${FILESDIR}"/${PN}-6.6.2-gcc14.patch
+	"${FILESDIR}"/${PN}-6.6.2-x32abi.patch
+	"${FILESDIR}"/${PN}-6.11.0-assimp6.patch
 )
 
 src_configure() {

@@ -1,10 +1,10 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 LUA_COMPAT=( lua5-{3..4} )
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{12..14} )
 
 inherit fcaps lua-single python-any-r1 qmake-utils toolchain-funcs xdg cmake
 
@@ -19,7 +19,7 @@ else
 	inherit verify-sig
 
 	SRC_URI="https://www.wireshark.org/download/src/all-versions/${P/_/}.tar.xz"
-	SRC_URI+=" verify-sig? ( https://www.wireshark.org/download/SIGNATURES-${PV}.txt -> ${P}-signatures.txt )"
+	SRC_URI+=" verify-sig? ( https://www.wireshark.org/download/SIGNATURES-${PV/_/}.txt -> ${P}-signatures.txt )"
 	S="${WORKDIR}/${P/_/}"
 
 	if [[ ${PV} != *_rc* ]] ; then
@@ -30,10 +30,10 @@ fi
 LICENSE="GPL-2"
 SLOT="0/${PV}"
 IUSE="androiddump bcg729 brotli +capinfos +captype ciscodump +dftest doc dpauxmon"
-IUSE+=" +dumpcap +editcap +gui http2 http3 ilbc kerberos libxml2 lua lz4 maxminddb"
-IUSE+=" +mergecap +minizip +netlink opus +plugins +pcap +randpkt"
+IUSE+=" +dumpcap +editcap +gui http2 http3 ilbc kerberos lua lz4 maxminddb"
+IUSE+=" +mergecap +minizip +netlink opus pkcs11 +plugins +pcap +randpkt"
 IUSE+=" +randpktdump +reordercap sbc selinux +sharkd smi snappy spandsp sshdump ssl"
-IUSE+=" sdjournal test +text2pcap +tshark +udpdump wifi zlib +zstd"
+IUSE+=" sdjournal test +text2pcap +tshark +udpdump wifi xxhash zlib +zstd"
 
 REQUIRED_USE="
 	lua? ( ${LUA_REQUIRED_USE} )
@@ -45,7 +45,8 @@ RESTRICT="!test? ( test )"
 RDEPEND="
 	acct-group/pcap
 	>=dev-libs/glib-2.50.0:2
-	dev-libs/libpcre2
+	dev-libs/libpcre2:=
+	dev-libs/libxml2:=
 	>=net-dns/c-ares-1.13.0:=
 	>=dev-libs/libgcrypt-1.8.0:=
 	media-libs/speexdsp
@@ -57,18 +58,16 @@ RDEPEND="
 	http3? ( net-libs/nghttp3 )
 	ilbc? ( media-libs/libilbc:= )
 	kerberos? ( virtual/krb5 )
-	libxml2? ( dev-libs/libxml2 )
 	lua? ( ${LUA_DEPS} )
 	lz4? ( app-arch/lz4:= )
 	maxminddb? ( dev-libs/libmaxminddb:= )
-	minizip? ( sys-libs/zlib[minizip] )
+	minizip? ( virtual/minizip:= )
 	netlink? ( dev-libs/libnl:3 )
 	opus? ( media-libs/opus )
 	pcap? ( net-libs/libpcap )
 	gui? (
-		dev-qt/qtbase:6[concurrent,dbus,gui,widgets]
+		dev-qt/qtbase:6[concurrent,gui,widgets]
 		dev-qt/qt5compat:6
-		dev-qt/qtdeclarative:6
 		dev-qt/qtmultimedia:6
 		x11-misc/xdg-utils
 	)
@@ -78,9 +77,10 @@ RDEPEND="
 	snappy? ( app-arch/snappy:= )
 	spandsp? ( media-libs/spandsp:= )
 	sshdump? ( >=net-libs/libssh-0.6:= )
-	ssl? ( >=net-libs/gnutls-3.5.8:= )
+	ssl? ( >=net-libs/gnutls-3.5.8:=[pkcs11?] )
 	wifi? ( >=net-libs/libssh-0.6:= )
-	zlib? ( sys-libs/zlib )
+	xxhash? ( dev-libs/xxhash )
+	zlib? ( virtual/zlib:= )
 	zstd? ( app-arch/zstd:= )
 "
 DEPEND="
@@ -118,7 +118,6 @@ if [[ ${PV} != *9999* ]] ; then
 fi
 
 PATCHES=(
-	"${FILESDIR}/4.4.4-fix-skipping-rawshark-tests-on-big-endian.patch"
 	"${FILESDIR}/4.4.6-lto.patch"
 )
 
@@ -203,9 +202,9 @@ src_configure() {
 		-DENABLE_BROTLI=$(usex brotli)
 		-DENABLE_CAP=$(usex filecaps caps)
 		-DENABLE_GNUTLS=$(usex ssl)
+		-DENABLE_PKCS11=$(usex pkcs11)
 		-DENABLE_ILBC=$(usex ilbc)
 		-DENABLE_KERBEROS=$(usex kerberos)
-		-DENABLE_LIBXML2=$(usex libxml2)
 		-DENABLE_LUA=$(usex lua)
 		-DLUA_FIND_VERSIONS="${ELUA#lua}"
 		-DENABLE_LZ4=$(usex lz4)
@@ -223,6 +222,7 @@ src_configure() {
 		-DENABLE_SNAPPY=$(usex snappy)
 		-DENABLE_SPANDSP=$(usex spandsp)
 		-DBUILD_wifidump=$(usex wifi)
+		-DENABLE_XXHASH=$(usex xxhash)
 		-DENABLE_ZLIB=$(usex zlib)
 		-DENABLE_ZLIBNG=OFF
 		-DENABLE_ZSTD=$(usex zstd)
@@ -250,19 +250,19 @@ src_install() {
 
 	if ! use doc; then
 		# prepare Relase Notes redirector (bug #939195)
-		local relnotes="doc/release-notes.html"
+		local relnotes="doc/Wireshark Release Notes.html"
 
 		# by default create a link for our specific version
 		local relversion="wireshark-${PV}.html"
 
 		# for 9999 we link to the release notes index page
-		if [[ ${PV} == *9999* ]] ; then
+		if [[ ${PV} == *_rc* ]] || [[ ${PV} == *9999* ]] ; then
 			relversion=""
 		fi
 
 		# patch version into redirector & install it
-		sed -e "s/#VERSION#/${relversion}/g" < "${FILESDIR}/release-notes.html" > ${relnotes} || die
-		dodoc ${relnotes}
+		sed -e "s/#VERSION#/${relversion}/g" < "${FILESDIR}/release-notes.html" > "${relnotes}" || die
+		dodoc "${relnotes}"
 	fi
 
 	# FAQ is not required as is installed from help/faq.txt

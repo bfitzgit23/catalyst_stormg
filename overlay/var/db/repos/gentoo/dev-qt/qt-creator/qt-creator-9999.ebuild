@@ -1,13 +1,12 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-LLVM_COMPAT=( {15..20} )
+LLVM_COMPAT=( {16..22} )
 LLVM_OPTIONAL=1
-PYTHON_COMPAT=( python3_{10..13} )
-inherit cmake edo flag-o-matic go-env llvm-r2 multiprocessing
-inherit python-any-r1 readme.gentoo-r1 xdg
+PYTHON_COMPAT=( python3_{11..14} )
+inherit cmake flag-o-matic llvm-r2 python-any-r1 readme.gentoo-r1 xdg
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
@@ -26,7 +25,6 @@ else
 	[[ ${QTC_PV} == ${PV} ]] && QTC_REL=official || QTC_REL=development
 	SRC_URI="
 		https://download.qt.io/${QTC_REL}_releases/qtcreator/$(ver_cut 1-2)/${PV/_/-}/${QTC_P}.tar.xz
-		cmdbridge-server? ( https://dev.gentoo.org/~ionen/distfiles/${QTC_P}-vendor.tar.xz )
 	"
 	S=${WORKDIR}/${QTC_P}
 	KEYWORDS="~amd64"
@@ -36,11 +34,10 @@ DESCRIPTION="Lightweight IDE for C++/QML development centering around Qt"
 HOMEPAGE="https://www.qt.io/product/development-tools"
 
 LICENSE="GPL-3"
-LICENSE+=" BSD MIT" # go
 SLOT="0"
 IUSE="
-	+clang cmdbridge-server designer doc +help keyring plugin-dev
-	qmldesigner serialterminal +svg test +tracing webengine
+	+clang designer doc +help keyring plugin-dev qmldesigner
+	serialterminal +svg test +tracing webengine
 "
 REQUIRED_USE="clang? ( ${LLVM_REQUIRED_USE} )"
 RESTRICT="!test? ( test )"
@@ -51,10 +48,8 @@ QT_PV=6.7.3:6
 COMMON_DEPEND="
 	app-arch/libarchive:=
 	dev-cpp/yaml-cpp:=
-	>=dev-qt/qt5compat-${QT_PV}
-	>=dev-qt/qtbase-${QT_PV}=[concurrent,dbus,gui,network,widgets,xml]
+	>=dev-qt/qtbase-${QT_PV}=[concurrent,dbus,gui,network,ssl,widgets,xml]
 	>=dev-qt/qtdeclarative-${QT_PV}=
-	sys-libs/zlib:=
 	clang? (
 		$(llvm_gen_dep '
 			llvm-core/clang:${LLVM_SLOT}=
@@ -92,12 +87,9 @@ RDEPEND="
 	qmldesigner? ( >=dev-qt/qtquicktimeline-${QT_PV} )
 "
 DEPEND="${COMMON_DEPEND}"
-# intentionally skipping := on go (unlike go-module.eclass) given not
-# worth a massive rebuild every time for the minor go usage
 BDEPEND="
 	${PYTHON_DEPS}
 	>=dev-qt/qttools-${QT_PV}[linguist]
-	cmdbridge-server? ( >=dev-lang/go-1.21.7 )
 	doc? ( >=dev-qt/qttools-${QT_PV}[qdoc,qtattributionsscanner] )
 "
 
@@ -106,29 +98,12 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-12.0.0-musl-no-malloc-trim.patch
 )
 
-QA_FLAGS_IGNORED="usr/libexec/qtcreator/cmdbridge-.*" # written in Go
-
-src_unpack() {
-	if [[ ${PV} == 9999 ]]; then
-		git-r3_src_unpack
-		if use cmdbridge-server; then
-			cd -- "${S}"/src/libs/gocmdbridge/server || die
-			edo go mod vendor
-		fi
-	else
-		default
-	fi
-}
-
 src_prepare() {
 	cmake_src_prepare
 
 	# needed for finding docs at runtime in PF
 	sed -e "/_IDE_DOC_PATH/s/qtcreator/${PF}/" \
 		-i cmake/QtCreatorAPIInternal.cmake || die
-
-	# avoid stripping for Go, use sed to avoid rebases as may be there forever
-	sed -i 's/-s -w //' src/libs/gocmdbridge/server/CMakeLists.txt || die
 
 	# avoid building manual tests (aka not ran) for nothing (bug #950010)
 	sed -i '/add_subdirectory(manual)/d' tests/CMakeLists.txt || die
@@ -144,11 +119,6 @@ src_prepare() {
 
 src_configure() {
 	use clang && llvm_chost_setup
-
-	if use cmdbridge-server; then
-		go-env_set_compile_environment
-		export GOFLAGS="-p=$(makeopts_jobs) -v -x -buildvcs=false -buildmode=pie"
-	fi
 
 	# -Werror=lto-type-mismatch issues, needs looking into
 	filter-lto
@@ -185,11 +155,9 @@ src_configure() {
 
 		-DBUILD_PLUGIN_HELP=$(usex help)
 		-DBUILD_HELPVIEWERBACKEND_QTWEBENGINE=$(usex webengine)
+		# TODO?: unbundle litehtml, but support for latest releases
+		# tend to lag behind and bundled may work out better for now
 		-DBUILD_LIBRARY_QLITEHTML=$(usex help $(usex !webengine))
-		# TODO?: package litehtml, but support for latest releases seem
-		# to lag behind and bundled may work out better for now
-		# https://bugreports.qt.io/browse/QTCREATORBUG-29169
-		$(use help && usev !webengine -DCMAKE_DISABLE_FIND_PACKAGE_litehtml=yes)
 
 		# help shouldn't use with the above, but qmldesigner is automagic
 		$(use help || use qmldesigner &&
@@ -197,8 +165,10 @@ src_configure() {
 
 		-DBUILD_PLUGIN_SERIALTERMINAL=$(usex serialterminal)
 		-DENABLE_SVG_SUPPORT=$(usex svg)
-		$(usev !cmdbridge-server -DGO_BIN=GO_BIN-NOTFOUND) #945925
 		-DWITH_QMLDESIGNER=$(usex qmldesigner)
+
+		# cmdbridge-server is a hardly used maintenance burden (bug #967488)
+		-DBUILD_EXECUTABLE_CMDBRIDGE=no
 
 		# meant to be in sync with qtbase[journald], but think(?) not worth
 		# handling given qt-creator can use QT_FORCE_STDERR_LOGGING=1 nowadays

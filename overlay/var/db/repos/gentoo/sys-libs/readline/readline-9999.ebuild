@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -44,7 +44,7 @@ elif (( PLEVEL < 0 )) && [[ ${PV} == *_p* ]] ; then
 	# the alpha, and the next pre-release is usually quite far away.
 	#
 	# i.e. if it's worth packaging the alpha, it's worth packaging a followup.
-	READLINE_COMMIT="4d34c34b3aa955f65e79bfbf7b7426344a3c2840"
+	READLINE_COMMIT="7cf2d923617659d216db3210f6247740f7dde1d8"
 	SRC_URI="https://git.savannah.gnu.org/cgit/readline.git/snapshot/readline-${READLINE_COMMIT}.tar.gz -> ${P}-${READLINE_COMMIT}.tar.gz"
 	S=${WORKDIR}/${PN}-${READLINE_COMMIT}
 else
@@ -60,7 +60,6 @@ else
 		my_patch_index=
 
 		upstream_url_base="mirror://gnu/readline"
-		mirror_url_base="ftp://ftp.cwru.edu/pub/readline"
 
 		for ((my_patch_index=1; my_patch_index <= ${PLEVEL} ; my_patch_index++)) ; do
 			printf -v mangled_patch_ver ${my_p}-%03d ${my_patch_index}
@@ -69,21 +68,17 @@ else
 			SRC_URI+=" ${patch_url}"
 			SRC_URI+=" verify-sig? ( ${patch_url}.sig )"
 
-			# Add in the mirror URL too.
-			SRC_URI+=" ${patch_url/${upstream_url_base}/${mirror_url_base}}"
-			SRC_URI+=" verify-sig? ( ${patch_url/${upstream_url_base}/${mirror_url_base}}.sig )"
-
 			MY_PATCHES+=( "${DISTDIR}"/${mangled_patch_ver} )
 		done
 
-		unset my_p patch_url my_patch_index upstream_url_base mirror_url_base
+		unset my_p patch_url my_patch_index upstream_url_base
 	fi
 fi
 
 LICENSE="GPL-3+"
 SLOT="0/8"  # subslot matches SONAME major
 if (( PLEVEL >= 0 )); then
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~arm64-macos ~x64-macos ~x64-solaris"
 fi
 IUSE="static-libs +unicode utils"
 
@@ -98,9 +93,6 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-5.0-no_rpath.patch
 	"${FILESDIR}"/${PN}-7.0-headers.patch
 	"${FILESDIR}"/${PN}-8.0-headers.patch
-
-	# TODO: rebase
-	#"${FILESDIR}"/${PN}-8.0-darwin-shlib-versioning.patch
 )
 
 src_unpack() {
@@ -134,7 +126,7 @@ src_prepare() {
 
 	#(( PLEVEL < 0 )) && eautoreconf
 
-	if use prefix && [[ ! -x "${BROOT}"/usr/bin/pkg-config ]] ; then
+	if use prefix && [[ -n ${STAGE} ]] ; then
 		# If we're bootstrapping, make a guess. We don't have pkg-config
 		# around yet. bug #818103.
 		# Incorrectly populating this leads to underlinked libreadline.
@@ -149,14 +141,14 @@ src_prepare() {
 	else
 		# Force ncurses linking, bug #71420.
 		# Use pkg-config to get the right values, bug #457558.
-		local ncurses_libs=$($(tc-getPKG_CONFIG) ncurses$(usex unicode w '') --libs)
+		local ncurses_libs=$($(tc-getPKG_CONFIG) ncurses$(usex unicode w '') --libs || die)
 	fi
 
 	sed -i \
 		-e "/^SHLIB_LIBS=/s:=.*:='${ncurses_libs}':" \
 		support/shobj-conf || die
 	sed -i \
-		-e "/^[[:space:]]*LIBS=.-lncurses/s:-lncurses:${ncurses_libs}:" \
+		-e "/[[:space:]]*LIBS=.-lncurses/s:-lncurses:${ncurses_libs}:" \
 		examples/rlfe/configure || die
 
 	# Fix building under Gentoo/FreeBSD; upstream FreeBSD deprecated

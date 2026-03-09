@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit autotools
+inherit autotools toolchain-funcs
 
 DESCRIPTION="Text mode (ncurses) SMB network commander. Features: resume and UTF-8"
 HOMEPAGE="https://sourceforge.net/projects/smbc/"
@@ -31,9 +31,16 @@ PATCHES=(
 	"${FILESDIR}"/${P}-tinfo.patch
 	"${FILESDIR}"/0001-Fix-signal-handlers.patch
 	"${FILESDIR}"/0002-Fix-Wformat-security.patch
+	"${FILESDIR}"/${P}-getcwd.patch
 )
 
 src_prepare() {
+	if ! tc-is-gcc; then
+		ewarn "force gcc because too many nested functions which is unsupported by clang"
+		export CC=${CHOST}-gcc
+		tc-is-gcc || die "tc-is-gcc failed in spite of CC=${CC}"
+	fi
+
 	default
 	mv configure.{in,ac} || die
 	# for some reason some build 32bit x86 objects are bundled

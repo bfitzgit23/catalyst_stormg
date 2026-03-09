@@ -21,17 +21,18 @@ HOMEPAGE="https://www.amule.org/"
 
 LICENSE="GPL-2+"
 SLOT="0"
-IUSE="daemon debug geoip nls remote stats upnp +X"
+IUSE="daemon debug geoip +gui nls remote stats upnp"
 
 RDEPEND="
 	dev-libs/boost:=
 	dev-libs/crypto++:=
 	sys-libs/binutils-libs:0=
 	sys-libs/readline:0=
-	sys-libs/zlib
-	x11-libs/wxGTK:${WX_GTK_VER}[X?]
+	virtual/zlib:=
+	x11-libs/wxGTK:${WX_GTK_VER}=
 	daemon? ( acct-user/amule )
 	geoip? ( dev-libs/geoip )
+	gui? ( x11-libs/wxGTK:${WX_GTK_VER}=[X] )
 	nls? ( virtual/libintl )
 	remote? (
 		acct-user/amule
@@ -41,7 +42,7 @@ RDEPEND="
 	upnp? ( net-libs/libupnp:0 )
 "
 DEPEND="${RDEPEND}
-	X? ( dev-util/desktop-file-utils )
+	gui? ( dev-util/desktop-file-utils )
 "
 BDEPEND="
 	virtual/pkgconfig
@@ -54,6 +55,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2.3.3-fix-exception.patch"
 	"${FILESDIR}/${PN}-2.3.3-backport-pr368.patch"
 	"${FILESDIR}/${PN}-2.3.3-use-xdg-open-as-preview-default.patch"
+	"${FILESDIR}/${PN}-9999-gettext-0.23.patch"
 )
 
 src_prepare() {
@@ -88,7 +90,7 @@ src_configure() {
 		$(use_enable upnp)
 	)
 
-	if use X; then
+	if use gui; then
 		myconf+=(
 			$(use_enable remote amule-gui)
 			$(use_enable stats alc)
@@ -141,9 +143,9 @@ pkg_postinst() {
 		elog "/etc/conf.d/{amuled,amuleweb} to the old values."
 	fi
 
-	use X && xdg_desktop_database_update
+	use gui && xdg_desktop_database_update
 }
 
 pkg_postrm() {
-	use X && xdg_desktop_database_update
+	use gui && xdg_desktop_database_update
 }

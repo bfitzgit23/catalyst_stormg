@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Gentoo Authors
+# Copyright 2024-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: llvm-r2.eclass
@@ -70,7 +70,7 @@ _LLVM_OLDEST_SLOT=15
 # @DESCRIPTION:
 # The newest stable LLVM version.  Versions newer than that won't
 # be automatically enabled via USE defaults.
-_LLVM_NEWEST_STABLE=19
+_LLVM_NEWEST_STABLE=21
 
 # == control variables ==
 
@@ -275,6 +275,7 @@ generate_llvm_config() {
 	# major + suffix
 	local shlib_name=LLVM-${version%%.*}
 	[[ ${version} == *git* ]] && shlib_name+="git${version##*git}"
+	[[ ${version} == *+* && ${shlib_name} != *+* ]] && shlib_name+="+${version##*+}"
 
 	local components=(
 		"${libs[@]#LLVM}" "${targets[@]}"

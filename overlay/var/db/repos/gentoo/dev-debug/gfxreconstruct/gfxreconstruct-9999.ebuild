@@ -1,9 +1,9 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit cmake
 
 if [[ ${PV} == 9999* ]]; then
@@ -29,7 +29,7 @@ IUSE="wayland X"
 RDEPEND="
 	app-arch/lz4:=
 	app-arch/zstd:=
-	sys-libs/zlib:=
+	virtual/zlib:=
 
 	media-libs/vulkan-loader[wayland?,X?]
 	wayland? ( dev-libs/wayland )
@@ -48,7 +48,7 @@ if [[ ${PV} != 9999* ]]; then
 		~dev-util/vulkan-headers-${PV}
 	"
 	PATCHES=(
-		"${FILESDIR}"/1.3.296.0-use-system-vulkan.patch
+		"${FILESDIR}"/1.3.313.0-use-system-vulkan.patch
 	)
 fi
 
@@ -70,6 +70,7 @@ src_configure() {
 		-DBUILD_WSI_WAYLAND_SUPPORT=$(usex wayland)
 		-DBUILD_WSI_XCB_SUPPORT=$(usex X)
 		-DBUILD_WSI_XLIB_SUPPORT=$(usex X)
+		-DGFXRECON_ENABLE_OPENXR=OFF
 	)
 	cmake_src_configure
 }

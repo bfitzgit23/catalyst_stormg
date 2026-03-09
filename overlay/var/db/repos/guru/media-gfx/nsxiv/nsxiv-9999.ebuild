@@ -1,11 +1,11 @@
-# Copyright 2021-2025 Gentoo Authors
+# Copyright 2021-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 inherit desktop xdg-utils savedconfig toolchain-funcs linux-info shell-completion
 
-ZSH_COMP_COMMIT="24384847326ad44ac98b7ee7e6fbfa02548ca9c0"
+ZSH_COMP_COMMIT="aa5f73c46a21060bb084b308f3d032ace86753c0"
 ZSH_COMP_URI="https://codeberg.org/nsxiv/nsxiv-extra/raw/commit/${ZSH_COMP_COMMIT}/completion/zsh/_nsxiv"
 ZSH_COMP="${PN}-${ZSH_COMP_COMMIT}.comp.zsh"
 if [[ ${PV} == "9999" ]] ; then
@@ -47,11 +47,6 @@ src_prepare() {
 	default
 
 	restore_config config.h
-}
-
-src_configure() {
-	# avoid rebuild on `make install`
-	sed -i -e '/^install: / s|: all|:|' Makefile || die
 }
 
 src_compile() {

@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -30,6 +30,8 @@ RDEPEND="
 		app-misc/dtach
 	)
 	!dedicated? (
+		media-libs/libogg
+		media-libs/opusfile
 		allegro? ( media-libs/allegro:5 )
 		fluidsynth? ( media-sound/fluidsynth )
 		icu? (
@@ -40,13 +42,13 @@ RDEPEND="
 		truetype? (
 			media-libs/fontconfig
 			media-libs/freetype:2
-			sys-libs/zlib:=
+			virtual/zlib:=
 		)
 	)
 	lzma? ( app-arch/xz-utils )
 	lzo? ( dev-libs/lzo:2 )
 	png? ( media-libs/libpng:= )
-	zlib? ( sys-libs/zlib:= )
+	zlib? ( virtual/zlib:= )
 "
 DEPEND="${RDEPEND}"
 BDEPEND="
@@ -97,10 +99,6 @@ src_configure() {
 		-DCMAKE_DISABLE_FIND_PACKAGE_LibLZMA=$(usex !lzma)
 		-DCMAKE_DISABLE_FIND_PACKAGE_LZO=$(usex !lzo)
 		-DCMAKE_DISABLE_FIND_PACKAGE_PNG=$(usex !png)
-		# N.B. regarding #807364 and #828984: CMAKE_DISABLE_FIND_PACKAGE_SDL is used only
-		# with USE="allegro -sdl" combination flags. There no other way to
-		# completely disable SDL1 support.
-		-DCMAKE_DISABLE_FIND_PACKAGE_SDL=ON
 		-DCMAKE_DISABLE_FIND_PACKAGE_SDL2=$(usex !sdl)
 		-DCMAKE_DISABLE_FIND_PACKAGE_SSE=$(usex !cpu_flags_x86_sse)
 		-DCMAKE_DISABLE_FIND_PACKAGE_ZLIB=$(usex !zlib)

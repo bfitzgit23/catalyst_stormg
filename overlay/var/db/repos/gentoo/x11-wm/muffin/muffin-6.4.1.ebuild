@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -13,7 +13,7 @@ SRC_URI="https://github.com/linuxmint/muffin/archive/${PV}.tar.gz -> ${P}.tar.gz
 
 LICENSE="BSD GPL-2+ LGPL-2+ LGPL-2.1+ MIT SGI-B-2.0"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
+KEYWORDS="amd64 ~arm64 ~loong ~ppc64 ~riscv x86"
 IUSE="input_devices_wacom +introspection screencast sysprof systemd test udev wayland video_cards_nvidia"
 REQUIRED_USE="wayland? ( udev )"
 
@@ -58,7 +58,7 @@ COMDEPEND="
 		>=dev-libs/libwacom-0.13:=
 	)
 	introspection? (
-		>=dev-libs/gobject-introspection-1.41.3:=
+		>=dev-libs/gobject-introspection-1.82.0-r2:=
 	)
 	screencast? (
 		>=media-video/pipewire-0.3.0:=
@@ -104,7 +104,7 @@ DEPEND="${COMDEPEND}
 "
 BDEPEND="
 	${PYTHON_DEPS}
-	dev-util/gdbus-codegen
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/glib-utils
 	sys-devel/gettext
 	virtual/pkgconfig

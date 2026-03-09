@@ -19,7 +19,7 @@ S="${WORKDIR}/${MY_P}"
 LICENSE="vmd"
 
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~amd64 ~x86"
 
 IUSE="cuda gromacs msms povray sqlite tachyon xinerama"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
@@ -111,6 +111,14 @@ src_prepare() {
 	sed \
 		-e "s:\$(CXXFLAGS)::g" \
 		-i hesstrans/Makefile || die
+
+	# hack for some very old code with recent compilers
+	# stamp uses old syntax so we need to add -std=gnu89
+	sed \
+		-e "s: -c: -std=gnu89 -c:g" \
+		-i stamp/Makefile \
+		-i rnaview/Makefile \
+		-i clustalw/Makefile || die
 
 	# prepare vmd itself
 	cd "${S}" || die

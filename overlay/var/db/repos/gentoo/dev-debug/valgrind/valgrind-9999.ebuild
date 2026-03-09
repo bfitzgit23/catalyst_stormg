@@ -10,7 +10,7 @@ EAPI=8
 #
 # Also check the ${PV}_STABLE branch upstream for backports.
 
-inherit autotools flag-o-matic toolchain-funcs multilib pax-utils
+inherit autotools dot-a flag-o-matic toolchain-funcs multilib pax-utils
 
 DESCRIPTION="An open-source memory debugger for GNU/Linux"
 HOMEPAGE="https://valgrind.org"
@@ -22,7 +22,7 @@ if [[ ${PV} == 9999 ]]; then
 	"
 	inherit git-r3
 else
-	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/valgrind.gpg
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/valgrind.asc
 	inherit verify-sig
 
 	MY_P="${P/_rc/.RC}"
@@ -42,11 +42,11 @@ else
 	S="${WORKDIR}"/${MY_P}
 
 	if [[ ${PV} != *_rc* ]] ; then
-		KEYWORDS="-* ~amd64 ~arm ~arm64 ~ppc ~ppc64 ~riscv ~x86 ~amd64-linux ~x86-linux ~x64-macos ~x64-solaris"
+		KEYWORDS="-* ~amd64 ~arm ~arm64 ~ppc ~ppc64 ~riscv ~x86 ~x64-macos ~x64-solaris"
 	fi
 fi
 
-LICENSE="GPL-2"
+LICENSE="GPL-3+"
 SLOT="0"
 IUSE="mpi"
 
@@ -59,7 +59,7 @@ if [[ ${PV} == 9999 ]] ; then
 		dev-libs/libxslt
 	"
 else
-	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-valgrind )"
+	BDEPEND+=" verify-sig? ( >=sec-keys/openpgp-keys-valgrind-20251018 )"
 fi
 
 PATCHES=(
@@ -120,6 +120,7 @@ src_configure() {
 	)
 
 	tc-is-lto && myconf+=( --enable-lto )
+	lto-guarantee-fat
 
 	# Respect ar, bug #468114
 	tc-export AR
@@ -176,6 +177,8 @@ src_install() {
 	dodoc FAQ.txt
 
 	pax-mark m "${ED}"/usr/$(get_libdir)/valgrind/*-*-linux
+
+	strip-lto-bytecode
 
 	# See README_PACKAGERS
 	dostrip -x /usr/libexec/valgrind/vgpreload* /usr/$(get_libdir)/valgrind/*

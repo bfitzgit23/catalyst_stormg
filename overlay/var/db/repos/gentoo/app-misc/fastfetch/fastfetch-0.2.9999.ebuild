@@ -1,4 +1,4 @@
-# Copyright 2022-2025 Gentoo Authors
+# Copyright 2022-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -15,20 +15,20 @@ if [[ ${PV} == *9999 ]]; then
 	[[ "${EGIT_BRANCH}" == "" ]] && die "Please set a git branch"
 else
 	SRC_URI="https://github.com/fastfetch-cli/fastfetch/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~m68k ~ppc ~ppc64 ~riscv ~sparc ~x86"
 fi
 
 LICENSE="MIT"
 SLOT="0"
-IUSE="X chafa dbus ddcutil drm elf gnome imagemagick opencl opengl pulseaudio sqlite test vulkan wayland xcb xfce xrandr"
+IUSE="X chafa dbus ddcutil drm elf gnome imagemagick opencl opengl pulseaudio sqlite test vulkan wayland xcb xrandr"
 RESTRICT="!test? ( test )"
 
 # note - qa-vdb will always report errors because fastfetch loads the libs dynamically
 # make sure to crank yyjson minimum version to match bundled version
 RDEPEND="
-	>=dev-libs/yyjson-0.10.0
+	>=dev-libs/yyjson-0.12.0
 	sys-apps/hwdata
-	sys-libs/zlib
+	virtual/zlib:=
 	chafa? ( media-gfx/chafa )
 	dbus? ( sys-apps/dbus )
 	ddcutil? ( app-misc/ddcutil:= )
@@ -52,7 +52,6 @@ RDEPEND="
 	)
 	wayland? ( dev-libs/wayland )
 	xcb? ( x11-libs/libxcb )
-	xfce? ( xfce-base/xfconf )
 	xrandr? ( x11-libs/libXrandr )
 "
 DEPEND="
@@ -68,13 +67,6 @@ REQUIRED_USE="
 	chafa? ( imagemagick )
 "
 
-pkg_pretend() {
-	if use X && ! use opengl; then
-		einfo 'USE="X" adds GLX support for USE="opengl"'
-		einfo 'This build with USE="X -opengl" will not include any extra X support.'
-	fi
-}
-
 src_configure() {
 	local fastfetch_enable_imagemagick7=no
 	local fastfetch_enable_imagemagick6=no
@@ -84,8 +76,13 @@ src_configure() {
 	fi
 
 	local glx=no
-	if use opengl && use X; then
-		glx=yes
+	if use X; then
+		if use opengl; then
+			glx=yes
+		else
+			ewarn 'USE="X" adds GLX support for USE="opengl"'
+			ewarn 'This build with USE="X -opengl" will not include any extra X support.'
+		fi
 	fi
 
 	local mycmakeargs=(
@@ -113,7 +110,6 @@ src_configure() {
 		-DENABLE_VULKAN=$(usex vulkan)
 		-DENABLE_WAYLAND=$(usex wayland)
 		-DENABLE_XCB_RANDR=$(usex xcb)
-		-DENABLE_XFCONF=$(usex xfce)
 		-DENABLE_XRANDR=$(usex xrandr)
 		-DBUILD_TESTS=$(usex test)
 	)

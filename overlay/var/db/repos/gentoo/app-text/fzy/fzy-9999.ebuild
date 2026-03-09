@@ -1,7 +1,7 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit optfeature savedconfig toolchain-funcs
 
@@ -9,8 +9,8 @@ if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/jhawthorn/fzy.git"
 else
-	SRC_URI="https://github.com/jhawthorn/${PN}/releases/download/${PV}/${P}.tar.gz"
-	KEYWORDS="~amd64 ~arm ~arm64 ~riscv ~x86"
+	SRC_URI="https://github.com/jhawthorn/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
+	KEYWORDS="~amd64 ~arm ~arm64 ~ppc64 ~riscv ~x86"
 fi
 
 DESCRIPTION="Fuzzy text selector (interactive grep) for console"
@@ -18,14 +18,11 @@ HOMEPAGE="https://github.com/jhawthorn/fzy"
 
 LICENSE="MIT"
 SLOT="0"
-IUSE="test"
-RESTRICT="!test? ( test )"
 
 src_prepare() {
 	default
 	restore_config config.h
 	tc-export CC
-	sed -i 's/$(LIBS)/$(LIBS) $(LDFLAGS)/g' Makefile || die
 }
 
 src_install() {

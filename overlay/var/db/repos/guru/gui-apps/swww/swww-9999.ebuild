@@ -3,19 +3,26 @@
 
 EAPI=8
 
-inherit cargo git-r3 shell-completion
+inherit cargo shell-completion
 
 DESCRIPTION="Efficient animated wallpaper daemon for wayland, controlled at runtime"
 HOMEPAGE="https://github.com/LGFae/swww"
-EGIT_REPO_URI="https://github.com/LGFae/swww.git"
+if [[ ${PV} == *9999* ]]; then
+    inherit git-r3
+    EGIT_REPO_URI="https://github.com/LGFae/${PN}.git"
+else
+    SRC_URI="
+    https://github.com/LGFae/swww/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
+    ${CARGO_CRATE_URIS}
+    "
+    KEYWORDS="~amd64"
+fi
 
 LICENSE="GPL-3"
 # Dependent crate licenses
-LICENSE+="
-	Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD-2 BSD ISC MIT
-	Unicode-DFS-2016
-"
+LICENSE+=" BSD MIT Unicode-3.0"
 SLOT="0"
+RUST_MIN_VER="1.89.0"
 
 DEPEND="
 	app-arch/lz4:=
@@ -32,8 +39,12 @@ QA_FLAGS_IGNORED="
 "
 
 src_unpack() {
-	git-r3_src_unpack
-	cargo_live_src_unpack
+    if [[ "${PV}" == *9999* ]]; then
+        git-r3_src_unpack
+        cargo_live_src_unpack
+    else
+        cargo_src_unpack
+    fi
 }
 
 src_compile() {

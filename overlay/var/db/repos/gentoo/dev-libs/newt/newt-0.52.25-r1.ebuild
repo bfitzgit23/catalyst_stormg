@@ -15,7 +15,7 @@ SRC_URI="https://github.com/mlichvar/newt/archive/${MY_PV}.tar.gz -> ${P}.tar.gz
 
 LICENSE="LGPL-2"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ppc ppc64 ~riscv ~sparc x86"
 IUSE="gpm python nls tcl"
 RESTRICT="test"
 
@@ -66,10 +66,10 @@ src_configure() {
 	getversions() {
 		versions+="${EPYTHON} "
 	}
-	python_foreach_impl getversions
+	use python && python_foreach_impl getversions
 
 	econf \
-		$(use_with python '' "${EPYTHON}") \
+		"$(use_with python '' "${versions}")" \
 		$(use_with gpm gpm-support) \
 		$(use_with tcl) \
 		$(use_enable nls)

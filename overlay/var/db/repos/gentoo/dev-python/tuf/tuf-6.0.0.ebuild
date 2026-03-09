@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=hatchling
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit distutils-r1 pypi
 
@@ -16,11 +16,16 @@ HOMEPAGE="
 
 LICENSE="|| ( Apache-2.0 MIT )"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64 ~arm ~arm64 ~ppc ~ppc64 ~x86"
 
 RDEPEND="
 	<dev-python/urllib3-3[${PYTHON_USEDEP}]
 	<dev-python/securesystemslib-2[${PYTHON_USEDEP}]
+"
+BDEPEND="
+	test? (
+		dev-python/freezegun[${PYTHON_USEDEP}]
+	)
 "
 
 distutils_enable_tests unittest

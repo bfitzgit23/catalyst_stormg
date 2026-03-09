@@ -1,9 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{10..14} )
 PYTHON_REQ_USE="sqlite,threads(+)"
 
 inherit meson python-single-r1 optfeature virtualx xdg
@@ -29,7 +29,10 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 RDEPEND="
 	${PYTHON_DEPS}
 	app-arch/cabextract
-	app-arch/p7zip
+	|| (
+		>=app-arch/7zip-24.09[symlink(+)]
+		app-arch/p7zip
+	)
 	app-arch/unzip
 	$(python_gen_cond_dep '
 		dev-python/certifi[${PYTHON_USEDEP}]
@@ -38,6 +41,7 @@ RDEPEND="
 		dev-python/evdev[${PYTHON_USEDEP}]
 		dev-python/lxml[${PYTHON_USEDEP}]
 		dev-python/pillow[${PYTHON_USEDEP}]
+		dev-python/setproctitle[${PYTHON_USEDEP}]
 		dev-python/pygobject:3[cairo,${PYTHON_USEDEP}]
 		dev-python/pypresence[${PYTHON_USEDEP}]
 		dev-python/pyyaml[${PYTHON_USEDEP}]
@@ -46,10 +50,7 @@ RDEPEND="
 		dev-python/moddb[${PYTHON_USEDEP}]
 	')
 	media-sound/fluid-soundfont
-	|| (
-		net-libs/webkit-gtk:4[introspection]
-		net-libs/webkit-gtk:4.1[introspection]
-	)
+	net-libs/webkit-gtk:4.1[introspection]
 	sys-apps/pciutils
 	sys-apps/xdg-desktop-portal
 	x11-apps/mesa-progs
@@ -147,7 +148,7 @@ pkg_postinst() {
 	# TODO: Package runner for HTML5 web games
 	# TODO: Package Xbox emulator
 	optfeature "playing Nintendo Switch games through an emulator (available in GURU overlay)" games-emulation/yuzu
-	optfeature "playing DOOM games" games-fps/gzdoom
+	optfeature "playing DOOM games" games-engines/uzdoom
 
 	# Quote README.rst
 	elog

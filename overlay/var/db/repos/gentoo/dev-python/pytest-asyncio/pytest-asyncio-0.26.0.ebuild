@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{10..13} python3_13t pypy3 pypy3_11 )
+PYTHON_COMPAT=( python3_{11..14} python3_{13,14}t pypy3_11 )
 
 inherit distutils-r1 pypi
 
@@ -16,7 +16,7 @@ HOMEPAGE="
 
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~x64-macos"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~x64-macos"
 
 RDEPEND="
 	>=dev-python/pytest-8.2[${PYTHON_USEDEP}]
@@ -30,6 +30,14 @@ BDEPEND="
 
 EPYTEST_XDIST=1
 distutils_enable_tests pytest
+
+src_prepare() {
+	distutils-r1_src_prepare
+
+	# redundant, and breaking setuptools-scm >= 1.2.0
+	# https://github.com/pypa/setuptools-scm/issues/1216
+	rm setup.cfg || die
+}
 
 python_test() {
 	local EPYTEST_DESELECT=(

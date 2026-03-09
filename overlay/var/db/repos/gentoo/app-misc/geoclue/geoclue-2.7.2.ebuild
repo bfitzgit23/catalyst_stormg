@@ -1,9 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{10..14} )
 PYTHON_REQ_USE="xml(+)"
 inherit meson python-any-r1 systemd vala xdg
 
@@ -21,7 +21,7 @@ DEPEND="
 	>=dev-libs/glib-2.74:2
 	>=dev-libs/json-glib-0.14.0
 	>=net-libs/libsoup-3.0.0:3.0
-	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 	modemmanager? ( >=net-misc/modemmanager-1.12 )
 	zeroconf? ( >=net-dns/avahi-0.6.10[dbus] )
 	x11-libs/libnotify
@@ -31,7 +31,7 @@ RDEPEND="${DEPEND}
 	sys-apps/dbus
 "
 BDEPEND="${PYTHON_DEPS}
-	dev-util/gdbus-codegen
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/glib-utils
 	gtk-doc? (
 		app-text/docbook-xml-dtd:4.1.2

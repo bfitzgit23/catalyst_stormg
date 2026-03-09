@@ -10,7 +10,7 @@ HOMEPAGE="https://www.gnu.org/software/screen/"
 
 if [[ ${PV} != 9999 ]] ; then
 	SRC_URI="mirror://gnu/${PN}/${P}.tar.gz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~arm64-macos ~x64-macos ~x64-solaris"
 else
 	inherit git-r3
 	EGIT_REPO_URI="https://git.savannah.gnu.org/git/screen.git"
@@ -21,6 +21,8 @@ fi
 LICENSE="GPL-3+"
 SLOT="0"
 IUSE="debug nethack pam selinux utempter multiuser"
+# bug #956963
+RESTRICT="test"
 
 DEPEND=">=sys-libs/ncurses-5.2:=
 	virtual/libcrypt:=
@@ -33,6 +35,7 @@ BDEPEND="sys-apps/texinfo"
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-5.0.0-utmp-musl.patch
+	"${FILESDIR}"/${PN}-5.0.1-texi.patch
 )
 
 src_prepare() {
@@ -70,13 +73,11 @@ src_configure() {
 	use debug && append-cppflags "-DDEBUG"
 
 	local myeconfargs=(
-		--with-socket-dir="${EPREFIX}/tmp/${PN}"
+		--enable-socket-dir="${EPREFIX}/tmp/${PN}"
 		--with-system-screenrc="${EPREFIX}/etc/screenrc"
 		--with-pty-mode=0620
 		--with-pty-group=5
-		--enable-rxvt_osc
 		--enable-telnet
-		--enable-colors256
 		$(use_enable pam)
 		$(use_enable utempter utmp)
 	)

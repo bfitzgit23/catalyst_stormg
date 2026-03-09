@@ -11,7 +11,7 @@ SRC_URI="https://github.com/Orc/discount/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0/2.2.7"
-KEYWORDS="~alpha amd64 ~arm arm64 ~loong ppc ppc64 ~riscv sparc x86"
+KEYWORDS="~alpha amd64 ~arm arm64 ~loong ppc ppc64 ~riscv ~sparc x86"
 IUSE="minimal test"
 RESTRICT="!test? ( test )"
 
@@ -22,9 +22,9 @@ PATCHES=(
 src_prepare() {
 	default
 
-	# for QA, we remove the Makefile’s usage of install -s.
+	# for QA, we remove the Makefile's usage of install -s.
 	# Drop ldconfig invocation.
-	# Force “librarian.sh” to respect LDFLAGS ($FLAGS should have CFLAGS
+	# Force "librarian.sh" to respect LDFLAGS ($FLAGS should have CFLAGS
 	# at that point).
 	sed -i \
 		-e '/INSTALL_PROGRAM/s,\$_strip ,,' \

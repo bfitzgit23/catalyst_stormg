@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{12..13} )
 DISTUTILS_USE_PEP517=hatchling
 inherit click-app distutils-r1
 
@@ -45,11 +45,6 @@ RDEPEND="
 		$(python_gen_any_dep 'dev-python/tabulate[${PYTHON_USEDEP}]')
 	)
 "
-BDEPEND="
-	test? (
-		dev-python/pytest-import-check[${PYTHON_USEDEP}]
-	)
-"
 
 PDEPEND="
 	!minimal? (
@@ -58,6 +53,8 @@ PDEPEND="
 		$(python_gen_any_dep 'dev-util/find-work-repology[${PYTHON_USEDEP}]')
 	)
 "
+
+EPYTEST_PLUGINS=( pytest-import-check )
 
 distutils_enable_tests pytest
 

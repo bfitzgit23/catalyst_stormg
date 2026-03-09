@@ -1,35 +1,62 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit pax-utils readme.gentoo-r1 systemd tmpfiles
-
-QA_PREBUILT="usr/bin/rslsync"
-BASE_URI="https://download-cdn.resilio.com/stable/linux-@arch@/${PN}_@arch@.tar.gz"
+inherit edo pax-utils readme.gentoo-r1 systemd tmpfiles
 
 DESCRIPTION="Resilient, fast and scalable file synchronization tool"
 HOMEPAGE="https://www.resilio.com"
-SRC_URI="amd64? ( ${BASE_URI//@arch@/x64} )
-	arm? ( ${BASE_URI//@arch@/armhf} )
-	arm64? ( ${BASE_URI//@arch@/arm64} )
-	x86? ( ${BASE_URI//@arch@/i386} )"
-S="${WORKDIR}"
 
+if [[ ${PV} == 9999 ]]; then
+	BDEPEND="net-misc/wget"
+	PROPERTIES="live"
+else
+	BASE_URI="https://download-cdn.resilio.com/${PV}/linux/@arch@/0/${PN}_@arch@.tar.gz -> ${P}_@arch@.tar.gz"
+	SRC_URI="
+		amd64? ( ${BASE_URI//@arch@/x64} )
+		arm64? ( ${BASE_URI//@arch@/arm64} )
+	"
+	KEYWORDS="-* ~amd64 ~arm64"
+fi
+
+S="${WORKDIR}"
 LICENSE="all-rights-reserved"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
 
 RESTRICT="bindist mirror"
 
-RDEPEND="acct-group/rslsync
+RDEPEND="
+	acct-group/rslsync
 	acct-user/rslsync
-	virtual/libcrypt:="
-DEPEND="${RDEPEND}"
+	virtual/libcrypt:=
+"
+
+QA_PREBUILT="usr/bin/rslsync"
 
 DOC_CONTENTS="You may need to review /etc/resilio-sync/config.json\\n
 Default metadata path is /var/lib/resilio-sync/.sync\\n
 Default web-gui URL is http://localhost:8888/\\n\\n"
+
+src_unpack() {
+	if [[ ${PV} == 9999 ]]; then
+		local base_uri="https://download-cdn.resilio.com/stable/linux/@arch@/0/${PN}_@arch@.tar.gz"
+		local uri
+		if use amd64; then
+			uri="${base_uri//@arch@/x64}"
+		elif use arm64; then
+			uri="${base_uri//@arch@/arm64}"
+		else
+			die "arch not supported"
+		fi
+
+		local dest="${T}/${PN}.tar.gz"
+		edo wget -O "${dest}" "${uri}"
+		unpack "${dest}"
+	else
+		default
+	fi
+}
 
 src_install() {
 	dobin rslsync

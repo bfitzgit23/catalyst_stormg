@@ -7,7 +7,7 @@ DOCS_BUILDER="sphinx"
 DOCS_DIR="doc"
 DOCS_AUTODOC=0
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 
 # python-any-r1 is inherited first because docs.eclass sources it, and cmake.eclass exports phases.
 inherit python-any-r1 cmake docs flag-o-matic linux-info
@@ -26,7 +26,8 @@ fi
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="curl debug doc +exif exiv2 +ffmpeg ffmpegthumbnailer +javascript +magic +matroska mysql systemd +taglib"
+IUSE="curl debug doc +exif exiv2 +ffmpeg ffmpegthumbnailer +javascript +magic +matroska mysql systemd +taglib test"
+RESTRICT="!test? ( test )"
 
 RDEPEND="
 	acct-group/gerbera
@@ -38,7 +39,7 @@ RDEPEND="
 	dev-libs/spdlog:=
 	net-libs/libupnp:=[ipv6(+),reuseaddr,-blocking-tcp]
 	sys-apps/util-linux
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/libiconv
 	curl? ( net-misc/curl )
 	exif? ( media-libs/libexif )
@@ -51,16 +52,17 @@ RDEPEND="
 	mysql? ( dev-db/mysql-connector-c:= )
 	taglib? ( media-libs/taglib:= )
 "
-
 DEPEND="${RDEPEND}"
-
-BDEPEND="doc? (
+BDEPEND="
+	doc? (
 		${PYTHON_DEPS}
 		$(python_gen_any_dep '
 			dev-python/sphinx-rtd-theme[${PYTHON_USEDEP}]
 		')
 		media-gfx/graphviz
-	)"
+	)
+	test? ( dev-cpp/gtest )
+"
 
 CONFIG_CHECK="~INOTIFY_USER"
 
@@ -85,6 +87,7 @@ src_configure() {
 		-DWITH_MYSQL=$(usex mysql)
 		-DWITH_SYSTEMD=$(usex systemd)
 		-DWITH_TAGLIB=$(usex taglib)
+		-DWITH_TESTS=$(usex test)
 	)
 
 	cmake_src_configure
@@ -102,7 +105,7 @@ src_install() {
 	newconfd "${FILESDIR}"/${PN}-1.0.0.confd ${PN}
 
 	insinto /etc/${PN}
-	newins "${FILESDIR}"/${PN}-1.3.0.config config.xml
+	newins "${FILESDIR}"/${PN}-2.6.1.config config.xml
 	fperms 0640 /etc/${PN}/config.xml
 	fowners root:gerbera /etc/${PN}/config.xml
 }

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -15,7 +15,7 @@ else
 	SRC_URI="https://github.com/NetworkConfiguration/dhcpcd/releases/download/v${PV}/${MY_P}.tar.xz"
 	S="${WORKDIR}/${MY_P}"
 
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 fi
 
 DESCRIPTION="A fully featured, yet light weight RFC2131 compliant DHCP client"
@@ -46,6 +46,7 @@ QA_CONFIG_IMPL_DECL_SKIP=(
 	consttime_memequal
 	SHA256_Init
 	hmac
+	timingsafe_bcmp
 	# These may exist on some glibc versions, but the checks fail due to
 	# -Werror / undefined reference no matter what. bug #924825
 	arc4random
@@ -168,5 +169,5 @@ pkg_postinst() {
 		elog "https://bugs.gentoo.org/show_bug.cgi?id=477356"
 	fi
 
-	optfeature "lookup-hostname hook" net-dns/bind-tools
+	optfeature "lookup-hostname hook" net-dns/bind
 }

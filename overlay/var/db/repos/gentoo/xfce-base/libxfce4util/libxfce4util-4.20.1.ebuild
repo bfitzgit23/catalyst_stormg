@@ -14,13 +14,13 @@ SRC_URI="https://archive.xfce.org/src/xfce/${PN}/${PV%.*}/${P}.tar.bz2"
 
 LICENSE="LGPL-2+ GPL-2+"
 SLOT="0/7"
-KEYWORDS="amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~sparc x86 ~amd64-linux ~x86-linux ~x64-solaris"
+KEYWORDS="amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~sparc x86 ~x64-solaris"
 IUSE="+introspection vala"
 REQUIRED_USE="vala? ( introspection )"
 
 DEPEND="
 	>=dev-libs/glib-2.72.0
-	introspection? ( >=dev-libs/gobject-introspection-1.72.0:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 "
 RDEPEND="
 	${DEPEND}

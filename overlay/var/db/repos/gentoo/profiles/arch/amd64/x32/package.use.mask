@@ -1,6 +1,14 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
+# Paul Zander <negril.nx+gentoo@gmail.com> (2025-09-11)
+# no llvm-runtimes/offload here
+dev-cpp/eigen clang-cuda
+
+# Paul Zander <negril.nx+gentoo@gmail.com> (2025-04-04)
+# Requires dev-qt/qtwebengine
+dev-util/nvidia-cuda-toolkit nsight
+
 # Nowa Ammerlaan <nowa@gentoo.org> (2025-02-03)
 # QtWebView is masked here
 dev-python/pyside webview
@@ -12,6 +20,7 @@ dev-lang/php jit
 mail-filter/rspamd jit
 net-proxy/haproxy pcre-jit
 www-servers/varnish jit
+www-apache/mod_security jit
 
 # Andreas Sturmlechner <asturm@gentoo.org> (2024-03-24)
 # Requires unkeyworded dev-qt/qtwebengine
@@ -59,6 +68,7 @@ games-util/lgogdownloader gui
 kde-apps/kde-apps-meta pim
 kde-apps/kdenetwork-meta bittorrent
 kde-apps/kleopatra pim
+kde-apps/umbrello php
 kde-misc/kio-gdrive share
 kde-plasma/plasma-nm openconnect
 net-misc/seafile-client shibboleth

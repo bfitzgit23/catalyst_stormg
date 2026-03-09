@@ -108,10 +108,10 @@ KEYWORDS="~amd64"
 RESTRICT="mirror"
 
 src_compile() {
-	go build -v -work -x -o ${PN} || die
+	ego build -o "bin/${PN}"
 }
 
 src_install() {
-	dobin ${PN}
+	dobin "bin/${PN}"
 	einstalldocs
 }

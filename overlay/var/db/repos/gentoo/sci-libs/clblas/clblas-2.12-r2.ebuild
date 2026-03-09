@@ -1,9 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{11..14} )
 DOCS_BUILDER="doxygen"
 DOCS_DEPEND="<dev-libs/mathjax-3"
 DOCS_CONFIG_NAME="clBLAS.doxy"
@@ -20,7 +20,7 @@ S="${WORKDIR}/${MYPN}-${PV}"
 
 LICENSE="Apache-2.0"
 SLOT="0/2" # soname version
-KEYWORDS="~amd64 ~riscv ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~amd64 ~riscv ~x86"
 IUSE="+client examples ktest performance test"
 # the testsuite is hopelessly broken and upstream is pretty much dead
 RESTRICT="test"
@@ -29,7 +29,10 @@ RDEPEND="
 	virtual/opencl
 	client? ( virtual/cblas )
 "
-DEPEND="${RDEPEND}"
+DEPEND="
+	${RDEPEND}
+	dev-util/opencl-headers
+"
 BDEPEND="${PYTHON_DEPS}
 	client? ( virtual/pkgconfig )
 "

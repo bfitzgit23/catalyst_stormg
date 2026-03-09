@@ -1,9 +1,9 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit cmake-multilib
+inherit cmake-multilib dot-a
 
 DESCRIPTION="Access a working SSH implementation by means of a library"
 HOMEPAGE="https://www.libssh.org/"
@@ -12,22 +12,27 @@ if [[ ${PV} == *9999* ]] ; then
 	inherit git-r3
 	EGIT_REPO_URI="https://git.libssh.org/projects/libssh.git"
 else
-	SRC_URI="https://www.libssh.org/files/$(ver_cut 1-2)/${P}.tar.xz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/libssh.asc
+	inherit verify-sig
+	SRC_URI="
+		https://www.libssh.org/files/$(ver_cut 1-2)/${P}.tar.xz
+		verify-sig? ( https://www.libssh.org/files/$(ver_cut 1-2)/${P}.tar.xz.asc )
+	"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	BDEPEND="verify-sig? ( sec-keys/openpgp-keys-libssh )"
 fi
 
 LICENSE="LGPL-2.1"
 SLOT="0/4" # subslot = soname major version
 IUSE="debug doc examples gssapi mbedtls pcap server +sftp static-libs test zlib"
 # Maintainer: check IUSE-defaults at DefineOptions.cmake
-
 RESTRICT="!test? ( test )"
 
 RDEPEND="
 	!mbedtls? ( >=dev-libs/openssl-1.0.1h-r2:0=[${MULTILIB_USEDEP}] )
 	gssapi? ( >=virtual/krb5-0-r1[${MULTILIB_USEDEP}] )
-	mbedtls? ( net-libs/mbedtls:0=[${MULTILIB_USEDEP}] )
-	zlib? ( >=sys-libs/zlib-1.2.8-r1[${MULTILIB_USEDEP}] )
+	mbedtls? ( net-libs/mbedtls:3=[${MULTILIB_USEDEP},threads] )
+	zlib? ( >=virtual/zlib-1.2.8-r1:=[${MULTILIB_USEDEP}] )
 "
 DEPEND="${RDEPEND}
 	test? (
@@ -35,11 +40,24 @@ DEPEND="${RDEPEND}
 		elibc_musl? ( sys-libs/argp-standalone )
 	)
 "
-BDEPEND="doc? ( app-text/doxygen[dot] )"
+BDEPEND+=" doc? ( app-text/doxygen[dot] )"
 
 DOCS=( AUTHORS CHANGELOG README )
 
+src_unpack() {
+	if [[ ${PV} == *9999* ]] ; then
+		git-r3_src_unpack
+	elif use verify-sig; then
+		verify-sig_verify_detached "${DISTDIR}"/${P}.tar.xz{,.asc}
+	fi
+
+	default
+}
+
 src_prepare() {
+	# Remove custom find module to use system one
+	rm cmake/Modules/FindMbedTLS.cmake || die
+
 	cmake_src_prepare
 
 	# just install the examples, do not compile them
@@ -72,22 +90,29 @@ src_prepare() {
 		fi
 
 		if use elibc_musl; then
-			sed -e "/SOLARIS/d" \
-				-i tests/CMakeLists.txt || die
+			sed -e "/SOLARIS/d" -i tests/CMakeLists.txt || die
 		fi
 	fi
 }
 
+src_configure() {
+	lto-guarantee-fat
+	multilib-minimal_src_configure
+}
+
 multilib_src_configure() {
 	local mycmakeargs=(
+		-DCMAKE_DISABLE_FIND_PACKAGE_ABIMap=ON # not packaged
 		-DWITH_NACL=OFF
 		-DWITH_STACK_PROTECTOR=OFF
 		-DWITH_STACK_PROTECTOR_STRONG=OFF
 		-DWITH_DEBUG_CALLTRACE=$(usex debug)
 		-DWITH_DEBUG_CRYPTO=$(usex debug)
+		# Deprecated per CMakeLists.txt
 		-DWITH_GCRYPT=OFF
 		-DWITH_GSSAPI=$(usex gssapi)
 		-DWITH_MBEDTLS=$(usex mbedtls)
+		-DMBEDTLS_FOUND=$(usex mbedtls) # Enforce variable from custom find module
 		-DWITH_PCAP=$(usex pcap)
 		-DWITH_SERVER=$(usex server)
 		-DWITH_SFTP=$(usex sftp)
@@ -123,6 +148,7 @@ multilib_src_install() {
 }
 
 multilib_src_install_all() {
+	strip-lto-bytecode
 	use mbedtls && DOCS+=( README.mbedtls )
 	einstalldocs
 

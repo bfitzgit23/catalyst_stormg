@@ -1,4 +1,4 @@
-# Copyright 2007-2023 Gentoo Authors
+# Copyright 2007-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # This file contains descriptions of APACHE2_MODULES USE_EXPAND flags.
@@ -81,6 +81,7 @@ proxy_wstunnel - Provides support for the tunnelling of web socket connections t
 ratelimit - Bandwidth Rate Limiting for Clients
 remoteip - Replaces the original client IP address for the connection with the useragent IP address list presented by a proxies or a load balancer via the request headers
 reqtimeout - Set timeout and minimum data rate for receiving requests
+request - Filters to handle and make available HTTP request bodies
 rewrite - Provides a rule-based rewriting engine to rewrite requested URLs on the fly
 session - Provides support for a server wide per user session interface
 session_crypto - Provides support for the encryption of user sessions before being written to a local database, or written to a remote browser via an HTTP cookie
@@ -93,7 +94,6 @@ socache_shmcb - A shared object cache provider using a high-performance cyclic b
 speling - Attempts to correct mistaken URLs that users might have entered by ignoring capitalization and by allowing up to one misspelling
 status - Provides information on server activity and performance
 substitute - Perform search and replace operations on response bodies
-tls - mod_tls TLS module for Apache, intended to replace mod_ssl
 unique_id - Provides an environment variable with a unique identifier for each request
 unixd - Basic (required) security for Unix-family platforms
 userdir - User-specific directories

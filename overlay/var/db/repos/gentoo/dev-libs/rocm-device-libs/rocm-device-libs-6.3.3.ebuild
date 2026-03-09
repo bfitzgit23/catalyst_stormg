@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -41,6 +41,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-6.1.0-fix-llvm-link.patch"
 	"${FILESDIR}/${PN}-6.1.2-fix-build.patch"
 	"${FILESDIR}/${PN}-6.2.0-test-bitcode-dir.patch"
+	"${FILESDIR}/${PN}-6.4.2-cmake-4-compat.patch"
 )
 
 src_unpack() {
@@ -83,7 +84,7 @@ src_install() {
 	local CLANG_EXE="$(get_llvm_prefix)/bin/clang"
 	# install symlink, so that clang won't ask for "--rocm-device-lib-path" flag anymore
 	local bitcodedir="$("${CLANG_EXE}" -print-resource-dir)/$(get_libdir)/amdgcn/bitcode"
-	dosym -r "/usr/lib/amdgcn/bitcode" "${bitcodedir#${EPREFIX}}"
+	dosym -r "/usr/lib/amdgcn/bitcode" "${bitcodedir#"${EPREFIX}"}"
 }
 
 src_test() {

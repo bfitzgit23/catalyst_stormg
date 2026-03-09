@@ -52,3 +52,4 @@ dev-db/sqlite abi_x86_32
 media-libs/libtheora abi_x86_32
 virtual/libudev abi_x86_32
 sys-apps/systemd-utils abi_x86_32
+app-arch/xz-utils abi_x86_32

@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -20,7 +20,7 @@ if [[ -z ${PV%%*9999} ]]; then
 else
 	MY_P="${P/_/.}"
 	SRC_URI="https://downloads.sourceforge.net/gnuplot/${MY_P}.tar.gz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x64-solaris"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~x64-macos ~x64-solaris"
 fi
 
 S="${WORKDIR}/${MY_P}"
@@ -51,9 +51,9 @@ RDEPEND="
 		dev-qt/qtbase:6[gui,network,widgets]
 		dev-qt/qtsvg:6 )
 	readline? ( sys-libs/readline:0= )
-	libcerf? ( sci-libs/libcerf )
+	libcerf? ( sci-libs/libcerf:= )
 	wxwidgets? (
-		x11-libs/wxGTK:${WX_GTK_VER}[X]
+		x11-libs/wxGTK:${WX_GTK_VER}=[X]
 		x11-libs/cairo
 		x11-libs/pango
 		x11-libs/gtk+:3 )
@@ -92,7 +92,7 @@ src_prepare() {
 
 	if [[ ${PV##*.} = 9999 ]]; then
 		local dir
-		for dir in config demo m4 term tutorial; do
+		for dir in config demo m4 term; do
 			emake -C "$dir" -f Makefile.am.in Makefile.am
 		done
 	fi
@@ -123,32 +123,37 @@ src_configure() {
 	tc-export_build_env BUILD_CC
 	export CC_FOR_BUILD=${BUILD_CC}
 
-	econf \
-		--with-texdir="${TEXMF}/tex/latex/${PN}" \
-		--with-readline=$(usex readline gnu builtin) \
-		$(use_with amos) \
-		$(use_with bitmap bitmap-terminals) \
-		$(use_with cairo) \
-		$(use_with gd) \
-		$(use_with gpic) \
-		"$(use_with libcaca caca "${EPREFIX}/usr/$(get_libdir)")" \
-		$(use_with libcerf) \
-		$(use_with lua) \
-		$(use_with metafont) \
-		$(use_with metapost) \
-		$(use_with qt6 qt qt6) \
-		$(use_with regis) \
-		$(use_with tgif) \
-		$(use_with X x) \
-		--enable-stats \
-		$(use_enable wxwidgets) \
-		DIST_CONTACT="https://bugs.gentoo.org/" \
+	local myconf=(
+		--with-texdir="${TEXMF}/tex/latex/${PN}"
+		--with-readline=$(usex readline gnu builtin)
+		$(use_with amos)
+		$(use_with bitmap bitmap-terminals)
+		$(use_with cairo)
+		$(use_with gd)
+		$(use_with gpic)
+		"$(use_with libcaca caca "${EPREFIX}/usr/$(get_libdir)")"
+		$(use_with libcerf)
+		$(use_with lua)
+		$(use_with metafont)
+		$(use_with metapost)
+		$(use_with qt6 qt qt6)
+		$(use_with regis)
+		$(use_with tgif)
+		$(use_with X x)
+		--enable-stats
+		$(use_enable wxwidgets)
+		DIST_CONTACT="https://bugs.gentoo.org/"
 		EMACS=no
+	)
+
+	econf "${myconf[@]}"
 }
 
 src_compile() {
-	# Prevent access violations, see bug 201871
-	export VARTEXFONTS="${T}/fonts"
+	# Prevent access violations #201871
+	local -x VARTEXFONTS="${T}/fonts"
+	# Work around luatex braindamage #950021
+	local -x TEXMFCACHE="${T}/texmf-var" TEXMFVAR="${T}/texmf-var"
 
 	emake all
 

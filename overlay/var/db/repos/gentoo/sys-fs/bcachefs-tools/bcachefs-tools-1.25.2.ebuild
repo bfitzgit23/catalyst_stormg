@@ -104,7 +104,7 @@ else
 	"
 	SRC_URI+=" verify-sig? ( https://evilpiepirate.org/bcachefs-tools/bcachefs-tools-${PV}.tar.sign )"
 	S="${WORKDIR}/${P}"
-	KEYWORDS="~amd64 ~arm64"
+	KEYWORDS="amd64 arm64"
 fi
 
 LICENSE="Apache-2.0 BSD GPL-2 MIT"
@@ -120,7 +120,7 @@ DEPEND="
 	dev-libs/userspace-rcu:=
 	sys-apps/keyutils:=
 	sys-apps/util-linux
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/udev
 	fuse? ( >=sys-fs/fuse-3.7.0 )
 "

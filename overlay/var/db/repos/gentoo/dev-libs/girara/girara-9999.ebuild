@@ -1,9 +1,9 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit meson
+inherit flag-o-matic meson
 
 DESCRIPTION="UI library that focuses on simplicity and minimalism"
 HOMEPAGE="https://pwmt.org/projects/girara/"
@@ -19,18 +19,17 @@ fi
 
 LICENSE="ZLIB"
 SLOT="0/9999"
-IUSE="doc test"
+IUSE="doc test X"
 RESTRICT="!test? ( test )"
 
 # REVIEW: are all those really needed?
 RDEPEND="
 	app-accessibility/at-spi2-core
 	>=dev-libs/glib-2.72:2
-	dev-libs/json-glib:=
 	media-libs/harfbuzz:=
 	x11-libs/cairo[glib]
 	x11-libs/gdk-pixbuf
-	>=x11-libs/gtk+-3.24:3
+	>=x11-libs/gtk+-3.24:3[X?]
 	x11-libs/pango
 "
 DEPEND="
@@ -50,8 +49,11 @@ BDEPEND="
 DOCS=( AUTHORS README.md )
 
 src_configure() {
-	local -a emesonargs=(
-		-Djson=enabled
+	# defang automagic dependencies
+	# Currently only needed for X11-specific workarounds
+	use X || append-flags -DGENTOO_GTK_HIDE_X11
+
+	local emesonargs=(
 		$(meson_feature doc docs)
 		$(meson_feature test tests)
 	)
@@ -60,5 +62,5 @@ src_configure() {
 
 src_compile() {
 	meson_src_compile
-	use doc && HTML_DOCS=( "${BUILD_DIR}"/doc/html/* ) # BUILD_DIR is set by meson_src_compile
+	use doc && HTML_DOCS=( "${BUILD_DIR}"/doc/html/. ) # BUILD_DIR is set by meson_src_compile
 }

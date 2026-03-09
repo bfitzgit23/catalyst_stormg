@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Gentoo Authors
+# Copyright 2024-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: rust.eclass
@@ -67,7 +67,15 @@ fi
 # @DESCRIPTION:
 # Definitive list of Rust slots and the associated LLVM slot, newest first.
 declare -A -g -r _RUST_LLVM_MAP=(
-	["9999"]=20
+	["9999"]=22
+	["1.94.0"]=21
+	["1.93.1"]=21
+	["1.93.0"]=21
+	["1.92.0"]=21
+	["1.91.0"]=21
+	["1.90.0"]=20
+	["1.89.0"]=20
+	["1.88.0"]=20
 	["1.87.0"]=20
 	["1.86.0"]=19
 	["1.85.1"]=19
@@ -84,7 +92,6 @@ declare -A -g -r _RUST_LLVM_MAP=(
 	["1.76.0"]=17
 	["1.75.0"]=17
 	["1.74.1"]=17
-	["1.71.1"]=16
 )
 
 # @ECLASS_VARIABLE: _RUST_SLOTS_ORDERED
@@ -95,6 +102,14 @@ declare -A -g -r _RUST_LLVM_MAP=(
 # this array is used to store the Rust slots in a more convenient order for iteration.
 declare -a -g -r _RUST_SLOTS_ORDERED=(
 	"9999"
+	"1.94.0"
+	"1.93.1"
+	"1.93.0"
+	"1.92.0"
+	"1.91.0"
+	"1.90.0"
+	"1.89.0"
+	"1.88.0"
 	"1.87.0"
 	"1.86.0"
 	"1.85.1"
@@ -111,7 +126,6 @@ declare -a -g -r _RUST_SLOTS_ORDERED=(
 	"1.76.0"
 	"1.75.0"
 	"1.74.1"
-	"1.71.1"
 )
 
 # == user control knobs ==
@@ -137,12 +151,14 @@ declare -a -g -r _RUST_SLOTS_ORDERED=(
 # == control variables ==
 
 # @ECLASS_VARIABLE: RUST_MAX_VER
+# @PRE_INHERIT
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 # Highest Rust slot supported by the package. Needs to be set before
 # rust_pkg_setup is called. If unset, no upper bound is assumed.
 
 # @ECLASS_VARIABLE: RUST_MIN_VER
+# @PRE_INHERIT
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 # Lowest Rust slot supported by the package. Needs to be set before
@@ -161,6 +177,7 @@ declare -a -g -r _RUST_SLOTS_ORDERED=(
 # This is set by rust_pkg_setup.
 
 # @ECLASS_VARIABLE: RUST_NEEDS_LLVM
+# @PRE_INHERIT
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 # If set to a non-empty value generate a llvm_slot_${llvm_slot}? gated
@@ -173,6 +190,7 @@ declare -a -g -r _RUST_SLOTS_ORDERED=(
 # means that a LLVM slot in LLVM_COMPAT has had all of its Rust slots filtered.
 
 # @ECLASS_VARIABLE: RUST_MULTILIB
+# @PRE_INHERIT
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 # If set to a non-empty value insert MULTILIB_USEDEP into the generated
@@ -188,6 +206,7 @@ declare -a -g -r _RUST_SLOTS_ORDERED=(
 # implementations listed in LLVM_COMPAT.
 
 # @ECLASS_VARIABLE: RUST_OPTIONAL
+# @PRE_INHERIT
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 # If set to a non-empty value, the Rust dependency will not be added
@@ -195,6 +214,7 @@ declare -a -g -r _RUST_SLOTS_ORDERED=(
 # certain USE themselves.
 
 # @ECLASS_VARIABLE: RUST_REQ_USE
+# @PRE_INHERIT
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 # Additional USE-dependencies to be added to the Rust dependency.
@@ -250,22 +270,25 @@ _rust_set_globals() {
 	local usedep="${RUST_REQ_USE+[${RUST_REQ_USE}]}"
 
 	# If we're not using LLVM, we can just generate a simple Rust dependency
-	# In time we need to implement trivial dependencies
-	# (>=RUST_MIN_VER) where RUST_MAX_VER isnt't set,
-	# however the previous attempt to do this ran into issues
-	# where `emerge ... --keep-going` ate legacy non-slotted
-	# Rust blockers resutling in the non-slotted version never
-	# being removed and breaking builds. #943206 #943143
 	if [[ -z "${RUST_NEEDS_LLVM}" ]]; then
 		rust_dep=( "|| (" )
-		# depend on each slot between RUST_MIN_VER and RUST_MAX_VER; it's a bit specific but
-		# won't hurt as we only ever add newer Rust slots.
-		for slot in "${_RUST_SLOTS[@]}"; do
+		# We can be more flexible if we generate a simpler, open-ended dependency
+		# when we don't have a max version set.
+		if [[ -z "${RUST_MAX_VER}" ]]; then
 			rust_dep+=(
-				"dev-lang/rust-bin:${slot}${usedep}"
-				"dev-lang/rust:${slot}${usedep}"
+				">=dev-lang/rust-bin-${RUST_MIN_VER}:*${usedep}"
+				">=dev-lang/rust-${RUST_MIN_VER}:*${usedep}"
 			)
-		done
+		else
+			# depend on each slot between RUST_MIN_VER and RUST_MAX_VER; it's a bit specific but
+			# won't hurt as we only ever add newer Rust slots.
+			for slot in "${_RUST_SLOTS[@]}"; do
+				rust_dep+=(
+					"dev-lang/rust-bin:${slot}${usedep}"
+					"dev-lang/rust:${slot}${usedep}"
+				)
+			done
+		fi
 		rust_dep+=( ")" )
 		RUST_DEPEND="${rust_dep[*]}"
 	else
@@ -308,6 +331,7 @@ unset -f _rust_set_globals
 
 # @FUNCTION: _get_rust_slot
 # @USAGE: [-b|-d]
+# @INTERNAL
 # @DESCRIPTION:
 # Find the newest Rust install that is acceptable for the package,
 # and export its version (i.e. SLOT) and type (source or bin[ary])

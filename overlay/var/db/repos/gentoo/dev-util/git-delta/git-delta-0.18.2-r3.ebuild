@@ -252,7 +252,7 @@ CRATES="
 	zerovec-derive@0.10.3
 	zerovec@0.10.4
 "
-
+RUST_MIN_VER="1.81"
 inherit cargo shell-completion
 
 DESCRIPTION="A syntax-highlighting pager for git"
@@ -267,7 +267,7 @@ LICENSE="MIT"
 # Dependent crate licenses
 LICENSE+=" Apache-2.0 BSD LGPL-3+ MIT MPL-2.0 Unicode-3.0"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~ppc64 ~riscv"
+KEYWORDS="amd64 ~arm ~arm64 ~ppc64 ~riscv"
 
 BDEPEND="
 	virtual/pkgconfig
@@ -275,7 +275,7 @@ BDEPEND="
 DEPEND="
 	dev-libs/libgit2:0/1.9
 	dev-libs/oniguruma:=
-	sys-libs/zlib
+	virtual/zlib:=
 "
 RDEPEND="
 	${DEPEND}

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -13,7 +13,7 @@ SRC_URI="https://ftp.samba.org/pub/linux-cifs/${PN}/${P}.tar.bz2"
 
 LICENSE="GPL-3"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ~ppc ppc64 ~riscv ~s390 ~sparc x86 ~x86-linux"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ~ppc ppc64 ~riscv ~s390 ~sparc x86"
 IUSE="+acl +ads +caps creds pam +python systemd"
 
 RDEPEND="
@@ -46,6 +46,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-6.12-ln_in_destdir.patch" #766594
 	"${FILESDIR}/${PN}-6.15-musl.patch"
 	"${FILESDIR}/${PN}-7.0-no-clobber-fortify-source.patch"
+	"${FILESDIR}/${PN}-7.0-musl.patch"
 )
 
 pkg_setup() {

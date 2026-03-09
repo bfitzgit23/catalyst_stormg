@@ -1,7 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
+
+inherit toolchain-funcs
 
 DESCRIPTION="\"minimum viable product\" Wayland compositor based on wlroots"
 HOMEPAGE="https://gitlab.freedesktop.org/wlroots/wlroots/-/tree/master/tinywl"
@@ -10,8 +12,10 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://gitlab.freedesktop.org/wlroots/wlroots.git"
 	inherit git-r3
 else
-	SRC_URI="https://gitlab.freedesktop.org/wlroots/wlroots/-/releases/${PV}/downloads/wlroots-${PV}.tar.gz"
-	KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
+	inherit verify-sig
+	SRC_URI="https://gitlab.freedesktop.org/wlroots/wlroots/-/releases/${PV}/downloads/wlroots-${PV}.tar.gz
+		https://gitlab.freedesktop.org/wlroots/wlroots/-/releases/${PV}/downloads/wlroots-${PV}.tar.gz.sig"
+	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc64 ~riscv ~x86"
 	S="${WORKDIR}/wlroots-${PV}"
 fi
 
@@ -32,12 +36,18 @@ BDEPEND="
 	virtual/pkgconfig
 "
 
+if [[ ${PV} != 9999 ]]; then
+	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-emersion )"
+	VERIFY_SIG_OPENPGP_KEY_PATH="/usr/share/openpgp-keys/emersion.asc"
+fi
+
 src_prepare() {
 	sed -i -e "s/-Werror //" tinywl/Makefile || die
 	default
 }
 
 src_compile() {
+	tc-export CC PKG_CONFIG
 	emake -C tinywl
 }
 

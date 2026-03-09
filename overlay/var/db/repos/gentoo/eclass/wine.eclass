@@ -1,4 +1,4 @@
-# Copyright 2025 Gentoo Authors
+# Copyright 2025-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: wine.eclass
@@ -35,21 +35,33 @@ inherit autotools flag-o-matic multilib prefix toolchain-funcs wrapper
 # abusing abi_x86_* with some specific requirements.
 #
 # TODO: when the *new* wow64 mode (aka USE=wow64) is mature enough to
-# be preferred over abi_x86_32, this should be removed and support for
-# 32bit-only-on-64bit be dropped matching how /no-multilib/ handles it
-# (USE=wow64 should be enabled by default on amd64 then, but not arm64)
+# be about always preferred over abi_x86_32, this should be removed and
+# support for 32bit-only-on-64bit be dropped matching how /no-multilib/
+# handles it
 readonly WINE_USEDEP="abi_x86_32(-)?,abi_x86_64(-)?"
 
-IUSE="
-	+abi_x86_32 +abi_x86_64 crossdev-mingw custom-cflags
-	+mingw +strip wow64
-"
+IUSE="+abi_x86_64 arm64ec crossdev-mingw custom-cflags +mingw +strip"
+
+# enable wow64 in wine-11+ where it is no longer considered experimental
+# and provides a better UX for Gentoo users without USE=abi_x86_32
+# TODO: drop wine-proton exception here and in wine_pkg_preinst when
+# 9999 is based on wine-11.0
+if ver_test -ge 11 && [[ ${PN} != wine-proton ]]; then
+	IUSE+=" abi_x86_32 +wow64"
+else
+	IUSE+=" +abi_x86_32 wow64"
+fi
+
 REQUIRED_USE="
 	|| ( abi_x86_32 abi_x86_64 arm64 )
 	crossdev-mingw? ( mingw )
 	wow64? ( !arm64? ( abi_x86_64 !abi_x86_32 ) )
 "
 
+RDEPEND="
+	arm64? ( wow64? ( app-emulation/fex-xtajit[wow64(+)] ) )
+	arm64ec? ( app-emulation/fex-xtajit[arm64ec(-)] )
+"
 BDEPEND="
 	|| (
 		sys-devel/binutils:*
@@ -89,6 +101,7 @@ wine_pkg_pretend() {
 			$(usev abi_x86_32 i686)
 			$(usev wow64 i686)
 			$(usev arm64 aarch64)
+			$(usev arm64ec arm64ec)
 		)
 
 		local mingw
@@ -188,9 +201,8 @@ wine_src_configure() {
 	# may segfault at runtime if used (bug #931329)
 	filter-flags -Wl,--gc-sections
 
-	# avoid gcc-15's c23 default for now (bug #943849)
-	# TODO: verify if still needed and limit to old until cleanup
-	append-cflags -std=gnu17
+	# avoid gcc-15's c23 default with older wine (bug #943849)
+	ver_test -lt 10 && append-cflags -std=gnu17
 
 	# Wine uses many linker tricks that are unlikely to work
 	# with anything but bfd or lld (bug #867097)
@@ -204,7 +216,7 @@ wine_src_configure() {
 	# wcc_* variables are used by _wine_flags(), see that
 	# function if need to adjust *FLAGS only for cross
 	local wcc_{amd64,x86,arm64}{,_testflags}
-	# TODO?: llvm-mingw support if ever packaged and wanted
+	# TODO?: llvm-mingw support if useful
 	if use mingw; then
 		conf+=( --with-mingw )
 
@@ -217,6 +229,7 @@ wine_src_configure() {
 		# no mingw64-toolchain ~arm64, but "may" be usable with crossdev
 		# (aarch64- rather than arm64- given it is what Wine searches for)
 		wcc_arm64=${CROSSCC:-${CROSSCC_arm64:-aarch64-w64-mingw32-gcc}}
+		wcc_arm64ec=${CROSSCC:-${CROSSCC_arm64ec:-arm64ec-w64-mingw32-gcc}}
 	else
 		conf+=( --with-mingw=clang )
 
@@ -230,6 +243,8 @@ wine_src_configure() {
 		wcc_x86_testflags="-target i386-windows"
 		wcc_arm64=${CROSSCC:-${CROSSCC_arm64:-${clang}}}
 		wcc_arm64_testflags="-target aarch64-windows"
+		wcc_arm64ec=${CROSSCC:-${CROSSCC_arm64ec:-${clang}}}
+		wcc_arm64ec_testflags="-target arm64ec-windows"
 
 		# do not copy from regular LDFLAGS given odds are they all are
 		# incompatible, and difficult to test linking without llvm-mingw
@@ -240,6 +255,7 @@ wine_src_configure() {
 		ac_cv_prog_x86_64_CC="${wcc_amd64}"
 		ac_cv_prog_i386_CC="${wcc_x86}"
 		ac_cv_prog_aarch64_CC="${wcc_arm64}"
+		ac_cv_prog_arm64ec_CC="${wcc_arm64ec}"
 	)
 
 	if ver_test -ge 10; then
@@ -252,6 +268,8 @@ wine_src_configure() {
 			i386_LDFLAGS="${CROSSLDFLAGS_x86:-${CROSSLDFLAGS:-$(_wine_flags ld x86)}}"
 			aarch64_CFLAGS="${CROSSCFLAGS_arm64:-${CROSSCFLAGS:-$(_wine_flags c arm64)}}"
 			aarch64_LDFLAGS="${CROSSLDFLAGS_arm64:-${CROSSLDFLAGS:-$(_wine_flags ld arm64)}}"
+			arm64ec_CFLAGS="${CROSSCFLAGS_arm64ec:-${CROSSCFLAGS:-$(_wine_flags c arm64ec)}}"
+			arm64ec_LDFLAGS="${CROSSLDFLAGS_arm64ec:-${CROSSLDFLAGS:-$(_wine_flags ld arm64ec)}}"
 		)
 	elif use abi_x86_64; then
 		conf+=(
@@ -298,8 +316,15 @@ wine_src_configure() {
 			$(usev abi_x86_64 x86_64)
 			$(usev wow64 i386) # 32-on-64bit "new" wow64
 			$(usev arm64 aarch64)
+			$(usev arm64ec arm64ec)
 		)
 		conf+=( ${archs:+--enable-archs="${archs[*]}"} )
+
+		if use amd64 && use !abi_x86_64; then
+			# same as above for 32bit-only on 64bit (allowed for wine)
+			conf+=( TARGETFLAGS=-m32 )
+			multilib_toolchain_setup x86
+		fi
 
 		econf "${conf[@]}" "${wineconfargs[@]}"
 	fi
@@ -349,6 +374,14 @@ wine_src_install() {
 		fi
 	fi
 
+	use arm64 && use wow64 &&
+		dosym -r /usr/lib/fex-xtajit/libwow64fex.dll \
+			${WINE_PREFIX}/wine/aarch64-windows/xtajit.dll
+
+	use arm64ec &&
+		dosym -r /usr/lib/fex-xtajit/libarm64ecfex.dll \
+			${WINE_PREFIX}/wine/aarch64-windows/xtajit64.dll
+
 	# delete unwanted files if requested, not done directly in ebuilds
 	# given must be done after install and before wrappers
 	if (( ${#WINE_SKIP_INSTALL[@]} )); then
@@ -370,14 +403,30 @@ wine_src_install() {
 		if use mingw; then
 			: "$(usex arm64 aarch64 $(usex abi_x86_64 x86_64 i686)-w64-mingw32-strip)"
 			find "${ED}"${WINE_PREFIX}/wine/*-windows -regex '.*\.\(a\|dll\|exe\)' \
-				-exec ${_} --strip-unneeded {} +
+				-type f -exec ${_} --strip-unneeded {} +
 		else
 			# llvm-strip errors on .a, and CHOST binutils strip could mangle
 			find "${ED}"${WINE_PREFIX}/wine/*-windows -regex '.*\.\(dll\|exe\)' \
-				-exec llvm-strip --strip-unneeded {} +
+				-type f -exec llvm-strip --strip-unneeded {} +
 		fi
 		eend ${?} || die
 	fi
+}
+
+# @FUNCTION: wine_pkg_preinst
+# @DESCRIPTION:
+# This should *not* be called directly, if need to declare your own
+# pkg_preinst, then simply do not call this.
+#
+# This is a temporary helper to warn about a default USE change,
+# that should be removed after 6+ months of >=wine-11.0 being stable
+# (also remove the pkg_preinst EXPORT and warning in wine_pkg_postinst).
+wine_pkg_preinst() {
+	# if *any* slot has it set or it is a new install, then assume
+	# user does not need a warning
+	use wow64 && ver_test -ge 11 && [[ ${PN} != wine-proton ]] &&
+		has_version "${CATEGORY}/${PN}" &&
+		! has_version "${CATEGORY}/${PN}[wow64(-)]" && WINE_WARN_WOW64=
 }
 
 # @FUNCTION: wine_pkg_postinst
@@ -413,11 +462,13 @@ wine_pkg_postinst() {
 		fi
 	fi
 
-	if use arm64 && use wow64; then
+	# see wine_pkg_preinst
+	if [[ -v WINE_WARN_WOW64 ]]; then
 		ewarn
-		ewarn "${PN} does not include an x86 emulator, running x86 binaries"
-		ewarn "with USE=wow64 on arm64 requires manually setting up xtajit.dll"
-		ewarn "(not packaged) in the Wine prefix."
+		ewarn "This version of Wine now enables USE=wow64 and disables USE=abi_x86_32"
+		ewarn "by default. This removes the need to set USE=abi_x86_32 on most of"
+		ewarn "Wine's dependencies while still being able to run 32bit applications."
+		ewarn "If experience issues, can be reverted with USE='abi_x86_32 -wow64'."
 	fi
 
 	eselect wine update --if-unset || die
@@ -448,17 +499,34 @@ _wine_flags() {
 
 	case ${1} in
 		c)
-			# many hardening options are unlikely to work right
-			filter-flags '-fstack-protector*' #870136
-			filter-flags '-mfunction-return=thunk*' #878849
+			if use mingw && use !custom-cflags; then
+				# Changing CROSSCFLAGS is not very tested and often cause
+				# problems even with simple things like -march=native/-O3 when
+				# using mingw-gcc (thus -mno-avx below, also bug #960825), only
+				# inherit basic flags from CFLAGS unless USE=custom-cflags.
+				#
+				# Note that users setting CROSSCFLAGS directly (unfiltered)
+				# are on their own just like with USE=custom-cflags.
+				local flag flags=${CFLAGS} CFLAGS=-O2
+				# not get-flag() given it returns only the first occurence
+				# TODO: can drop |-std=* when <wine-10 is gone
+				for flag in ${flags}; do
+					[[ ${flag} == @(-g*|-O[0-1g]|-std=*) ]] && CFLAGS+=" ${flag}"
+				done
+			else
+				# many hardening options are unlikely to work right
+				filter-flags '-fstack-protector*' #870136
+				filter-flags '-mfunction-return=thunk*' #878849
 
-			# bashrc-mv users often do CFLAGS="${LDFLAGS}" and then
-			# compile-only tests miss stripping unsupported linker flags
-			filter-flags '-Wl,*'
+				# bashrc-mv users often do CFLAGS="${LDFLAGS}" and then
+				# compile-only tests miss stripping unsupported linker flags
+				filter-flags '-Wl,*'
 
-			# -mavx with mingw-gcc has a history of problems and still see
-			# users have issues despite Wine's -mpreferred-stack-boundary=2
-			use mingw && append-cflags -mno-avx
+				# -mavx with mingw-gcc has a history of problems and still see
+				# users have issues despite Wine's -mpreferred-stack-boundary=2
+				# (kept even with USE=custom-cflags wrt bug #912268)
+				use mingw && append-cflags -mno-avx
+			fi
 
 			# same as strip-unsupported-flags but echos only for CC
 			CC="${wcc} ${wccflags}" test-flags-CC ${CFLAGS}
@@ -474,4 +542,4 @@ _wine_flags() {
 
 fi
 
-EXPORT_FUNCTIONS pkg_pretend src_prepare src_configure src_compile src_install pkg_postinst pkg_postrm
+EXPORT_FUNCTIONS pkg_pretend src_prepare src_configure src_compile src_install pkg_preinst pkg_postinst pkg_postrm

@@ -3,8 +3,12 @@
 
 EAPI=8
 
+GENTOO_DEPEND_ON_PERL="no"
 QA_PKGCONFIG_VERSION=$(ver_cut 1-3)
-inherit autotools flag-o-matic perl-functions toolchain-funcs
+inherit autotools flag-o-matic perl-module toolchain-funcs
+
+DESCRIPTION="A collection of tools and libraries for many image formats"
+HOMEPAGE="https://imagemagick.org"
 
 if [[ ${PV} == 9999 ]] ; then
 	EGIT_REPO_URI="https://github.com/ImageMagick/ImageMagick.git"
@@ -14,19 +18,19 @@ else
 	MY_PV="$(ver_rs 3 '-')"
 	MY_P="ImageMagick-${MY_PV}"
 	SRC_URI="mirror://imagemagick/${MY_P}.tar.xz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~arm64-macos ~x64-macos ~x64-solaris"
 fi
 
 S="${WORKDIR}/${MY_P}"
-
-DESCRIPTION="A collection of tools and libraries for many image formats"
-HOMEPAGE="https://imagemagick.org/index.php"
 
 LICENSE="imagemagick"
 # Please check this on bumps, SONAME is often not updated! Use abidiff on old/new.
 # If ABI is broken, change the bit after the '-'.
 SLOT="0/$(ver_cut 1-3)-18"
-IUSE="bzip2 corefonts +cxx djvu fftw fontconfig fpx graphviz hardened hdri heif jbig jpeg jpeg2k jpegxl lcms lqr lzma opencl openexr openmp pango perl +png postscript q32 q8 raw static-libs svg test tiff truetype webp wmf X xml zip zlib"
+IUSE="bzip2 corefonts +cxx djvu fftw fontconfig fpx graphviz hardened hdri heif"
+IUSE+=" jbig jpeg jpeg2k jpegxl lcms lqr lzma opencl openexr openmp pango perl ${GENTOO_PERL_USESTRING}"
+IUSE+=" +png postscript q32 q8 raw static-libs svg test tiff truetype webp wmf"
+IUSE+=" X xml zip zlib"
 
 REQUIRED_USE="
 	corefonts? ( truetype )
@@ -56,7 +60,10 @@ RDEPEND="
 	opencl? ( virtual/opencl )
 	openexr? ( media-libs/openexr:0= )
 	pango? ( x11-libs/pango )
-	perl? ( >=dev-lang/perl-5.8.8:= )
+	perl? (
+		${GENTOO_PERL_DEPSTRING}
+		>=dev-lang/perl-5.8.8:=
+	)
 	png? ( media-libs/libpng:= )
 	postscript? ( app-text/ghostscript-gpl:= )
 	raw? ( media-libs/libraw:= )
@@ -80,7 +87,7 @@ RDEPEND="
 	xml? ( dev-libs/libxml2:= )
 	lzma? ( app-arch/xz-utils )
 	zip? ( dev-libs/libzip:= )
-	zlib? ( sys-libs/zlib:= )
+	zlib? ( virtual/zlib:= )
 "
 DEPEND="
 	${RDEPEND}
@@ -107,22 +114,8 @@ src_prepare() {
 	eautoreconf
 
 	# For testsuite, see bug #500580#c3
-	local ati_cards mesa_cards nvidia_cards render_cards
 	shopt -s nullglob
-	ati_cards=$(echo -n /dev/ati/card*)
-	for card in ${ati_cards[@]} ; do
-		addpredict "${card}"
-	done
-	mesa_cards=$(echo -n /dev/dri/card*)
-	for card in ${mesa_cards[@]} ; do
-		addpredict "${card}"
-	done
-	nvidia_cards=$(echo -n /dev/nvidia*)
-	for card in ${nvidia_cards[@]} ; do
-		addpredict "${card}"
-	done
-	render_cards=$(echo -n /dev/dri/renderD128*)
-	for card in ${render_cards[@]} ; do
+	for card in /dev/{{ati,dri}/card,nvidia,dri/renderD128}*; do
 		addpredict "${card}"
 	done
 	shopt -u nullglob
@@ -199,6 +192,11 @@ src_configure() {
 	CONFIG_SHELL="${BROOT}"/bin/bash econf "${myeconfargs[@]}"
 }
 
+src_compile() {
+	# Avoid perl-module_src_compile
+	default
+}
+
 src_test() {
 	# Install default (unrestricted) policy in $HOME for test suite, bug #664238
 	local _im_local_config_home="${HOME}/.config/ImageMagick"
@@ -233,13 +231,15 @@ src_install() {
 	einstalldocs
 
 	if use perl; then
-		find "${ED}" -type f -name perllocal.pod -exec rm -f {} +
-		find "${ED}" -depth -mindepth 1 -type d -empty -exec rm -rf {} +
+		find "${ED}" -type f -name perllocal.pod -exec rm -f {} + || die
+		find "${ED}" -depth -mindepth 1 -type d -empty -exec rm -rf {} + || die
 	fi
 
-	find "${ED}" -name '*.la' -exec sed -i -e "/^dependency_libs/s:=.*:='':" {} +
 	# .la files in parent are not needed, keep plugin .la files
 	find "${ED}"/usr/$(get_libdir)/ -maxdepth 1 -name "*.la" -delete || die
+
+	# https://github.com/gentoo/gentoo/pull/37716#discussion_r1696713348
+	find "${ED}" -name '*.la' -exec sed -i -e "/^dependency_libs/s:=.*:='':" {} + || die
 
 	if use opencl; then
 		cat <<-EOF > "${T}"/99${PN}

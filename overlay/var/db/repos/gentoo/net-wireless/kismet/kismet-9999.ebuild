@@ -3,14 +3,13 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit autotools eapi9-ver python-single-r1 udev systemd
 
 if [[ ${PV} == "9999" ]] ; then
 	EGIT_REPO_URI="https://www.kismetwireless.net/git/${PN}.git"
 	inherit git-r3
-	RESTRICT="strip"
 else
 	MY_P=${P/\./-}
 	MY_P=${MY_P/_beta/-BETA}
@@ -45,7 +44,7 @@ CDEPEND="
 	dev-libs/glib:2
 	dev-libs/elfutils
 	dev-libs/openssl:=
-	sys-libs/zlib:=
+	virtual/zlib:=
 	dev-db/sqlite:3
 	net-libs/libwebsockets:=[client,lejp]
 	kernel_linux? ( sys-libs/libcap

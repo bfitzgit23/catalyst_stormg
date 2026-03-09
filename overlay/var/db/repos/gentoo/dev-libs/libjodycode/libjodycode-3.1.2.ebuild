@@ -10,11 +10,7 @@ S="${WORKDIR}/${PN}"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64 ~riscv"
-
-# missing test script
-# https://github.com/jbruchon/jdupes/issues/191
-RESTRICT="test"
+KEYWORDS="amd64 ~arm64 ~riscv"
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-3.0.1-static-lib.patch

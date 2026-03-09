@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -17,7 +17,7 @@ if [[ "${PV}" == 99999999 ]]; then
 	EGIT_REPO_URI="https://github.com/vinceliuice/Tela-icon-theme.git"
 else
 	SRC_URI="https://github.com/vinceliuice/Tela-icon-theme/archive/refs/tags/${MY_PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="amd64 arm64 ppc64"
+	KEYWORDS="~amd64 ~arm64 ~ppc64"
 	S="${WORKDIR}/${MY_PN}-${MY_PV}"
 fi
 

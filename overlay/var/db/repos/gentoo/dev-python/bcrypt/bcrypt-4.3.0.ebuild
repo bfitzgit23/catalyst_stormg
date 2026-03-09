@@ -5,7 +5,7 @@ EAPI=8
 
 DISTUTILS_EXT=1
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{10..13} pypy3 pypy3_11 )
+PYTHON_COMPAT=( python3_{11..14} pypy3_11 )
 
 CRATES="
 	autocfg@1.4.0
@@ -75,7 +75,7 @@ LICENSE="Apache-2.0"
 # Dependent crate licenses
 LICENSE+=" Apache-2.0-with-LLVM-exceptions BSD MIT Unicode-3.0"
 SLOT="0"
-KEYWORDS="amd64 arm arm64 ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86"
+KEYWORDS="amd64 arm arm64 ~loong ~mips ppc ppc64 ~riscv ~s390 ~sparc x86"
 
 BDEPEND="
 	>=dev-python/setuptools-rust-1.7.0[${PYTHON_USEDEP}]
@@ -95,6 +95,7 @@ src_prepare() {
 }
 
 python_configure_all() {
+	export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
 	# Workaround for sys-cluster/ceph (bug #920906)
 	# https://github.com/pyca/bcrypt/issues/694
 	# https://github.com/PyO3/pyo3/issues/3451

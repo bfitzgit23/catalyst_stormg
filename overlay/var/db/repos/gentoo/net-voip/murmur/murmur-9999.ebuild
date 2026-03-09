@@ -1,11 +1,11 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 inherit cmake flag-o-matic systemd readme.gentoo-r1 tmpfiles
 
-DESCRIPTION="Mumble is an open source, low-latency, high quality voice chat software"
+DESCRIPTION="Open source, low-latency, high quality voice chat server"
 HOMEPAGE="https://wiki.mumble.info"
 if [[ "${PV}" == 9999 ]] ; then
 	inherit git-r3
@@ -15,6 +15,7 @@ if [[ "${PV}" == 9999 ]] ; then
 	# even if these components may not be compiled in
 	EGIT_SUBMODULES=(
 		'-*'
+		3rdparty/CLI11
 		3rdparty/cmake-compiler-flags
 		3rdparty/FindPythonInterpreter
 		3rdparty/flag-icons
@@ -39,23 +40,21 @@ fi
 
 LICENSE="BSD"
 SLOT="0"
-IUSE="+ice test zeroconf"
+IUSE="+ice mysql postgres +sqlite test zeroconf"
+REQUIRED_USE="|| ( mysql postgres sqlite )"
 RESTRICT="!test? ( test )"
 
 RDEPEND="
 	acct-group/murmur
 	acct-user/murmur
-	dev-cpp/ms-gsl
+	dev-cpp/cli11
+	dev-cpp/nlohmann_json
+	>=dev-db/soci-4.1.2-r2[mysql?,postgres?,sqlite?]
 	>=dev-libs/openssl-1.0.0b:0=
 	>=dev-libs/protobuf-2.2.0:=
-	dev-qt/qtcore:5
-	dev-qt/qtdbus:5
-	dev-qt/qtnetwork:5[ssl]
-	|| (
-		dev-qt/qtsql:5[sqlite]
-		dev-qt/qtsql:5[mysql]
-	)
-	dev-qt/qtxml:5
+	dev-libs/spdlog:=
+	>=dev-libs/utfcpp-4.0.0
+	dev-qt/qtbase:6[dbus,network,sqlite?,ssl,xml]
 	sys-apps/lsb-release
 	>=sys-libs/libcap-2.15
 	ice? ( dev-libs/Ice:= )
@@ -64,7 +63,7 @@ RDEPEND="
 
 DEPEND="${RDEPEND}
 	dev-libs/boost
-	dev-qt/qttest:5
+	dev-qt/qtbase:6[test?]
 "
 BDEPEND="
 	acct-group/murmur
@@ -84,6 +83,11 @@ This will set the built-in 'SuperUser' password to '<pw>' when starting murmur.
 "
 
 src_prepare() {
+	sed '/TRACY_ON_DEMAND/s@ ON @ OFF @' -i src/CMakeLists.txt || die
+
+	# Fix unneeded dependency on GSL in database
+	sed '/target_link_libraries/s@ GSL @ @' -i src/murmur/database/CMakeLists.txt || die
+
 	# Adjust default server settings to be correct for our default setup
 	sed \
 		-e 's:database=:database=/var/lib/murmur/database.sqlite:' \
@@ -100,8 +104,15 @@ src_prepare() {
 src_configure() {
 	local mycmakeargs=(
 		-DBUILD_TESTING="$(usex test)"
-		-Dbundled-gsl="OFF"
+		-Dbundled-cli11="OFF"
+		-Dbundled-json="OFF"
+		-Dbundled-soci="OFF"
+		-Dbundled-spdlog="OFF"
+		-Dbundled-utfcpp="OFF"
 		-Dclient="OFF"
+		-Denable-sqlite="$(usex sqlite)"
+		-Denable-mysql="$(usex mysql)"
+		-Denable-postgresql="$(usex postgres)"
 		-Dice="$(usex ice)"
 		-DMUMBLE_INSTALL_SYSCONFDIR="/etc/murmur"
 		-Dserver="ON"
@@ -131,7 +142,7 @@ src_install() {
 	newins "${FILESDIR}"/murmur.logrotate murmur
 
 	# Copy over the initd file so we can modify it incase zeroconf support is on.
-	cp "${FILESDIR}"/murmur.initd-r2 "${T}"/murmur.initd || die
+	cp "${FILESDIR}"/murmur.initd-r3 "${T}"/murmur.initd || die
 
 	if use zeroconf; then
 		sed -e 's:need:need avahi-daemon:' -i "${T}"/murmur.initd || die
@@ -148,6 +159,7 @@ src_install() {
 	mv "${D}/$(systemd_get_systemunitdir)/mumble-server.service" \
 		"${D}/$(systemd_get_systemunitdir)/murmur.service" || die
 	sed -i 's|mumble-server\.ini|murmur.ini|' "${D}/$(systemd_get_systemunitdir)/murmur.service" || die
+	sed -i '/^ExecStart/{s|-ini|--ini|;s| -fg||}' "${D}/$(systemd_get_systemunitdir)/murmur.service" || die
 
 	readme.gentoo_create_doc
 }

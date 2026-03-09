@@ -5,7 +5,7 @@ EAPI=8
 
 PYTHON_COMPAT=( python3_{10..13} )
 
-inherit libtool python-any-r1
+inherit autotools libtool python-any-r1
 
 DESCRIPTION="A fast and low-memory footprint OCI Container Runtime fully written in C"
 HOMEPAGE="https://github.com/containers/crun"
@@ -15,7 +15,7 @@ if [[ "$PV" == *9999* ]]; then
 	EGIT_REPO_URI="https://github.com/containers/${PN}.git"
 else
 	SRC_URI="https://github.com/containers/${PN}/releases/download/${PV}/${P}.tar.gz"
-	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc64 ~riscv"
+	KEYWORDS="amd64 ~arm arm64 ~loong ppc64 ~riscv"
 fi
 
 LICENSE="GPL-2+ LGPL-2.1+"
@@ -40,6 +40,15 @@ BDEPEND="
 src_prepare() {
 	default
 	elibtoolize
+
+	# https://github.com/containers/crun/pull/1887
+	sed -i -E '/AC_CHECK_HEADERS\(\[error.h/{
+		s/error\.h[[:space:]]*//g
+		a\
+		AC_CHECK_HEADER([error.h], [AC_CHECK_FUNC([error], AC_DEFINE([HAVE_ERROR_H], [1], [Define if error.h is usable]))])
+	}' configure.ac || die
+
+	eautoreconf
 }
 
 src_configure() {

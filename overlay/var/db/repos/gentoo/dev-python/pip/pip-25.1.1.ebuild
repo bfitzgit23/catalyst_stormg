@@ -6,7 +6,7 @@ EAPI=8
 # please bump dev-python/ensurepip-pip along with this package!
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_TESTED=( pypy3_11 python3_{11..13} )
+PYTHON_TESTED=( pypy3_11 python3_{11..14} )
 PYTHON_COMPAT=( "${PYTHON_TESTED[@]}" )
 PYTHON_REQ_USE="ssl(+),threads(+)"
 
@@ -24,8 +24,9 @@ SRC_URI="
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~mips ~ppc ~riscv ~x86"
-IUSE="test-rust"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86"
+IUSE="test test-rust"
+RESTRICT="!test? ( test )"
 
 # see src/pip/_vendor/vendor.txt
 RDEPEND="
@@ -53,6 +54,7 @@ BDEPEND="
 			dev-python/ensurepip-wheel
 			dev-python/freezegun[${PYTHON_USEDEP}]
 			dev-python/pretend[${PYTHON_USEDEP}]
+			dev-python/pytest[${PYTHON_USEDEP}]
 			dev-python/pytest-rerunfailures[${PYTHON_USEDEP}]
 			dev-python/pytest-xdist[${PYTHON_USEDEP}]
 			dev-python/scripttest[${PYTHON_USEDEP}]
@@ -67,8 +69,6 @@ BDEPEND="
 		' "${PYTHON_TESTED[@]}")
 	)
 "
-
-distutils_enable_tests pytest
 
 python_prepare_all() {
 	local PATCHES=(
@@ -106,7 +106,13 @@ python_compile_all() {
 	# 'pip completion' command embeds full $0 into completion script, which confuses
 	# 'complete' and causes QA warning when running as "${PYTHON} -m pip".
 	# This trick sets correct $0 while still calling just installed pip.
-	local pipcmd='import sys; sys.argv[0] = "pip"; __file__ = ""; from pip._internal.cli.main import main; sys.exit(main())'
+	local pipcmd='if True:
+		import sys
+		sys.argv[0] = "pip"
+		__file__ = ""
+		from pip._internal.cli.main import main
+		sys.exit(main())
+	'
 	"${EPYTHON}" -c "${pipcmd}" completion --bash > completion.bash || die
 	"${EPYTHON}" -c "${pipcmd}" completion --zsh > completion.zsh || die
 }
@@ -152,6 +158,26 @@ python_test() {
 				tests/functional/test_install_config.py::test_prompt_for_authentication
 			)
 			;;
+		python3.14*)
+			EPYTEST_DESELECT+=(
+				# TODO: segfaults
+				tests/unit/test_collector.py::test_get_index_content_directory_append_index
+				# https://github.com/python/cpython/issues/125974
+				tests/unit/test_collector.py::test_ensure_quoted_url
+				tests/unit/test_finder.py::test_finder_priority_file_over_page
+				tests/unit/test_urls.py::test_path_to_url_unix
+				tests/unit/test_collector.py::test_clean_url_path
+				tests/unit/test_collector.py::test_clean_url_path_with_local_path
+				tests/unit/test_req.py::TestRequirementSet::test_download_info_local_editable_dir
+				tests/unit/test_req.py::test_parse_editable_local
+				tests/unit/test_req.py::test_parse_editable_local_extras
+				tests/unit/test_req.py::test_get_url_from_path__archive_file
+				tests/unit/test_req.py::test_get_url_from_path__installable_dir
+				tests/functional/test_lock.py::test_lock_wheel_from_findlinks
+				tests/functional/test_lock.py::test_lock_sdist_from_findlinks
+				tests/functional/test_lock.py::test_lock_local_editable_with_dep
+			)
+			;;
 	esac
 
 	if ! has_version "dev-python/cryptography[${PYTHON_USEDEP}]"; then
@@ -164,12 +190,12 @@ python_test() {
 	fi
 
 	local -x PIP_DISABLE_PIP_VERSION_CHECK=1
-	local -x PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+	local EPYTEST_PLUGINS=( pytest-rerunfailures )
 	local EPYTEST_XDIST=1
 	# rerunfailures because test suite breaks if packages are installed
 	# in parallel
 	epytest -m "not network" -o tmp_path_retention_policy=all \
-		-p rerunfailures --reruns=5 --use-venv
+		--reruns=5 --use-venv
 }
 
 python_install_all() {

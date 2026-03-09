@@ -23,7 +23,7 @@ DEPEND="
 	app-arch/zstd:=
 	dev-cpp/gflags:=
 	sys-libs/liburing:=
-	sys-libs/zlib:=
+	virtual/zlib:=
 	sys-process/numactl
 	jemalloc? ( dev-libs/jemalloc:= )
 	tbb? ( dev-cpp/tbb:= )
@@ -31,6 +31,7 @@ DEPEND="
 RDEPEND="${DEPEND}"
 
 src_prepare() {
+	eapply "${FILESDIR}/rocksdb-10.1-fixincludes.patch" || die
 	sed -i -e 's/liburing.a/uring/' cmake/modules/Finduring.cmake || die
 	sed -i -e '/find_program(CCACHE_FOUND ccache)/d' CMakeLists.txt || die
 	cmake_src_prepare

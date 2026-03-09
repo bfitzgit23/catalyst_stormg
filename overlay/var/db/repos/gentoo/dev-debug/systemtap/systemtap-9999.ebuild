@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} pypy3 )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit autotools flag-o-matic linux-info python-single-r1 toolchain-funcs
 
@@ -45,7 +45,7 @@ DEPEND="
 	app-text/xmlto
 	>=sys-devel/gettext-0.18.2
 
-	libvirt? ( dev-libs/libxml2 )
+	libvirt? ( dev-libs/libxml2:= )
 "
 RDEPEND="
 	${CDEPEND}

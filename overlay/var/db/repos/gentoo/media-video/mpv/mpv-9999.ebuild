@@ -1,10 +1,10 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 LUA_COMPAT=( lua5-1 luajit )
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit flag-o-matic lua-single meson optfeature pax-utils python-single-r1 xdg
 
 if [[ ${PV} == 9999 ]]; then
@@ -12,7 +12,7 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://github.com/mpv-player/mpv.git"
 else
 	SRC_URI="https://github.com/mpv-player/mpv/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86 ~amd64-linux"
+	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
 fi
 
 DESCRIPTION="Media player for the command line"
@@ -24,8 +24,8 @@ IUSE="
 	+X +alsa aqua archive bluray cdda +cli coreaudio debug +drm dvb
 	dvd +egl gamepad +iconv jack javascript jpeg lcms libcaca +libmpv
 	+lua nvenc openal pipewire pulseaudio rubberband sdl selinux sixel
-	sndio soc test tools +uchardet vaapi vdpau +vulkan wayland xv zimg
-	zlib
+	sndio soc subrandr test tools +uchardet vaapi vdpau +vulkan wayland
+	xv zimg zlib
 "
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
@@ -51,6 +51,7 @@ COMMON_DEPEND="
 		x11-libs/libX11
 		x11-libs/libXScrnSaver
 		x11-libs/libXext
+		x11-libs/libXfixes
 		x11-libs/libXpresent
 		x11-libs/libXrandr
 		xv? ( x11-libs/libXv )
@@ -90,6 +91,7 @@ COMMON_DEPEND="
 	sdl? ( media-libs/libsdl2[sound,threads(+),video] )
 	sixel? ( media-libs/libsixel )
 	sndio? ( media-sound/sndio:= )
+	subrandr? ( >=media-libs/subrandr-1.1.0 )
 	vaapi? ( media-libs/libva:=[X?,drm(+)?,wayland?] )
 	vdpau? (
 		media-libs/libglvnd[X]
@@ -97,11 +99,11 @@ COMMON_DEPEND="
 	)
 	vulkan? ( media-libs/vulkan-loader[X?,wayland?] )
 	wayland? (
-		dev-libs/wayland
+		>=dev-libs/wayland-1.23
 		x11-libs/libxkbcommon
 	)
 	zimg? ( media-libs/zimg )
-	zlib? ( sys-libs/zlib:= )
+	zlib? ( virtual/zlib:= )
 "
 RDEPEND="
 	${COMMON_DEPEND}
@@ -124,20 +126,8 @@ BDEPEND="
 	>=dev-build/meson-1.3.0
 	virtual/pkgconfig
 	cli? ( dev-python/docutils )
-	wayland? ( dev-util/wayland-scanner )
+	wayland? ( >=dev-util/wayland-scanner-1.23 )
 "
-
-pkg_pretend() {
-	if has_version "${CATEGORY}/${PN}[X,opengl]" && use !egl; then #953107
-		ewarn "${PN}'s 'opengl' USE was removed in favour of the 'egl' USE as it was"
-		ewarn "only for the deprecated 'gl-x11' mpv option when 'egl-x11/wayland'"
-		ewarn "should be used if --gpu-api=opengl. It is recommended to enable 'egl'"
-		ewarn "unless using vulkan (default since ${PN}-0.40) or something else."
-		ewarn
-		ewarn "USE=vdpau (for nvidia) still enables gl-x11 as it requires it, however"
-		ewarn "it is recommended to instead use --hwdec=nvdec (USE=nvenc) or =vulkan."
-	fi
-}
 
 pkg_setup() {
 	use lua && lua-single_pkg_setup
@@ -165,6 +155,7 @@ src_configure() {
 		-Dbuild-date=false
 
 		# misc options
+		$(meson_feature X x11-clipboard)
 		$(meson_feature archive libarchive)
 		$(meson_feature bluray libbluray)
 		$(meson_feature cdda)
@@ -178,7 +169,7 @@ src_configure() {
 		$(meson_feature lcms lcms2)
 		-Dlua=$(usex lua "${ELUA}" disabled)
 		$(meson_feature rubberband)
-		-Dsdl2=$(use gamepad || use sdl && echo enabled || echo disabled) #857156
+		$(meson_feature subrandr)
 		$(meson_feature uchardet)
 		-Dvapoursynth=disabled # only available in overlays
 		$(meson_feature zimg)

@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit distutils-r1 pypi
 
@@ -21,6 +21,7 @@ RDEPEND="
 	dev-python/cffi[${PYTHON_USEDEP}]
 	dev-python/numpy[${PYTHON_USEDEP}]
 	media-libs/libsndfile
+	test? ( media-libs/libsndfile[-minimal] )
 "
 
 distutils_enable_tests pytest

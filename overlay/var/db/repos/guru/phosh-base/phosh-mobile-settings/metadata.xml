@@ -1,11 +1,23 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="person">
 		<email>cyber+gentoo@sysrq.in</email>
 		<name>Anna</name>
 	</maintainer>
+	<longdescription>
+		Mobile Settings allows to configure some advanced settings of the Phosh mobile
+		environment that would otherwise involve using the command line.
+	</longdescription>
 	<upstream>
-		<remote-id type="gnome-gitlab">guidog/phosh-mobile-settings</remote-id>
+		<remote-id type="gnome-gitlab">World/Phosh/phosh-mobile-settings</remote-id>
+		<maintainer>
+			<name>Guido Günther</name>
+			<email>agx@sigxcpu.org</email>
+		</maintainer>
+		<maintainer>
+			<name>Gotam Gorabh</name>
+			<email>gotamgorabh@gnome.org</email>
+		</maintainer>
 	</upstream>
 </pkgmetadata>

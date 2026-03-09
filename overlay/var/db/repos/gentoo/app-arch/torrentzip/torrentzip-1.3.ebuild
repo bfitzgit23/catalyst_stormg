@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit cmake python-any-r1
 
 MY_P="trrntzip-${PV}"
@@ -19,7 +19,7 @@ IUSE="test"
 RESTRICT="!test? ( test )"
 
 RDEPEND="
-	sys-libs/zlib:=
+	virtual/zlib:=
 "
 DEPEND="
 	${RDEPEND}
@@ -33,6 +33,10 @@ BDEPEND="
 "
 
 DOCS=(AUTHORS NEWS.md README.md)
+
+PATCHES=(
+	"${FILESDIR}/${P}-cmake-minreq.patch" # bug #964532
+)
 
 pkg_setup() {
 	use test && python-any-r1_pkg_setup

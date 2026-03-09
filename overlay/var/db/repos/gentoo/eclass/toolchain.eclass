@@ -1,10 +1,10 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: toolchain.eclass
 # @MAINTAINER:
 # Toolchain Ninjas <toolchain@gentoo.org>
-# @SUPPORTED_EAPIS: 7 8
+# @SUPPORTED_EAPIS: 8
 # @BLURB: Common code for sys-devel/gcc ebuilds
 # @DESCRIPTION:
 # Common code for sys-devel/gcc ebuilds (and occasionally GCC forks, like
@@ -16,8 +16,9 @@ _TOOLCHAIN_ECLASS=1
 
 RUST_OPTIONAL="1"
 
+# See tc_version_is_at_least below wrt old EAPIs vs old GCCs.
 case ${EAPI} in
-	7|8) ;;
+	8) ;;
 	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
 esac
 
@@ -205,6 +206,12 @@ GCCMICRO=$(ver_cut 3 ${GCC_PV})
 # @DESCRIPTION:
 # Controls whether fixincludes should be used.
 : "${GCC_RUN_FIXINCLUDES:=0}"
+# @ECLASS_VARIABLE: GCC_BUILD_PLUGINS
+# @INTERNAL
+# @DESCRIPTION:
+# Controls whether plugins and libcody's c++-module-mapper are built.
+# Only used for avoiding collisions in some special cross cases.
+: "${GCC_BUILD_PLUGINS:=1}"
 
 tc_use_major_version_only() {
 	local use_major_version_only=0
@@ -263,18 +270,22 @@ fi
 # Require minimum gcc version to simplify assumptions.
 # Normally we would require gcc-6+ (based on sys-devel/gcc)
 # but we still have sys-devel/gcc-apple-4.2.1_p5666.
+#
+# Older GCC support lives in toolchain-legacy.eclass in the toolchain
+# repository at https://gitweb.gentoo.org/proj/toolchain.git/. Patches
+# welcome!
 tc_version_is_at_least 8 || die "${ECLASS}: ${GCC_RELEASE_VER} is too old."
 
 PREFIX=${TOOLCHAIN_PREFIX:-${EPREFIX}/usr}
 
-LIBPATH=${TOOLCHAIN_LIBPATH:-${PREFIX}/lib/gcc/${CTARGET}/${GCC_CONFIG_VER}}
+LIBPATH=${TOOLCHAIN_LIBPATH:-${PREFIX}/lib/gcc/${CTARGET#accel-}/${GCC_CONFIG_VER}}
 INCLUDEPATH=${TOOLCHAIN_INCLUDEPATH:-${LIBPATH}/include}
 
 if is_crosscompile ; then
-	BINPATH=${TOOLCHAIN_BINPATH:-${PREFIX}/${CHOST}/${CTARGET}/gcc-bin/${GCC_CONFIG_VER}}
+	BINPATH=${TOOLCHAIN_BINPATH:-${PREFIX}/${CHOST}/${CTARGET#accel-}/gcc-bin/${GCC_CONFIG_VER}}
 	HOSTLIBPATH=${PREFIX}/${CHOST}/${CTARGET}/lib/${GCC_CONFIG_VER}
 else
-	BINPATH=${TOOLCHAIN_BINPATH:-${PREFIX}/${CTARGET}/gcc-bin/${GCC_CONFIG_VER}}
+	BINPATH=${TOOLCHAIN_BINPATH:-${PREFIX}/${CTARGET#accel-}/gcc-bin/${GCC_CONFIG_VER}}
 fi
 
 DATAPATH=${TOOLCHAIN_DATAPATH:-${PREFIX}/share/gcc-data/${CTARGET}/${GCC_CONFIG_VER}}
@@ -307,7 +318,7 @@ if [[ ${PN} != kgcc64 && ${PN} != gcc-* ]] ; then
 
 	# Stop forcing openmp on by default in the eclass. Gradually phase it out.
 	# See bug #890999.
-	if tc_version_is_at_least 13.0.0_pre20221218 ; then
+	if tc_version_is_at_least 13.1 ; then
 		IUSE+=" openmp"
 	else
 		IUSE+=" +openmp"
@@ -330,17 +341,18 @@ if [[ ${PN} != kgcc64 && ${PN} != gcc-* ]] ; then
 	tc_version_is_at_least 10 && IUSE+=" zstd" TC_FEATURES+=( zstd )
 	tc_version_is_at_least 11 && IUSE+=" valgrind" TC_FEATURES+=( valgrind )
 	tc_version_is_at_least 11 && IUSE+=" custom-cflags"
-	tc_version_is_at_least 12 && IUSE+=" ieee-long-double"
+	tc_version_is_at_least 8.0 && IUSE+=" ieee-long-double"
 	tc_version_is_at_least 12.2.1_p20221203 ${PV} && IUSE+=" default-znow"
 	tc_version_is_at_least 12.2.1_p20221203 ${PV} && IUSE+=" default-stack-clash-protection"
-	tc_version_is_at_least 13.0.0_pre20221218 ${PV} && IUSE+=" modula2"
+	tc_version_is_at_least 13.1 ${PV} && IUSE+=" modula2"
 	# See https://gcc.gnu.org/pipermail/gcc-patches/2023-April/615944.html
 	# and https://rust-gcc.github.io/2023/04/24/gccrs-and-gcc13-release.html for why
 	# it was disabled in 13.
-	tc_version_is_at_least 14.0.0_pre20230423 ${PV} && IUSE+=" rust" TC_FEATURES+=( rust )
-	tc_version_is_at_least 14.2.1_p20241026 ${PV} && IUSE+=" time64"
-	tc_version_is_at_least 15.0.0_pre20241124 ${PV} && IUSE+=" libgdiagnostics"
-	tc_version_is_at_least 15.0.1_pre20250316 ${PV} && IUSE+=" cobol"
+	tc_version_is_at_least 14.1 ${PV} && IUSE+=" rust" TC_FEATURES+=( rust )
+	tc_version_is_at_least 13.3.1_p20250522 ${PV} && IUSE+=" time64"
+	tc_version_is_at_least 15.1 ${PV} && IUSE+=" libgdiagnostics"
+	tc_version_is_at_least 15.1 ${PV} && IUSE+=" cobol" TC_FEATURES+=( cobol )
+	tc_version_is_at_least 16.0.0_p20251130 ${PV} && IUSE+=" algol68"
 fi
 
 if tc_version_is_at_least 10; then
@@ -354,7 +366,7 @@ fi
 #---->> DEPEND <<----
 
 RDEPEND="
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/libiconv
 	nls? ( virtual/libintl )
 "
@@ -362,6 +374,10 @@ RDEPEND="
 GMP_MPFR_DEPS=">=dev-libs/gmp-4.3.2:0= >=dev-libs/mpfr-2.4.2:0="
 RDEPEND+=" ${GMP_MPFR_DEPS}"
 RDEPEND+=" >=dev-libs/mpc-0.8.1:0="
+
+if tc_has_feature cobol && tc_version_is_at_least 16.0.0_p20251019 ; then
+	RDEPEND+=" cobol? ( dev-libs/libxml2:= )"
+fi
 
 if tc_has_feature objc-gc ; then
 	RDEPEND+=" objc-gc? ( >=dev-libs/boehm-gc-7.4.2 )"
@@ -414,7 +430,7 @@ if tc_has_feature zstd ; then
 fi
 
 if tc_has_feature valgrind ; then
-	BDEPEND+=" valgrind? ( dev-debug/valgrind )"
+	DEPEND+=" valgrind? ( dev-debug/valgrind )"
 fi
 
 if [[ ${PN} != gnat-gpl ]] && tc_has_feature ada ; then
@@ -422,8 +438,7 @@ if [[ ${PN} != gnat-gpl ]] && tc_has_feature ada ; then
 		BDEPEND+="
 			ada? (
 				|| (
-					sys-devel/gcc:${SLOT}[ada]
-					<sys-devel/gcc-${SLOT}[ada]
+					<sys-devel/gcc-$((${SLOT} + 1))[ada]
 					<dev-lang/ada-bootstrap-$((${SLOT} + 1))
 				)
 			)
@@ -432,9 +447,9 @@ if [[ ${PN} != gnat-gpl ]] && tc_has_feature ada ; then
 		BDEPEND+="
 			ada? (
 				|| (
-					sys-devel/gcc:${SLOT}[ada]
 					<sys-devel/gcc-${SLOT}[ada]
 					<dev-lang/ada-bootstrap-${SLOT}
+					sys-devel/gcc:${SLOT}[ada]
 				)
 			)
 		"
@@ -447,10 +462,10 @@ if tc_has_feature d && tc_version_is_at_least 12.0 ; then
 	# D in 12+ is self-hosting and needs D to bootstrap.
 	# TODO: package some binary we can use, like for Ada
 	# bug #840182
-	BDEPEND+=" d? ( || ( sys-devel/gcc:${SLOT}[d(-)] <sys-devel/gcc-${SLOT}[d(-)] <sys-devel/gcc-12[d(-)] ) )"
+	BDEPEND+=" d? ( || ( <sys-devel/gcc-$((${SLOT} + 1))[d(-)] sys-devel/gcc:11 ) )"
 fi
 
-if tc_has_feature rust && tc_version_is_at_least 14.0.0_pre20230421 ; then
+if tc_has_feature rust && tc_version_is_at_least 14.1 ; then
 	# This was added upstream in r14-9968-g3e1e73fc995844 as a temporary measure.
 	# See https://inbox.sourceware.org/gcc/34fec7ea-8762-4cac-a1c8-ff54e20e31ed@embecosm.com/
 	BDEPEND+=" rust? ( ${RUST_DEPEND} )"
@@ -463,13 +478,8 @@ PDEPEND=">=sys-devel/gcc-config-2.11"
 # @ECLASS_VARIABLE: TOOLCHAIN_PATCH_SUFFIX
 # @DESCRIPTION:
 # Used to override compression used for for patchsets.
-# Default is xz for EAPI 8+ and bz2 for older EAPIs.
-if [[ ${EAPI} == 8 ]] ; then
-	: "${TOOLCHAIN_PATCH_SUFFIX:=xz}"
-else
-	# Older EAPIs
-	: "${TOOLCHAIN_PATCH_SUFFIX:=bz2}"
-fi
+# Default is xz for EAPI 8+.
+: "${TOOLCHAIN_PATCH_SUFFIX:=xz}"
 
 # @ECLASS_VARIABLE: TOOLCHAIN_SET_S
 # @DESCRIPTION:
@@ -654,7 +664,7 @@ toolchain_fetch_git_patches() {
 	mkdir "${WORKDIR}"/patch || die
 	mv "${WORKDIR}"/patch.tmp/${PATCH_GCC_VER}/gentoo/* "${WORKDIR}"/patch || die
 
-	if [[ -z ${MUSL_VER} || -d "${WORKDIR}"/musl ]] && [[ ${CTARGET} == *musl* ]] ; then
+	if [[ -z ${MUSL_VER} || -d "${WORKDIR}"/musl ]] && [[ ${CTARGET#accel-} == *musl* ]] ; then
 		mkdir "${WORKDIR}"/musl || die
 		mv "${WORKDIR}"/patch.tmp/${PATCH_GCC_VER}/musl/* "${WORKDIR}"/musl || die
 	fi
@@ -755,7 +765,7 @@ do_gcc_gentoo_patches() {
 			BRANDING_GCC_PKGVERSION="${BRANDING_GCC_PKGVERSION} p${PATCH_VER}"
 		fi
 
-		if [[ -n ${MUSL_VER} || -d "${WORKDIR}"/musl ]] && [[ ${CTARGET} == *musl* ]] ; then
+		if [[ -n ${MUSL_VER} || -d "${WORKDIR}"/musl ]] && [[ ${CTARGET#accel-} == *musl* ]] ; then
 			if [[ ${CATEGORY} == cross-* ]] ; then
 				# We don't want to apply some patches when cross-compiling.
 				if [[ -d "${WORKDIR}"/musl/nocross ]] ; then
@@ -766,12 +776,24 @@ do_gcc_gentoo_patches() {
 				fi
 			fi
 
-			local shopt_save=$(shopt -p nullglob)
+			local -
 			shopt -s nullglob
 			einfo "Applying musl patches ..."
 			eapply "${WORKDIR}"/musl/{,nocross/}*.patch
-			${shopt_save}
 		fi
+
+		#
+		# THIS IS A TEMPORARY SOLUTION AND SHOULD BE REPLACED BY A PROPER FIX.
+		# Adding it so we can already build stages for further testing. -dilfridge
+		#
+		if [[ ${CTARGET#accel-} == m68*-aligned-* ]]; then
+			einfo "Hard-wiring m68k -malign-int switch into gcc"
+			echo '#define DRIVER_SELF_SPECS "-malign-int"' >> "${S}/gcc/config/m68k/m68k.h" || die
+		fi
+		#
+		# END TEMPORARY SOLUTION
+		#
+
 	fi
 }
 
@@ -799,7 +821,7 @@ tc_enable_hardened_gcc() {
 		hardened_gcc_flags+=" -DDEF_GENTOO_ZNOW"
 	fi
 
-	if _tc_use_if_iuse cet && [[ -z ${CLANG_DISABLE_CET_HACK} && ${CTARGET} == *x86_64*-linux-gnu* ]] ; then
+	if _tc_use_if_iuse cet && [[ -z ${CLANG_DISABLE_CET_HACK} && ${CTARGET#accel-} == *x86_64*-linux-gnu* ]] ; then
 		einfo "Updating gcc to use x86-64 control flow protection by default ..."
 		hardened_gcc_flags+=" -DEXTRA_OPTIONS_CF"
 	fi
@@ -855,7 +877,7 @@ setup_multilib_osdirnames() {
 	local libdirs="../lib64 ../lib32"
 
 	# This only makes sense for some Linux targets
-	case ${CTARGET} in
+	case ${CTARGET#accel-} in
 		x86_64*-linux*)    config="i386" ;;
 		powerpc64*-linux*) config="rs6000" ;;
 		sparc64*-linux*)   config="sparc" ;;
@@ -878,6 +900,7 @@ setup_multilib_osdirnames() {
 
 # @FUNCTION: _get_bootstrap_gcc_info
 # @USAGE: [gcc_pkg|gcc_bin_base]...
+# @INTERNAL
 # @DESCRIPTION:
 # Get some information about the gcc that would be used to build this package.
 # All the variables that are passed as arguments will be set to their apropriate
@@ -1140,7 +1163,7 @@ toolchain_setup_ada() {
 
 	export CC="$(tc-getCC) -specs=${T}/ada.spec"
 
-	if ver_test ${PV} -lt 13 && [[ ${CTARGET} == hppa* ]] ; then
+	if ver_test ${PV} -lt 13 && [[ ${CTARGET#accel-} == hppa* ]] ; then
 		# For HPPA, the ada-bootstrap binaries seem to default
 		# to -fstack-protector still (maybe because of cross-building)
 		# so we need to override it for <13 (which ignores -fstack-protector)
@@ -1186,10 +1209,12 @@ toolchain_setup_d() {
 toolchain_src_configure() {
 	BUILD_CONFIG_TARGETS=()
 	is-flagq '-O3' && BUILD_CONFIG_TARGETS+=( bootstrap-O3 )
+	is-flagq '-fsanitize=address' && BUILD_CONFIG_TARGETS+=( bootstrap-asan )
+	is-flagq '-fsanitize=undefined' && BUILD_CONFIG_TARGETS+=( bootstrap-ubsan )
 
 	downgrade_arch_flags
 	gcc_do_filter_flags
-	if [[ ${PN} != kgcc64 && ${PN} != gcc-* ]] && tc_version_is_at_least 14.2.1_p20241026 ${PV}; then
+	if [[ ${PN} != kgcc64 && ${PN} != gcc-* ]] && tc_version_is_at_least 13.3.1_p20250522 ${PV}; then
 		append-cppflags "-D_GENTOO_TIME64_FORCE=$(usex time64 1 0)"
 	fi
 
@@ -1228,7 +1253,7 @@ toolchain_src_configure() {
 		# "GCC has code to correctly determine the correct value for target
 		# for nearly all native systems. Therefore, we highly recommend you
 		# not provide a configure target when configuring a native compiler."
-		confgcc+=( --target=${CTARGET} )
+		confgcc+=( --target=${CTARGET#accel-} )
 	fi
 	[[ -n ${CBUILD} ]] && confgcc+=( --build=${CBUILD} )
 
@@ -1284,8 +1309,10 @@ toolchain_src_configure() {
 	is_f95 && GCC_LANG+=",f95"
 	is_ada && GCC_LANG+=",ada"
 	is_cobol && GCC_LANG+=",cobol"
+	is_algol68 && GCC_LANG+=",algol68"
 	is_modula2 && GCC_LANG+=",m2"
 	is_rust && GCC_LANG+=",rust"
+	is_jit && GCC_LANG+=",jit"
 
 	_need_ada_bootstrap_mangling() {
 		if [[ ${CATEGORY}/${PN} == dev-lang/gnat-gpl ]] ; then
@@ -1381,7 +1408,7 @@ toolchain_src_configure() {
 		fi
 	fi
 
-	if tc_version_is_at_least 12 && _tc_use_if_iuse cet && [[ -z ${CLANG_DISABLE_CET_HACK} && ${CTARGET} == x86_64-*-gnu* ]] ; then
+	if tc_version_is_at_least 12 && _tc_use_if_iuse cet && [[ -z ${CLANG_DISABLE_CET_HACK} && ${CTARGET#accel-} == x86_64-*-gnu* ]] ; then
 		BUILD_CONFIG_TARGETS+=( bootstrap-cet )
 	fi
 
@@ -1390,17 +1417,19 @@ toolchain_src_configure() {
 		confgcc+=( --disable-libstdcxx-pch )
 	fi
 
-	# build-id was disabled for file collisions: bug #526144
-	#
-	# # Turn on the -Wl,--build-id flag by default for ELF targets. bug #525942
-	# # This helps with locating debug files.
-	# case ${CTARGET} in
-	# *-linux-*|*-elf|*-eabi)
-	# 	tc_version_is_at_least 4.5 && confgcc+=(
-	# 		--enable-linker-build-id
-	# 	)
-	# 	;;
-	# esac
+	# Turn on the -Wl,--build-id flag by default for ELF targets. bug #953869
+	# This helps with locating debug files.
+	case ${CTARGET} in
+		*-linux-*|*-elf|*-eabi)
+			tc_version_is_at_least 4.5 && confgcc+=(
+				--enable-linker-build-id
+			)
+		;;
+	esac
+
+	if in_iuse ada ; then
+		confgcc+=( $(use_enable ada libada) )
+	fi
 
 	### Cross-compiler option
 	#
@@ -1423,11 +1452,15 @@ toolchain_src_configure() {
 				;;
 			*-elf|*-eabi)
 				needed_libc=newlib
-				# Bare-metal targets don't have access to clock_gettime()
-				# arm-none-eabi example: bug #589672
-				# But we explicitly do --enable-libstdcxx-time above.
-				# Undoing it here.
-				confgcc+=( --disable-libstdcxx-time )
+				confgcc+=(
+					# Bare-metal targets don't have access to clock_gettime()
+					# arm-none-eabi example: bug #589672
+					# But we explicitly do --enable-libstdcxx-time above.
+					# Undoing it here.
+					--disable-libstdcxx-time
+					# bug #970098
+					--disable-libada
+				)
 				;;
 			*-gnu*)
 				needed_libc=glibc
@@ -1444,32 +1477,30 @@ toolchain_src_configure() {
 			avr)
 				confgcc+=( --enable-shared --disable-threads )
 				;;
+			accel-nvptx*)
+				needed_libc=newlib
+				# --enable-as-accelerator-for= disables installing
+				# nvtpx-none-cc etc, so we have to split into two
+				# targets: nvptx-none and accel-nvptx-none.
+				confgcc+=(
+					# "LTO is not supported for this target"
+					--disable-lto
+					--enable-as-accelerator-for=${CHOST}
+					--disable-sjlj-exceptions
+				)
+				;;
 			nvptx*)
 				needed_libc=newlib
 				confgcc+=(
 					# "LTO is not supported for this target"
 					--disable-lto
-				)
 
-				# --enable-as-accelerator-for= seems to disable
-				# installing nvtpx-none-cc etc, so we have to
-				# avoid passing that for the stage1-build that
-				# crossdev does. If we pass it unconditionally,
-				# we can't build newlib after building stage1 gcc.
-				if has_version ${CATEGORY}/${PN} ; then
-					confgcc+=(
-						# It's unlikely that anyone will want
-						# to build nvptx-none as a pure standalone
-						# toolchain (which will be single-threaded, etc).
-						#
-						# If someone really wants it, we can see about
-						# adding a USE=offload or similar based on CTARGET
-						# for cross targets. But for now, we always assume
-						# we're being built as an offloading compiler (accelerator).
-						--enable-as-accelerator-for=${CHOST}
-						--disable-sjlj-exceptions
-					)
-				fi
+					# Avoid colliding with accel-nvptx with libcc1* plugins
+					--disable-plugin
+					# ... and g++-mapper-server
+					--disable-c++-tools
+				)
+				GCC_BUILD_PLUGINS=0
 				;;
 		esac
 
@@ -1498,10 +1529,10 @@ toolchain_src_configure() {
 			elif has_version "${CATEGORY}/${needed_libc}[headers-only(-)]" ; then
 				confgcc+=(
 					"${confgcc_no_libc[@]}"
-					--with-sysroot="${PREFIX}"/${CTARGET}
+					--with-sysroot="${PREFIX}"/${CTARGET#accel-}
 				)
 			else
-				confgcc+=( --with-sysroot="${PREFIX}"/${CTARGET} )
+				confgcc+=( --with-sysroot="${PREFIX}"/${CTARGET#accel-} )
 			fi
 		fi
 
@@ -1545,7 +1576,7 @@ toolchain_src_configure() {
 
 	# __cxa_atexit is "essential for fully standards-compliant handling of
 	# destructors", but apparently requires glibc.
-	case ${CTARGET} in
+	case ${CTARGET#accel-} in
 		nvptx*|*-elf|*-eabi)
 			confgcc+=( --with-newlib )
 			;;
@@ -1557,6 +1588,10 @@ toolchain_src_configure() {
 				--enable-__cxa_atexit
 				--enable-clocale=gnu
 			)
+
+			if [[ ${CTARGET} == x86_64*-*-linux-* ]] && tc_version_is_at_least 16.0.0_p20251214 ${PV} ; then
+				confgcc+=( --with-tls=gnu2 )
+			fi
 			;;
 		*-solaris*)
 			confgcc+=( --enable-__cxa_atexit )
@@ -1583,7 +1618,7 @@ toolchain_src_configure() {
 			# If they've explicitly opt-ed in, do hardfloat,
 			# otherwise let the gcc default kick in.
 			case ${CTARGET//_/-} in
-				*-hardfloat-*|*eabihf)
+				*-hardfloat-*|*eabihf*)
 					confgcc+=( --with-float=hard )
 				;;
 			esac
@@ -1705,7 +1740,7 @@ toolchain_src_configure() {
 
 	# Linux specifically here for bug #946397.
 	# TODO: amdgcn-amdhsa?
-	[[ ${CTARGET} == x86_64*-*-linux-* ]] && confgcc+=(
+	[[ ${CTARGET#accel-} == x86_64*-*-linux-* ]] && confgcc+=(
 		--enable-offload-defaulted
 		--enable-offload-targets=nvptx-none
 	)
@@ -1718,7 +1753,7 @@ toolchain_src_configure() {
 		# build without a C library, and you can't build that w/o
 		# already having a compiler...
 		if ! is_crosscompile || \
-		   $(tc-getCPP ${CTARGET}) -E - <<<"#include <pthread.h>" >& /dev/null
+		   $(unset CC; unset CPP; tc-getCPP ${CTARGET#accel-}) -E - <<<"#include <pthread.h>" >& /dev/null
 		then
 			confgcc+=( $(use_enable openmp libgomp) )
 		else
@@ -1737,7 +1772,7 @@ toolchain_src_configure() {
 			# On some targets USE="ssp -libssp" is an invalid
 			# configuration as the target libc does not provide
 			# stack_chk_* functions. Do not disable libssp there.
-			case ${CTARGET} in
+			case ${CTARGET#accel-} in
 				mingw*|*-mingw*)
 					ewarn "Not disabling libssp"
 					;;
@@ -1750,15 +1785,11 @@ toolchain_src_configure() {
 		fi
 	fi
 
-	if in_iuse ada ; then
-		confgcc+=( $(use_enable ada libada) )
-	fi
-
 	if in_iuse cet ; then
 		# Usage: triple_arch triple_env cet_name
 		enable_cet_for() {
-			if [[ ${CTARGET} == ${1}-* ]] ; then
-				if use cet && [[ ${CTARGET} == *-${2}* ]]; then
+			if [[ ${CTARGET#accel-} == ${1}-* ]] ; then
+				if use cet && [[ ${CTARGET#accel-} == *-${2}* ]]; then
 					confgcc+=( --enable-${3} )
 				else
 					confgcc+=( --disable-${3} )
@@ -1768,7 +1799,7 @@ toolchain_src_configure() {
 
 		enable_cet_for 'x86_64' 'gnu' 'cet'
 		enable_cet_for 'aarch64' 'gnu' 'standard-branch-protection'
-		[[ -n ${CLANG_DISABLE_CET_HACK} || ${CTARGET} == i[34567]86-* ]] && confgcc+=( --disable-cet )
+		[[ -n ${CLANG_DISABLE_CET_HACK} || ${CTARGET#accel-} == i[34567]86-* ]] && confgcc+=( --disable-cet )
 	fi
 
 	if in_iuse systemtap ; then
@@ -1777,6 +1808,16 @@ toolchain_src_configure() {
 
 	if in_iuse valgrind ; then
 		confgcc+=( $(use_enable valgrind valgrind-annotations) )
+
+		# We patch this in w/ PR66487-object-lifetime-instrumentation-for-Valgrind.patch,
+		# so it may not always be available.
+		if grep -q -- '--enable-valgrind-interop' "${S}"/libgcc/configure.ac ; then
+			if ! is_crosscompile && $(unset CC; unset CPP; tc-getCPP ${CTARGET#accel-}) -E - <<<"#include <valgrind/memcheck.h>" >& /dev/null ; then
+				confgcc+=( $(use_enable valgrind valgrind-interop) )
+			else
+				confgcc+=( --disable-valgrind-interop )
+			fi
+		fi
 	fi
 
 	if in_iuse vtv ; then
@@ -1808,19 +1849,27 @@ toolchain_src_configure() {
 	fi
 
 	if in_iuse pie ; then
-		confgcc+=( $(use_enable pie default-pie) )
+		# Workaround for broken configure logic (bug #970413)
+		if use pie ; then
+			confgcc+=( --enable-default-pie )
+		fi
 
-		if tc_version_is_at_least 14.0.0_pre20230612 ${PV} ; then
-			confgcc+=( --enable-host-pie )
+		if tc_version_is_at_least 14.1 ${PV} || tc_version_is_at_least 13.4.1_p20250814 ${PV} ; then
+			# Workaround for broken configure logic (bug #970413)
+			if use pie ; then
+				confgcc+=( --enable-host-pie )
+			fi
 		fi
 	fi
 
-	if in_iuse default-znow && tc_version_is_at_least 14.0.0_pre20230619 ${PV}; then
+	if in_iuse default-znow && { tc_version_is_at_least 14.1 ${PV} || tc_version_is_at_least 13.4.1_p20250814 ${PV} ; } ; then
 		# See https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=33ebb0dff9bb022f1e0709e0e73faabfc3df7931.
 		# TODO: Add to LDFLAGS_FOR_TARGET?
-		confgcc+=(
-			$(use_enable default-znow host-bind-now)
-		)
+		#
+		# Workaround for broken configure logic (bug #970413)
+		if use default-znow ; then
+			confgcc+=( --enable-host-bind-now )
+		fi
 	fi
 
 	if in_iuse ssp ; then
@@ -1837,7 +1886,7 @@ toolchain_src_configure() {
 			GCC_RUN_FIXINCLUDES=1
 		fi
 
-		case ${CBUILD}-${CHOST}-${CTARGET} in
+		case ${CBUILD}-${CHOST}-${CTARGET#accel-} in
 			*-w*-mingw*)
 				# config/i386/t-cygming requires fixincludes (bug #925204)
 				GCC_RUN_FIXINCLUDES=1
@@ -1860,9 +1909,17 @@ toolchain_src_configure() {
 		fi
 	fi
 
-	if [[ ${CTARGET} != *-darwin* ]] && tc_version_is_at_least 14.1 ; then
+	if [[ ${CTARGET#accel-} != *-darwin* ]] && tc_version_is_at_least 14.1 ; then
 		# This allows passing -stdlib=libc++ at runtime.
 		confgcc+=( --with-gxx-libcxx-include-dir="${ESYSROOT}"/usr/include/c++/v1 )
+	fi
+
+	if is_jit || _tc_use_if_iuse libgdiagnostics ; then
+		confgcc+=( --enable-host-shared )
+	fi
+
+	if tc_version_is_at_least 15.1 ${PV} && _tc_use_if_iuse libgdiagnostics ; then
+		confgcc+=( $(use_enable libgdiagnostics) )
 	fi
 
 	# TODO: Ignore RCs here (but TOOLCHAIN_IS_RC isn't yet an eclass var)
@@ -1913,66 +1970,6 @@ toolchain_src_configure() {
 	# use of bash for them.
 	if tc_version_is_at_least 11.2 ; then
 		gcc_shell="${BROOT}"/bin/sh
-	fi
-
-	if is_jit || _tc_use_if_iuse libgdiagnostics ; then
-		einfo "Configuring shared gcc for JIT/libgdiagnostics"
-
-		local confgcc_jit=(
-			"${confgcc[@]}"
-
-			--enable-lto
-			--disable-analyzer
-			--disable-bootstrap
-			--disable-cet
-			--disable-default-pie
-			--disable-default-ssp
-			--disable-gcov
-			--disable-libada
-			--disable-libatomic
-			--disable-libgomp
-			--disable-libitm
-			--disable-libquadmath
-			--disable-libsanitizer
-			--disable-libssp
-			--disable-libstdcxx-pch
-			--disable-libvtv
-			--disable-nls
-			--disable-objc-gc
-			--disable-systemtap
-
-			--enable-host-shared
-
-			# Might be used for the just-built GCC. Easier to just
-			# respect USE=graphite here in case the user passes some
-			# graphite flags rather than try strip them out.
-			$(use_with graphite isl)
-			--with-system-zlib
-		)
-
-		if is_jit ; then
-			confgcc_jit+=( --enable-languages=jit )
-		else
-			confgcc_jit+=( --enable-languages=c,c++ )
-		fi
-
-		if tc_has_feature zstd ; then
-			confgcc_jit+=( $(use_with zstd) )
-		fi
-
-		if tc_version_is_at_least 15.0.0_pre20241124 ${PV} ; then
-			confgcc_jit+=( $(use_enable libgdiagnostics) )
-		fi
-
-		if tc_version_is_at_least 13.1 ; then
-			confgcc_jit+=( --disable-fixincludes )
-		fi
-
-		mkdir -p "${WORKDIR}"/build-jit || die
-		pushd "${WORKDIR}"/build-jit > /dev/null || die
-
-		CONFIG_SHELL="${gcc_shell}" edo "${gcc_shell}" "${S}"/configure "${confgcc_jit[@]}"
-		popd > /dev/null || die
 	fi
 
 	CONFIG_SHELL="${gcc_shell}" edo "${gcc_shell}" "${S}"/configure "${confgcc[@]}"
@@ -2161,8 +2158,11 @@ gcc_do_filter_flags() {
 	fi
 
 	if ver_test -lt 15.1 ; then
-		filter-flags -fdiagnostics-explain-harder -fdiagnostics-details
 		filter-flags -fdiagnostics-set-output=text:experimental-nesting=yes
+	fi
+
+	if ver_test -lt 16.1 ; then
+		filter-flags '-fdiagnostics-show-context=*'
 	fi
 
 	# Ada: PR116226
@@ -2174,6 +2174,8 @@ gcc_do_filter_flags() {
 
 	# Avoid shooting self in foot
 	filter-flags '-mabi*' -m31 -m32 -m64
+	# gcc will try to find libgomp.spec, which may not exist yet (bug #966882)
+	filter-flags -fopenmp
 
 	# bug #490738
 	filter-flags -frecord-gcc-switches
@@ -2227,7 +2229,7 @@ gcc-multilib-configure() {
 	done
 
 	if [[ -n ${list} ]] ; then
-		case ${CTARGET} in
+		case ${CTARGET#accel-} in
 			x86_64*)
 				confgcc+=( --with-multilib-list=${list:1} )
 			;;
@@ -2238,7 +2240,7 @@ gcc-multilib-configure() {
 gcc-abi-map() {
 	# Convert the ABI name we use in Gentoo to what gcc uses
 	local map=()
-	case ${CTARGET} in
+	case ${CTARGET#accel-} in
 		mips*)
 			map=("o32 32" "n32 n32" "n64 64")
 			;;
@@ -2307,7 +2309,7 @@ gcc_do_make() {
 			ewarn "This is NOT a safe configuration for end users!"
 			ewarn "This compiler may not be safe or reliable for production use!"
 		elif _tc_use_if_iuse pgo; then
-			GCC_MAKE_TARGET=${GCC_MAKE_TARGET-profiledbootstrap}
+			GCC_MAKE_TARGET=${GCC_MAKE_TARGET-profiledbootstrap-lean}
 		else
 			GCC_MAKE_TARGET=${GCC_MAKE_TARGET-bootstrap-lean}
 		fi
@@ -2340,7 +2342,7 @@ gcc_do_make() {
 		# The last known issues are with < GCC 4.9 or so, but it's easier
 		# to keep this bound somewhat fresh just to avoid problems. Ultimately,
 		# using not-O0 is just a build-time speed improvement anyway.
-		if ! tc-is-gcc || ver_test $(gcc-fullversion) -lt 10 ; then
+		if ! tc-is-gcc || ver_test $(gcc-fullversion) -lt 10 || ver_test ${PV} -lt 10 ; then
 			einfo "Resetting STAGE1_*FLAGS to -O0 because of old or non-GCC bootstrap compiler"
 			STAGE1_CFLAGS="-O0"
 			STAGE1_CXXFLAGS="-O0"
@@ -2389,18 +2391,12 @@ gcc_do_make() {
 		)
 	fi
 
-	if is_jit || _tc_use_if_iuse libgdiagnostics ; then
-		# TODO: docs for jit?
-		einfo "Building JIT"
-		emake -C "${WORKDIR}"/build-jit "${emakeargs[@]}"
-	fi
-
 	einfo "Compiling ${PN} (${GCC_MAKE_TARGET})..."
 	pushd "${WORKDIR}"/build >/dev/null || die
 	emake "${emakeargs[@]}" ${GCC_MAKE_TARGET}
 
 	if ! is_crosscompile && _tc_use_if_iuse cxx && tc_has_feature doc && _tc_use_if_iuse doc ; then
-		cd "${CTARGET}"/libstdc++-v3/doc || die
+		cd "${CTARGET#accel-}"/libstdc++-v3/doc || die
 		emake doc-man-doxygen
 
 		# Clean bogus manpages. bug #113902
@@ -2418,7 +2414,6 @@ gcc_do_make() {
 
 #---->> src_test <<----
 
-# TODO: add JIT testing
 toolchain_src_test() {
 	# GCC's testsuite is a special case.
 	#
@@ -2433,6 +2428,11 @@ toolchain_src_test() {
 
 	# From opensuse's spec file: "asan needs a whole shadow address space"
 	ulimit -v unlimited
+
+	# Use the magic value of 1 which avoids invoking coredump handlers
+	# like systemd-coredumpd which can be really slow when we have many
+	# intentional or expected crashes.
+	prlimit -c=1 -p $$
 
 	# 'asan' wants to be preloaded first, so does 'sandbox'.
 	# To make asan tests work, we disable sandbox for all of test suite.
@@ -2562,6 +2562,7 @@ toolchain_src_test() {
 		# the failures are tolerable or not, so we bail out.
 		eerror "No reference test data at ${manifest}!"
 		eerror "GCC's tests require a baseline to compare with for any reasonable interpretation of results."
+		eerror "See https://wiki.gentoo.org/wiki/Project:Toolchain/sys-devel/gcc#Test_suite for details."
 
 		if [[ -n ${GCC_TESTS_IGNORE_NO_BASELINE} ]] ; then
 			eerror "GCC_TESTS_IGNORE_NO_BASELINE is set, ignoring test result and creating a new baseline..."
@@ -2589,28 +2590,6 @@ toolchain_src_install() {
 			grep -q 'It has been auto-edited by fixincludes from' "${x}" \
 				&& rm -f "${x}"
 		done < <(find gcc/include*/ -name '*.h')
-	fi
-
-	if is_jit || _tc_use_if_iuse libgdiagnostics ; then
-		# See https://gcc.gnu.org/onlinedocs/gcc-11.3.0/jit/internals/index.html#packaging-notes
-		# and bug #843341.
-		#
-		# Both of the non-JIT and JIT builds are configured to install to $(DESTDIR)
-		# Install the configuration with --enable-host-shared first
-		# *then* the one without, so that the faster build
-		# of "cc1" et al overwrites the slower build.
-		#
-		# Do the 'make install' from the build directory
-		pushd "${WORKDIR}"/build-jit > /dev/null || die
-		S="${WORKDIR}"/build-jit emake DESTDIR="${D}" -j1 install
-
-		# This one comes with binutils
-		find "${ED}" -name libiberty.a -delete || die
-
-		# Move the libraries to the proper location
-		gcc_movelibs
-
-		popd > /dev/null || die
 	fi
 
 	# Do the 'make install' from the build directory
@@ -2647,7 +2626,7 @@ toolchain_src_install() {
 	cd "${D}"${BINPATH} || die
 	# Ugh: we really need to auto-detect this list.
 	#      It's constantly out of date.
-	for x in cpp gcc gccrs g++ c++ gcobol gcov gdc g77 gfortran gccgo gnat* ; do
+	for x in cpp gcc gccrs g++ c++ ga68 gcobol gcov gdc g77 gfortran gccgo gnat* ; do
 		# For some reason, g77 gets made instead of ${CTARGET}-g77...
 		# this should take care of that
 		if [[ -f ${x} ]] ; then
@@ -2689,8 +2668,8 @@ toolchain_src_install() {
 	# Hack for C++ modules
 	if ! is_crosscompile && tc_version_is_at_least 15.0.1_pre20250316 ${PV}; then
 		# PR19266 (bug #948394)
-		sed -i -e "s,\.\./lib/gcc/${CHOST}/${GCCMAJOR}/include/,include/," \
-			"${ED}"/usr/lib/gcc/${CHOST}/${GCCMAJOR}/libstdc++.modules.json || die
+		find "${ED}"/usr/lib/gcc/${CHOST}/${GCCMAJOR} -name libstdc++.modules.json \
+			-exec sed -i -e "s,\"source-path\": \".*gcc/${CHOST}/${GCCMAJOR}/include/,\"source-path\": \"include/," "{}" + || die
 	fi
 
 	# As gcc installs object files built against both ${CHOST} and ${CTARGET}
@@ -2710,7 +2689,7 @@ toolchain_src_install() {
 		rm -rf "${ED}"/usr/share/{man,info}
 		rm -rf "${D}"${DATAPATH}/{man,info}
 	else
-		local cxx_mandir=$(find "${WORKDIR}/build/${CTARGET}/libstdc++-v3" -name man || die)
+		local cxx_mandir=$(find "${WORKDIR}/build/${CTARGET#accel-}/libstdc++-v3" -name man || die)
 		if [[ -d ${cxx_mandir} ]] ; then
 			cp -r "${cxx_mandir}"/man? "${D}${DATAPATH}"/man/ || die
 		fi
@@ -2790,11 +2769,11 @@ toolchain_src_install() {
 	export QA_EXECSTACK="usr/lib*/go/*/*.gox"
 	export QA_WX_LOAD="usr/lib*/go/*/*.gox"
 	# Workaround bug #793770
-	export QA_PRESTRIPPED="usr/lib*/go/*/*.gox"
+	export QA_PRESTRIPPED="usr/lib*/go/*/*/*.gox"
 
 	# Disable RANDMMAP so PCH works, bug #301299
-	pax-mark -r "${ED}/libexec/gcc/${CTARGET}/${GCC_CONFIG_VER}/cc1"
-	pax-mark -r "${ED}/libexec/gcc/${CTARGET}/${GCC_CONFIG_VER}/cc1plus"
+	pax-mark -r "${D}${PREFIX}/libexec/gcc/${CTARGET}/${GCC_CONFIG_VER}/cc1"
+	pax-mark -r "${D}${PREFIX}/libexec/gcc/${CTARGET}/${GCC_CONFIG_VER}/cc1plus"
 
 	if [[ -n ${TOOLCHAIN_HAS_TESTS} ]] && use test ; then
 		mkdir "${T}"/test-results || die
@@ -2812,24 +2791,24 @@ gcc_movelibs() {
 	# that you want to link against when building tools rather than building
 	# code to run on the target.
 	if is_crosscompile ; then
-		dodir "${HOSTLIBPATH#${EPREFIX}}"
+		dodir "${HOSTLIBPATH#"${EPREFIX}"}"
 		# XXX: Ideally, we'd use $(get_libdir) here, but it's
 		# not right for cross. See bug #942573 and bug #794181.
-		mv "${ED}"/usr/lib*/libcc1* "${D}${HOSTLIBPATH}" || die
+		if [[ ${GCC_BUILD_PLUGINS} == 1 ]] ; then
+			mv "${ED}"/usr/lib*/libcc1* "${D}${HOSTLIBPATH}" || die
+		fi
 	fi
 
 	# libgccjit gets installed to /usr/lib, not /usr/$(get_libdir). Probably
 	# due to a bug in gcc build system.
-	if [[ ${PWD} == "${WORKDIR}"/build-jit ]] ; then
-		dodir "${LIBPATH#${EPREFIX}}"
+	dodir "${LIBPATH#"${EPREFIX}"}"
 
-		if is_jit ; then
-			mv "${ED}"/usr/lib/libgccjit* "${D}${LIBPATH}" || die
-		fi
+	if is_jit ; then
+		mv "${ED}"/usr/lib/libgccjit* "${D}${LIBPATH}" || die
+	fi
 
-		if _tc_use_if_iuse libgdiagnostics ; then
-			mv "${ED}"/usr/lib/libgdiagnostics* "${D}${LIBPATH}" || die
-		fi
+	if _tc_use_if_iuse libgdiagnostics ; then
+		mv "${ED}"/usr/lib/libgdiagnostics* "${D}${LIBPATH}" || die
 	fi
 
 	# For all the libs that are built for CTARGET, move them into the
@@ -2850,7 +2829,7 @@ gcc_movelibs() {
 			"${LIBPATH}"/${OS_MULTIDIR} \
 			"${LIBPATH}"/../${MULTIDIR} \
 			"${PREFIX}"/lib/${OS_MULTIDIR} \
-			"${PREFIX}"/${CTARGET}/lib/${OS_MULTIDIR}
+			"${PREFIX}"/${CTARGET#accel-}/lib/${OS_MULTIDIR}
 		do
 			removedirs="${removedirs} ${FROMDIR}"
 			FROMDIR=${D}${FROMDIR}
@@ -2867,9 +2846,14 @@ gcc_movelibs() {
 	# Without this, we end up either unable to find the libgomp spec/archive, or
 	# we underlink and can't find gomp_nvptx_main (presumably because we can't find the plugin)
 	# https://src.fedoraproject.org/rpms/gcc/blob/02c34dfa3627ef05d676d30e152a66e77b58529b/f/gcc.spec#_1445
-	if [[ ${CTARGET} == nvptx* ]] && has_version ${CATEGORY}/${PN} ; then
+	#
+	# openmp/fortran check is needed here to know if we're in the stage1
+	# build or not.
+	if [[ ${CATEGORY} == cross-accel-nvptx* ]] && { _tc_use_if_iuse openmp || is_fortran ; } ; then
 		rm -rf "${ED}"/usr/libexec/gcc/nvptx-none/${GCCMAJOR}/install-tools
-		rm -rf "${ED}"/usr/libexec/gcc/${CHOST}/${GCCMAJOR}/accel/nvptx-none/{install-tools,plugin,cc1,cc1plus,f951}
+		rm -rf "${ED}"/usr/libexec/gcc/${CHOST}/${GCCMAJOR}/accel/nvptx-none/{install-tools,plugin,cc1,cc1plus}
+		is_fortran && rm -rf "${ED}"/usr/libexec/gcc/${CHOST}/${GCCMAJOR}/accel/nvptx-none/f951
+
 		rm -rf "${ED}"/usr/lib/gcc/nvptx-none/${GCCMAJOR}/{install-tools,plugin}
 		rm -rf "${ED}"/usr/lib/gcc/${CHOST}/${GCCMAJOR}/accel/nvptx-none/{install-tools,plugin,include-fixed}
 		mv "${ED}"/usr/nvptx-none/lib/*.{a,spec} "${ED}"/usr/lib/gcc/${CHOST}/${GCCMAJOR}/accel/nvptx-none/
@@ -3210,6 +3194,11 @@ is_cobol() {
 	_tc_use_if_iuse cobol
 }
 
+is_algol68() {
+	gcc-lang-supported algol68 || return 1
+	_tc_use_if_iuse algol68
+}
+
 is_modula2() {
 	gcc-lang-supported m2 || return 1
 	_tc_use_if_iuse cxx && _tc_use_if_iuse modula2
@@ -3234,10 +3223,10 @@ toolchain_death_notice() {
 	# TODO: For bootstrap comparison failures, include the stage2 & stage3
 	# differing objects to avoid having to ask reporters to manually collect...
 	local dir
-	for dir in "${WORKDIR}"/build-jit "${WORKDIR}"/build ; do
+	for dir in "${WORKDIR}"/build ; do
 		if [[ -e "${dir}" ]] ; then
 			pushd "${WORKDIR}" >/dev/null
-			(echo '' | $(tc-getCC ${CTARGET}) ${CFLAGS} -v -E - 2>&1) > "${dir}"/gccinfo.log
+			(echo '' | $(tc-getCC ${CTARGET#accel-}) ${CFLAGS} -v -E - 2>&1) > "${dir}"/gccinfo.log
 			[[ -e "${T}"/build.log ]] && cp "${T}"/build.log "${dir}"
 			tar -rf "${WORKDIR}"/gcc-build-logs.tar \
 				"${dir#${WORKDIR}/}"/gccinfo.log "${dir#${WORKDIR}/}"/build.log $(find "${dir#${WORKDIR}/}" -type f -name "config.log")

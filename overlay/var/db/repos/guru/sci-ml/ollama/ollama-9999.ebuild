@@ -4,10 +4,10 @@
 EAPI=8
 
 # supports ROCM/HIP >=5.5, but we define 6.1 due to the eclass
-ROCM_VERSION=6.1
+ROCM_VERSION="6.1"
 inherit cuda rocm
 inherit cmake
-inherit go-module systemd toolchain-funcs
+inherit flag-o-matic go-module linux-info systemd toolchain-funcs
 
 DESCRIPTION="Get up and running with Llama 3, Mistral, Gemma, and other language models."
 HOMEPAGE="https://ollama.com"
@@ -18,7 +18,7 @@ if [[ ${PV} == *9999* ]]; then
 else
 	SRC_URI="
 		https://github.com/ollama/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.gh.tar.gz
-		https://github.com/negril/gentoo-overlay-vendored/raw/refs/heads/blobs/${P}-vendor.tar.xz
+		https://github.com/gentoo-golang-dist/${PN}/releases/download/v${PV}/${P}-deps.tar.xz
 	"
 	KEYWORDS="~amd64"
 fi
@@ -27,42 +27,51 @@ LICENSE="MIT"
 SLOT="0"
 
 X86_CPU_FLAGS=(
+	sse4_2
 	avx
 	f16c
 	avx2
+	bmi2
 	fma3
 	avx512f
 	avx512vbmi
 	avx512_vnni
-	avx512_bf16
 	avx_vnni
-	amx_tile
-	amx_int8
 )
 CPU_FLAGS=( "${X86_CPU_FLAGS[@]/#/cpu_flags_x86_}" )
-IUSE="${CPU_FLAGS[*]} cuda blas mkl rocm"
-# IUSE+=" opencl vulkan"
+IUSE="blas ${CPU_FLAGS[*]} cuda mkl rocm vulkan"
+# IUSE+=" opencl"
+
+RESTRICT="mirror test"
 
 COMMON_DEPEND="
-	cuda? (
-		dev-util/nvidia-cuda-toolkit:=
-	)
 	blas? (
 		!mkl? (
 			virtual/blas
 		)
 		mkl? (
-			sci-libs/mkl
+			sci-libs/mkl[llvm-openmp]
 		)
 	)
+	cuda? (
+		dev-util/nvidia-cuda-toolkit:=
+	)
 	rocm? (
-		>=sci-libs/hipBLAS-5.5:=[${ROCM_USEDEP}]
+		>=dev-util/hip-${ROCM_VERSION}:=
+		>=sci-libs/hipBLAS-${ROCM_VERSION}:=
+		>=sci-libs/rocBLAS-${ROCM_VERSION}:=
 	)
 "
 
 DEPEND="
 	${COMMON_DEPEND}
 	>=dev-lang/go-1.23.4
+"
+BDEPEND="
+	vulkan? (
+		dev-util/vulkan-headers
+		media-libs/shaderc
+	)
 "
 
 RDEPEND="
@@ -72,10 +81,47 @@ RDEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}/${PN}-0.6.3-use-GNUInstallDirs.patch"
+	"${FILESDIR}/${PN}-9999-use-GNUInstallDirs.patch"
 )
 
+pkg_pretend() {
+	if use amd64; then
+		if use cpu_flags_x86_f16c && use cpu_flags_x86_avx2 && use cpu_flags_x86_fma3 && ! use cpu_flags_x86_bmi2; then
+			ewarn
+			ewarn "CPU_FLAGS_X86: bmi2 not enabled."
+			ewarn "  Not building haswell runner."
+			ewarn "  Not building skylakex runner."
+			ewarn "  Not building icelake runner."
+			ewarn "  Not building alderlake runner."
+			ewarn
+			if grep bmi2 /proc/cpuinfo > /dev/null; then
+				ewarn "bmi2 found in /proc/cpuinfo"
+				ewarn
+			fi
+		fi
+	fi
+}
+
+pkg_setup() {
+	if use rocm; then
+		linux-info_pkg_setup
+		if linux-info_get_any_version && linux_config_exists; then
+			if ! linux_chkconfig_present HSA_AMD_SVM; then
+				ewarn "To use ROCm/HIP, you need to have HSA_AMD_SVM option enabled in your kernel."
+			fi
+		fi
+	fi
+}
+
 src_unpack() {
+	# Already filter lto flags for ROCM
+	# 963401
+	if use rocm; then
+		# copied from _rocm_strip_unsupported_flags
+		strip-unsupported-flags
+		export CXXFLAGS="$(test-flags-HIPCXX "${CXXFLAGS}")"
+	fi
+
 	if [[ "${PV}" == *9999* ]]; then
 		git-r3_src_unpack
 		go-module_live_vendor
@@ -91,87 +137,85 @@ src_prepare() {
 		-e "/set(GGML_CCACHE/s/ON/OFF/g" \
 		-e "/PRE_INCLUDE_REGEXES.*cu/d" \
 		-e "/PRE_INCLUDE_REGEXES.*hip/d" \
-		-i CMakeLists.txt || die sed
+		-i CMakeLists.txt || die "bundle headers sed failed"
 
+	# TODO see src_unpack?
 	sed \
 		-e "s/ -O3//g" \
-		-i ml/backend/ggml/ggml/src/ggml-cpu/cpu.go || die sed
+		-i \
+			ml/backend/ggml/ggml/src/ggml-cpu/cpu.go \
+		|| die "-O3 sed failed"
 
-	# fix library location
-	sed \
-		-e "s#lib/ollama#$(get_libdir)/ollama#g" \
-		-i CMakeLists.txt || die sed
-
+	# grep -Rl -e 'lib/ollama' -e '"..", "lib"'  --include '*.go'
 	sed \
 		-e "s/\"..\", \"lib\"/\"..\", \"$(get_libdir)\"/" \
 		-e "s#\"lib/ollama\"#\"$(get_libdir)/ollama\"#" \
 		-i \
 			ml/backend/ggml/ggml/src/ggml.go \
-			discover/path.go \
-		|| die
+			ml/path.go \
+		|| die "libdir sed failed"
 
 	if use amd64; then
-		if ! use cpu_flags_x86_avx; then
-			sed -e "/ggml_add_cpu_backend_variant(sandybridge/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# AVX)
+		if
+			! use cpu_flags_x86_sse4_2; then
+			sed -e "/ggml_add_cpu_backend_variant(sse42/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
+			# SSE42)
 		fi
 		if
+			! use cpu_flags_x86_sse4_2 ||
+			! use cpu_flags_x86_avx; then
+			sed -e "/ggml_add_cpu_backend_variant(sandybridge/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
+			# SSE42 AVX)
+		fi
+		if
+			! use cpu_flags_x86_sse4_2 ||
 			! use cpu_flags_x86_avx ||
 			! use cpu_flags_x86_f16c ||
 			! use cpu_flags_x86_avx2 ||
+			! use cpu_flags_x86_bmi2 ||
 			! use cpu_flags_x86_fma3; then
 			sed -e "/ggml_add_cpu_backend_variant(haswell/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# AVX F16C AVX2 FMA)
+			# SSE42 AVX F16C AVX2 BMI2 FMA)
 		fi
 		if
+			! use cpu_flags_x86_sse4_2 ||
 			! use cpu_flags_x86_avx ||
 			! use cpu_flags_x86_f16c ||
 			! use cpu_flags_x86_avx2 ||
+			! use cpu_flags_x86_bmi2 ||
 			! use cpu_flags_x86_fma3 ||
 			! use cpu_flags_x86_avx512f; then
 			sed -e "/ggml_add_cpu_backend_variant(skylakex/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt ||  die
-			# AVX F16C AVX2 FMA AVX512)
+			# SSE42 AVX F16C AVX2 BMI2 FMA AVX512)
 		fi
 		if
+			! use cpu_flags_x86_sse4_2 ||
 			! use cpu_flags_x86_avx ||
 			! use cpu_flags_x86_f16c ||
 			! use cpu_flags_x86_avx2 ||
+			! use cpu_flags_x86_bmi2 ||
 			! use cpu_flags_x86_fma3 ||
 			! use cpu_flags_x86_avx512f ||
 			! use cpu_flags_x86_avx512vbmi ||
 			! use cpu_flags_x86_avx512_vnni; then
 			sed -e "/ggml_add_cpu_backend_variant(icelake/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# AVX F16C AVX2 FMA AVX512 AVX512_VBMI AVX512_VNNI)
+			# SSE42 AVX F16C AVX2 BMI2 FMA AVX512 AVX512_VBMI AVX512_VNNI)
 		fi
 		if
+			! use cpu_flags_x86_sse4_2 ||
 			! use cpu_flags_x86_avx ||
 			! use cpu_flags_x86_f16c ||
 			! use cpu_flags_x86_avx2 ||
+			! use cpu_flags_x86_bmi2 ||
 			! use cpu_flags_x86_fma3 ||
 			! use cpu_flags_x86_avx_vnni; then
 			sed -e "/ggml_add_cpu_backend_variant(alderlake/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			# AVX F16C AVX2 FMA AVX_VNNI)
+			# SSE42 AVX F16C AVX2 BMI2 FMA AVX_VNNI)
 		fi
 
-		if
-			! use cpu_flags_x86_avx ||
-			! use cpu_flags_x86_f16c ||
-			! use cpu_flags_x86_avx2 ||
-			! use cpu_flags_x86_fma3 ||
-			! use cpu_flags_x86_avx512f ||
-			! use cpu_flags_x86_avx512vbmi ||
-			! use cpu_flags_x86_avx512_vnni ||
-			! use cpu_flags_x86_avx512_bf16 ||
-			! use cpu_flags_x86_amx_tile ||
-			! use cpu_flags_x86_amx_int8 ; then
-			sed -e "/ggml_add_cpu_backend_variant(sapphirerapids/s/^/# /g" -i ml/backend/ggml/ggml/src/CMakeLists.txt || die
-			#AVX F16C AVX2 FMA AVX512 AVX512_VBMI AVX512_VNNI AVX512_BF16 AMX_TILE AMX_INT8)
-		fi
-		: # ml/backend/ggml/ggml/src/CMakeLists.txt
+		# ml/backend/ggml/ggml/src/CMakeLists.txt
 	fi
 
-	# default
-	# return
 	if use cuda; then
 		cuda_src_prepare
 	fi
@@ -189,8 +233,14 @@ src_configure() {
 	local mycmakeargs=(
 		-DGGML_CCACHE="no"
 
+		# backends end up in /usr/bin otherwise
+		-DGGML_BACKEND_DL="yes"
+		# TODO causes duplicate install warning but breaks detection otherwise ollama/issues/13614
+		-DGGML_BACKEND_DIR="${EPREFIX}/usr/$(get_libdir)/${PN}"
+
 		# -DGGML_CPU="yes"
 		-DGGML_BLAS="$(usex blas)"
+
 		# -DGGML_CUDA="$(usex cuda)"
 		# -DGGML_HIP="$(usex rocm)"
 
@@ -203,12 +253,13 @@ src_configure() {
 		# -DGGML_KOMPUTE="$(usex kompute)"
 		# -DGGML_OPENCL="$(usex opencl)"
 		# -DGGML_VULKAN="$(usex vulkan)"
+		"$(cmake_use_find_package vulkan Vulkan)"
 	)
 
 	if use blas; then
 		if use mkl; then
 			mycmakeargs+=(
-				-DGGML_BLAS_VENDOR="Intel"
+				-DGGML_BLAS_VENDOR="Intel10_64lp"
 			)
 		else
 			mycmakeargs+=(
@@ -216,10 +267,20 @@ src_configure() {
 			)
 		fi
 	fi
+
 	if use cuda; then
 		local -x CUDAHOSTCXX CUDAHOSTLD
 		CUDAHOSTCXX="$(cuda_gccdir)"
 		CUDAHOSTLD="$(tc-getCXX)"
+
+		# default to all for now until cuda.eclass is updated
+		if [[ ! -v CUDAARCHS ]]; then
+			local CUDAARCHS="all"
+		fi
+
+		mycmakeargs+=(
+			-DCMAKE_CUDA_ARCHITECTURES="${CUDAARCHS}"
+		)
 
 		cuda_add_sandbox -w
 		addpredict "/dev/char/"
@@ -238,8 +299,6 @@ src_configure() {
 		)
 
 		local -x HIP_PATH="${ESYSROOT}/usr"
-
-		check_amdgpu
 	else
 		mycmakeargs+=(
 			-DCMAKE_HIP_COMPILER="NOTFOUND"
@@ -250,6 +309,26 @@ src_configure() {
 }
 
 src_compile() {
+	# export version information
+	# https://github.com/gentoo/guru/pull/205
+	# https://forums.gentoo.org/viewtopic-p-8831646.html
+	local VERSION
+	if [[ "${PV}" == *9999* ]]; then
+		VERSION="$(
+			git describe --tags --first-parent --abbrev=7 --long --dirty --always \
+			| sed -e "s/^v//g"
+		)"
+	else
+		VERSION="${PVR}"
+	fi
+	local EXTRA_GOFLAGS_LD=(
+		# "-w" # disable DWARF generation
+		# "-s" # disable symbol table
+		"-X=github.com/ollama/ollama/version.Version=${VERSION}"
+		"-X=github.com/ollama/ollama/server.mode=release"
+	)
+	GOFLAGS+=" '-ldflags=${EXTRA_GOFLAGS_LD[*]}'"
+
 	ego build
 
 	cmake_src_compile

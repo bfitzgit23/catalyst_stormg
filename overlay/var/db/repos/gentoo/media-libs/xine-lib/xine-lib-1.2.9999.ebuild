@@ -38,7 +38,7 @@ RDEPEND="
 	dev-libs/libxdg-basedir
 	media-libs/libdvdnav
 	media-video/ffmpeg-compat:6=
-	sys-libs/zlib:=
+	virtual/zlib:=
 	virtual/libiconv
 	a52? ( media-libs/a52dec )
 	aac? ( media-libs/faad2 )
@@ -74,7 +74,7 @@ RDEPEND="
 	)
 	theora? (
 		media-libs/libogg
-		media-libs/libtheora
+		media-libs/libtheora:=
 	)
 	truetype? (
 		media-libs/fontconfig

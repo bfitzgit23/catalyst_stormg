@@ -1,9 +1,13 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit multilib prefix
+# Default to baselayout's PV as the OS version.
+: "${BRANDING_OS_VERSION:=${PV}}"
+: "${BRANDING_OS_VERSION_ID:=${PV}}"
+
+inherit branding multilib prefix
 
 DESCRIPTION="Filesystem baselayout and init scripts"
 HOMEPAGE="https://wiki.gentoo.org/wiki/No_homepage"
@@ -12,7 +16,7 @@ if [[ ${PV} = 9999 ]]; then
 	inherit git-r3
 else
 	SRC_URI="https://gitweb.gentoo.org/proj/${PN}.git/snapshot/${P}.tar.bz2"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~arm64-macos ~x64-macos ~x64-solaris"
 fi
 
 LICENSE="GPL-2"
@@ -223,12 +227,6 @@ src_prepare() {
 		echo PATH=/usr/sbin:/sbin:/usr/bin:/bin >> etc/env.d/99host
 		echo ROOTPATH=/usr/sbin:/sbin:/usr/bin:/bin >> etc/env.d/99host
 		echo MANPATH=/usr/share/man >> etc/env.d/99host
-
-		# change branding
-		sed -i \
-			-e '/gentoo-release/s/Gentoo Base/Gentoo Prefix Base/' \
-			-e '/make_os_release/s/${OS}/Prefix/' \
-			Makefile || die
 	fi
 
 	# handle multilib paths.  do it here because we want this behavior
@@ -252,6 +250,29 @@ src_install() {
 	emake \
 		DESTDIR="${ED}" \
 		install
+
+	insinto /etc
+	newins - gentoo-release <<-EOF
+	${BRANDING_OS_NAME} Base System release ${PV}
+	EOF
+
+	# warning: changes to os-release may require updating the Gentoo
+	# wiki captcha that uses a sha256sum of the 6th line (bug #968834)
+	insinto /usr/lib
+	grep . <<-EOF | newins - os-release
+	${BRANDING_OS_NAME:+NAME=${BRANDING_OS_NAME@Q}}
+	${BRANDING_OS_ID:+ID=${BRANDING_OS_ID@Q}}
+	${BRANDING_OS_ID_LIKE:+ID_LIKE=${BRANDING_OS_ID_LIKE@Q}}
+	${BRANDING_OS_PRETTY_NAME:+PRETTY_NAME=${BRANDING_OS_PRETTY_NAME@Q}}
+	${BRANDING_OS_VERSION:+VERSION=${BRANDING_OS_VERSION@Q}}
+	${BRANDING_OS_VERSION_ID:+VERSION_ID=${BRANDING_OS_VERSION_ID@Q}}
+	${BRANDING_OS_HOME_URL:+HOME_URL=${BRANDING_OS_HOME_URL@Q}}
+	${BRANDING_OS_SUPPORT_URL:+SUPPORT_URL=${BRANDING_OS_SUPPORT_URL@Q}}
+	${BRANDING_OS_BUG_REPORT_URL:+BUG_REPORT_URL=${BRANDING_OS_BUG_REPORT_URL@Q}}
+	ANSI_COLOR='1;32'
+	EOF
+
+	dosym -r /usr/lib/os-release /etc/os-release
 
 	if [[ ${CHOST} == *-darwin* ]] ; then
 		# add SDK path which contains development manpages

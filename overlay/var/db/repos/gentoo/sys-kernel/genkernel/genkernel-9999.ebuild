@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # genkernel-9999        -> latest Git branch "master"
@@ -6,32 +6,31 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{10..13} )
 
-inherit bash-completion-r1 eapi9-ver python-single-r1
+inherit bash-completion-r1 python-single-r1
 
 # Whenever you bump a GKPKG, check if you have to move
 # or add new patches!
 VERSION_BCACHE_TOOLS="1.1_p20230217"
-# boost-1.84.0 needs dev-build/b2 packaged
-VERSION_BOOST="1.79.0"
+VERSION_BOOST="1.90.0"
 VERSION_BTRFS_PROGS="6.7.1"
 VERSION_BUSYBOX="1.36.1"
+VERSION_B2=5.4.2
 VERSION_COREUTILS="9.4"
 VERSION_CRYPTSETUP="2.6.1"
 VERSION_DMRAID="1.0.0.rc16-3"
 VERSION_DROPBEAR="2022.83"
 VERSION_EUDEV="3.2.14"
 VERSION_EXPAT="2.5.0"
-VERSION_E2FSPROGS="1.47.0"
+VERSION_E2FSPROGS="1.47.3"
 VERSION_FUSE="2.9.9"
 # gnupg-2.x needs several new deps packaged
 VERSION_GPG="1.4.23"
 VERSION_HWIDS="20210613"
 # open-iscsi-2.1.9 static build not working yet
 VERSION_ISCSI="2.1.8"
-# json-c-0.17 needs gkbuild ported to meson
-VERSION_JSON_C="0.17"
+VERSION_JSON_C="0.18"
 VERSION_KMOD="31"
 VERSION_LIBAIO="0.3.113"
 VERSION_LIBGCRYPT="1.10.3"
@@ -41,7 +40,7 @@ VERSION_LVM="2.03.22"
 VERSION_LZO="2.10"
 VERSION_MDADM="4.2"
 VERSION_POPT="1.19"
-VERSION_STRACE="6.7"
+VERSION_STRACE="6.15"
 VERSION_THIN_PROVISIONING_TOOLS="0.9.0"
 # unionfs-fuse-3.4 needs fuse:3
 VERSION_UNIONFS_FUSE="2.0"
@@ -58,11 +57,12 @@ COMMON_URI="
 	https://boostorg.jfrog.io/artifactory/main/release/${VERSION_BOOST}/source/boost_${VERSION_BOOST//./_}.tar.bz2
 	https://www.kernel.org/pub/linux/kernel/people/kdave/btrfs-progs/btrfs-progs-v${VERSION_BTRFS_PROGS}.tar.xz
 	https://www.busybox.net/downloads/busybox-${VERSION_BUSYBOX}.tar.bz2
+	https://github.com/bfgroup/b2/archive/refs/tags/${VERSION_B2}.tar.gz -> b2-${VERSION_B2}.tar.gz
 	mirror://gnu/coreutils/coreutils-${VERSION_COREUTILS}.tar.xz
 	https://www.kernel.org/pub/linux/utils/cryptsetup/v$(ver_cut 1-2 ${VERSION_CRYPTSETUP})/cryptsetup-${VERSION_CRYPTSETUP}.tar.xz
 	https://people.redhat.com/~heinzm/sw/dmraid/src/dmraid-${VERSION_DMRAID}.tar.bz2
 	https://matt.ucc.asn.au/dropbear/releases/dropbear-${VERSION_DROPBEAR}.tar.bz2
-	https://dev.gentoo.org/~blueness/eudev/eudev-${VERSION_EUDEV}.tar.gz
+	https://github.com/eudev-project/eudev/releases/download/v${VERSION_EUDEV}/eudev-${VERSION_EUDEV}.tar.gz
 	https://github.com/libexpat/libexpat/releases/download/R_${VERSION_EXPAT//\./_}/expat-${VERSION_EXPAT}.tar.xz
 	https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v${VERSION_E2FSPROGS}/e2fsprogs-${VERSION_E2FSPROGS}.tar.xz
 	https://github.com/libfuse/libfuse/releases/download/fuse-${VERSION_FUSE}/fuse-${VERSION_FUSE}.tar.gz
@@ -120,18 +120,19 @@ DEPEND="
 "
 RDEPEND="${PYTHON_DEPS}
 	app-alternatives/cpio
-	>=app-misc/pax-utils-1.2.2
-	app-portage/elt-patches
-	app-portage/portage-utils
-	dev-util/gperf
-	sys-apps/sandbox
-	dev-build/autoconf
-	dev-build/autoconf-archive
-	dev-build/automake
 	app-alternatives/bc
 	app-alternatives/yacc
 	app-alternatives/lex
+	>=app-misc/pax-utils-1.2.2
+	app-portage/elt-patches
+	app-portage/portage-utils
+	dev-build/autoconf
+	dev-build/autoconf-archive
+	dev-build/automake
+	dev-build/cmake
 	dev-build/libtool
+	dev-util/gperf
+	sys-apps/sandbox
 	virtual/pkgconfig
 	elibc_glibc? ( sys-libs/glibc[static-libs(+)] )
 	firmware? ( sys-kernel/linux-firmware )
@@ -217,15 +218,21 @@ pkg_postinst() {
 	#elog 'https://wiki.gentoo.org/wiki/Genkernel'
 	#echo
 
-	if ver_replacing -lt 4 ; then
-		# This is an upgrade which requires user review
+	local replacing_version
+	for replacing_version in ${REPLACING_VERSIONS} ; do
+		if ver_test "${replacing_version}" -lt 4 ; then
+			# This is an upgrade which requires user review
 
-		ewarn ""
-		ewarn "Genkernel v4.x is a new major release which touches"
-		ewarn "nearly everything. Be careful, read updated manpage"
-		ewarn "and pay special attention to program output regarding"
-		ewarn "changed kernel command-line parameters!"
-	fi
+			ewarn ""
+			ewarn "Genkernel v4.x is a new major release which touches"
+			ewarn "nearly everything. Be careful, read updated manpage"
+			ewarn "and pay special attention to program output regarding"
+			ewarn "changed kernel command-line parameters!"
+
+			# Show this elog only once
+			break
+		fi
+	done
 
 	if [[ $(find /boot -name 'kernel-genkernel-*' 2>/dev/null | wc -l) -gt 0 ]] ; then
 		ewarn ''

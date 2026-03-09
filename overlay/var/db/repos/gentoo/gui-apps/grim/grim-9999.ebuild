@@ -1,19 +1,20 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit bash-completion-r1 meson
+inherit shell-completion meson
 
 DESCRIPTION="Grab images from a Wayland compositor"
-HOMEPAGE="https://sr.ht/~emersion/grim"
+HOMEPAGE="https://gitlab.freedesktop.org/emersion/grim"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
-	EGIT_REPO_URI="https://git.sr.ht/~emersion/${PN}"
+	EGIT_REPO_URI="https://gitlab.freedesktop.org/emersion/grim.git"
 else
-	SRC_URI="https://git.sr.ht/~emersion/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-	S="${WORKDIR}/${PN}-v${PV}"
+	inherit verify-sig
+	SRC_URI="https://gitlab.freedesktop.org/emersion/grim/-/releases/v${PV}/downloads/${P}.tar.gz
+		https://gitlab.freedesktop.org/emersion/grim/-/releases/v${PV}/downloads/${P}.tar.gz.sig"
 	KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~x86"
 fi
 
@@ -35,6 +36,11 @@ BDEPEND="
 	man? ( app-text/scdoc )
 "
 
+if [[ ${PV} != 9999 ]]; then
+	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-emersion )"
+	VERIFY_SIG_OPENPGP_KEY_PATH="/usr/share/openpgp-keys/emersion.asc"
+fi
+
 src_configure() {
 	local emesonargs=(
 		$(meson_feature jpeg)
@@ -49,6 +55,5 @@ src_install() {
 	meson_src_install
 
 	newbashcomp contrib/completions/bash/grim.bash grim
-	insinto /usr/share/fish/vendor_completions.d/
-	doins contrib/completions/fish/grim.fish
+	dofishcomp contrib/completions/fish/grim.fish
 }

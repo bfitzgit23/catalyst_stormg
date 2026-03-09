@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,32 +6,35 @@ EAPI=8
 # Please bump with app-editors/vim-core and app-editors/vim
 
 VIM_VERSION="9.1"
-VIM_PATCHES_VERSION="9.0.2092"
+VIM_PATCHES_VERSION="9.1.1432"
 
 LUA_COMPAT=( lua5-{1..4} luajit )
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 PYTHON_REQ_USE="threads(+)"
 USE_RUBY="ruby31 ruby32"
+GENTOO_DEPEND_ON_PERL=no
 
-inherit bash-completion-r1 flag-o-matic lua-single prefix python-single-r1 ruby-single toolchain-funcs vim-doc xdg-utils
+inherit bash-completion-r1 flag-o-matic lua-single perl-module prefix python-single-r1 ruby-single toolchain-funcs vim-doc xdg-utils
 
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/vim/vim.git"
 	EGIT_CHECKOUT_DIR=${WORKDIR}/vim-${PV}
 else
-	SRC_URI="https://github.com/vim/vim/archive/v${PV}.tar.gz -> vim-${PV}.tar.gz
-		https://git.sr.ht/~xxc3nsoredxx/vim-patches/refs/download/vim-${VIM_PATCHES_VERSION}-patches/vim-${VIM_PATCHES_VERSION}-patches.tar.xz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos"
+	SRC_URI="
+		https://github.com/vim/vim/archive/v${PV}.tar.gz -> vim-${PV}.tar.gz
+		https://gitweb.gentoo.org/proj/vim-patches.git/snapshot/vim-patches-vim-${VIM_PATCHES_VERSION}-patches.tar.bz2
+	"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~arm64-macos ~x64-macos ~x64-solaris"
 fi
-S="${WORKDIR}"/vim-${PV}
 
 DESCRIPTION="GUI version of the Vim text editor"
 HOMEPAGE="https://www.vim.org https://github.com/vim/vim"
+S="${WORKDIR}"/vim-${PV}
 
 LICENSE="vim"
 SLOT="0"
-IUSE="acl crypt cscope debug lua minimal motif netbeans nls perl python racket ruby selinux session sound tcl"
+IUSE="acl crypt cscope debug lua minimal motif netbeans nls perl python racket ruby selinux session sound tcl wayland ${GENTOO_PERL_USESTRING}"
 REQUIRED_USE="
 	lua? ( ${LUA_REQUIRED_USE} )
 	python? ( ${PYTHON_REQUIRED_USE} )
@@ -48,7 +51,7 @@ RDEPEND="
 	acl? ( kernel_linux? ( sys-apps/acl ) )
 	motif? ( >=x11-libs/motif-2.3:0 )
 	!motif? (
-		x11-libs/gtk+:3
+		x11-libs/gtk+:3[X]
 		x11-libs/libXft
 	)
 	crypt? ( dev-libs/libsodium:= )
@@ -58,7 +61,10 @@ RDEPEND="
 		$(lua_gen_impl_dep 'deprecated' lua5-1)
 	)
 	nls? ( virtual/libintl )
-	perl? ( dev-lang/perl:= )
+	perl? (
+		${GENTOO_PERL_DEPSTRING}
+		dev-lang/perl:=
+	)
 	python? ( ${PYTHON_DEPS} )
 	racket? ( dev-scheme/racket )
 	ruby? ( ${RUBY_DEPS} )
@@ -66,10 +72,10 @@ RDEPEND="
 	session? ( x11-libs/libSM )
 	sound? ( media-libs/libcanberra )
 	tcl? ( dev-lang/tcl:0= )
+	wayland? ( dev-libs/wayland )
 "
 DEPEND="${RDEPEND}
-	x11-base/xorg-proto
-"
+	x11-base/xorg-proto"
 # configure runs the Lua interpreter
 BDEPEND="
 	dev-build/autoconf
@@ -82,7 +88,7 @@ PDEPEND="!minimal? ( app-vim/gentoo-syntax )"
 if [[ ${PV} != 9999* ]]; then
 	# Gentoo patches to fix runtime issues, cross-compile errors, etc
 	PATCHES=(
-		"${WORKDIR}/vim-${VIM_PATCHES_VERSION}-patches"
+		"${WORKDIR}/vim-patches-vim-${VIM_PATCHES_VERSION}-patches"
 	)
 fi
 
@@ -122,7 +128,7 @@ src_prepare() {
 
 	# Use exuberant ctags which installs as /usr/bin/exuberant-ctags.
 	# Hopefully this pattern won't break for a while at least.
-	# This fixes bug #29398 (27 Sep 2003 agriffis)
+	# This fixes bug 29398 (27 Sep 2003 agriffis)
 	sed -i -e \
 		's/\<ctags\("\| [-*.]\)/exuberant-&/g' \
 		"${S}"/runtime/doc/syntax.txt \
@@ -143,7 +149,7 @@ src_prepare() {
 	if [[ -d "${S}"/src/po ]]; then
 		sed -i -e \
 			'/-S check.vim/s,..VIM.,ln -s $(VIM) testvim \; ./testvim -X,' \
-			"${S}"/src/po/Makefile || die "sed failed"
+			"${S}"/src/po/Makefile || die
 	fi
 
 	cp -v "${S}"/src/config.mk.dist "${S}"/src/auto/config.mk || die "cp failed"
@@ -155,7 +161,7 @@ src_prepare() {
 	# (4) Run ./configure (with wrong args) to remake auto/config.mk
 	sed -i -e \
 		's# auto/config\.mk:#:#' src/Makefile || die "Makefile sed failed"
-	rm src/auto/configure || die "rm failed"
+	rm -v src/auto/configure || die "rm failed"
 
 	# --with-features=huge forces on cscope even if we --disable it. We need
 	# to sed this out to avoid screwiness. (1 Sep 2004 ciaranm)
@@ -171,20 +177,10 @@ src_prepare() {
 }
 
 src_configure() {
-
-	# Fix bug #37354: Disallow -funroll-all-loops on amd64
-	# Bug #57859 suggests that we want to do this for all archs
-	filter-flags -funroll-all-loops
-
-	# Fix bug 76331: -O3 causes problems, use -O2 instead. We'll do this for
-	# everyone since previous flag filtering bugs have turned out to affect
-	# multiple archs...
-	replace-flags -O3 -O2
-
 	emake -j1 -C src autoconf
 
-	# This should fix a sandbox violation (see bug #24447). The hvc
-	# things are for ppc64, see bug #86433.
+	# This should fix a sandbox violation (see bug 24447). The hvc
+	# things are for ppc64, see bug 86433.
 	local file
 	for file in /dev/pty/s* /dev/console /dev/hvc/* /dev/hvc*; do
 		if [[ -e ${file} ]]; then
@@ -192,15 +188,9 @@ src_configure() {
 		fi
 	done
 
-	local myconf=(
-		--with-modified-by="Gentoo-${PVR} (RIP Bram)"
-		--with-vim-name=gvim
-		--with-x
-	)
-
 	use debug && append-flags "-DDEBUG"
 
-	myconf+=(
+	local myconf=(
 		--with-features=huge
 		--disable-gpm
 		--with-gnome=no
@@ -218,6 +208,7 @@ src_configure() {
 		$(use_enable selinux)
 		$(use_enable session xsmp)
 		$(use_enable tcl tclinterp)
+		$(use_with wayland)
 	)
 
 	if use lua; then
@@ -258,7 +249,11 @@ src_configure() {
 			   vim_cv_toupper_broken=no
 	fi
 
-	econf "${myconf[@]}"
+	econf \
+		--with-modified-by="Gentoo-${PVR} (RIP Bram)" \
+		--with-vim-name=gvim \
+		--with-x \
+		"${myconf[@]}"
 }
 
 src_compile() {
@@ -334,7 +329,7 @@ pkg_postinst() {
 	# update documentation tags (from vim-doc.eclass)
 	update_vim_helptags
 
-	# update desktop file mime cache
+	# update fdo mime stuff, bug #78394
 	xdg_desktop_database_update
 
 	# update icon cache
@@ -348,7 +343,7 @@ pkg_postrm() {
 	# update documentation tags (from vim-doc.eclass)
 	update_vim_helptags
 
-	# update desktop file mime cache
+	# update fdo mime stuff, bug #78394
 	xdg_desktop_database_update
 
 	# update icon cache

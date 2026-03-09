@@ -1,8 +1,20 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # Unmask the flag which corresponds to ARCH.
 -m68k
+
+# James Le Cuirot <chewi@gentoo.org> (2026-02-28)
+# Unkeyworded and untested on m68k.
+systemtap
+
+# James Le Cuirot <chewi@gentoo.org> (2025-11-22)
+# Vala looks like it would work well enough, but m68k doesn't need it.
+vala
+
+# Andreas Sturmlechner <asturm@gentoo.org> (2025-06-12)
+# x11-drivers/xf86-input-wacom is not keyworded here
+input_devices_wacom
 
 # James Le Cuirot <chewi@gentoo.org> (2023-08-20)
 # Neither Kerberos implementation is keyworded for m68k yet.
@@ -15,10 +27,6 @@ gtk2
 gtk3
 gtk4
 wxwidgets
-
-# James Le Cuirot <chewi@gentoo.org> (2022-01-30)
-# The app-shells/fish tests fail on m68k, so it remains unkeyworded.
-fish-completion
 
 # James Le Cuirot <chewi@gentoo.org> (2022-01-15)
 # Most of the PostgreSQL tests pass on m68k, but some fail and some hang. I
@@ -37,6 +45,7 @@ vim-syntax
 # James Le Cuirot <chewi@gentoo.org> (2022-01-01)
 # Hardware that probably doesn't apply to m68k.
 input_devices_elographics
+tpm
 video_cards_amdgpu
 video_cards_mga
 video_cards_nouveau
@@ -129,7 +138,6 @@ cups
 dbus
 devil
 diet
-djbfft
 djvu
 emacs
 emf
@@ -157,7 +165,3 @@ slang
 tcl
 tk
 xemacs
-
-# Andreas K. Hüttel <dilfridge@gentoo.org>
-# Requires 32bit alignment, so we mask it for the moment
-python_targets_python3_13

@@ -192,7 +192,7 @@ LICENSE="GPL-2+
 	rust? (
 		0BSD Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD Boost-1.0 MIT MPL-2.0 PSF-2 Unicode-DFS-2016 Unlicense ZLIB )"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 ~loong ~m68k ~mips ppc ppc64 ~riscv x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+KEYWORDS="~alpha amd64 arm arm64 ~loong ~m68k ~mips ppc ppc64 ~riscv x86 ~arm64-macos ~x64-macos ~x64-solaris"
 IUSE="+chg emacs gpg test tk rust"
 
 BDEPEND="rust? ( ${RUST_DEPEND} )"
@@ -372,8 +372,8 @@ python_test() {
 pkg_postinst() {
 	use emacs && elisp-site-regen
 
-	elog "If you want to convert repositories from other tools using convert"
-	elog "extension please install correct tool:"
+	elog "If you want to convert repositories from other tools using"
+	elog "the convert extension please install the correct tool:"
 	elog "  dev-vcs/cvs"
 	elog "  dev-vcs/darcs"
 	elog "  dev-vcs/git"

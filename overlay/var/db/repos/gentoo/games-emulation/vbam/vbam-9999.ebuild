@@ -31,7 +31,7 @@ REQUIRED_USE="
 RDEPEND="
 	>=media-libs/libpng-1.4:=
 	media-libs/libsdl2[joystick]
-	sys-libs/zlib:=
+	virtual/zlib:=
 	virtual/glu
 	virtual/opengl
 	link? ( >=media-libs/libsfml-3.0:= )
@@ -40,7 +40,7 @@ RDEPEND="
 	wxwidgets? (
 		ffmpeg? ( media-video/ffmpeg:= )
 		openal? ( media-libs/openal )
-		x11-libs/wxGTK:${WX_GTK_VER}[X,opengl]
+		x11-libs/wxGTK:${WX_GTK_VER}=[X,opengl]
 	)
 "
 DEPEND="

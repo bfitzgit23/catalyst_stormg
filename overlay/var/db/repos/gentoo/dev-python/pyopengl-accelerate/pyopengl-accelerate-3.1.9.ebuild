@@ -18,7 +18,7 @@ HOMEPAGE="
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 x86"
 IUSE="numpy"
 
 DEPEND="
@@ -35,6 +35,10 @@ BDEPEND="
 "
 
 distutils_enable_tests pytest
+
+PATCHES=(
+	"${FILESDIR}"/pyopengl-accelerate-3.1.9-cpython3.1.0.patch
+)
 
 src_configure() {
 	if ! use numpy; then

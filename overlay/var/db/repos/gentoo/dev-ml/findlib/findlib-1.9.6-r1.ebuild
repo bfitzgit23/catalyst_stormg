@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -9,10 +9,10 @@ SRC_URI="http://download.camlcity.org/download/${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="amd64 arm arm64 ~hppa ~loong ~ppc ppc64 ~riscv x86 ~amd64-linux ~x86-linux ~ppc-macos"
+KEYWORDS="amd64 arm arm64 ~hppa ~loong ~ppc ppc64 ~riscv x86"
 IUSE="doc +ocamlopt tk"
 
-DEPEND=">=dev-lang/ocaml-4.02.3-r1:=[ocamlopt?]
+DEPEND="dev-lang/ocaml:=[ocamlopt?]
 	tk? ( dev-ml/labltk:= )"
 RDEPEND="${DEPEND}"
 
@@ -51,7 +51,7 @@ src_compile() {
 src_install() {
 	emake prefix="${D}" install
 
-	dodir "${stublibs#${EPREFIX}}"
+	dodir "${stublibs#"${EPREFIX}"}"
 
 	if use doc; then
 		cd "${S}/doc" || die

@@ -3,25 +3,25 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{12..14} )
 
 inherit autotools optfeature python-single-r1
 
 if [[ ${PV} == "9999" ]] ; then
 	inherit git-r3
-	EGIT_REPO_URI="https://gitlab.com/${PN}/main.git"
+	EGIT_REPO_URI="https://gitlab.com/${PN}/${PN}.git"
 else
-	SRC_URI="https://gitlab.com/${PN}/main/-/archive/v${PV}/main-v${PV}.tar.bz2 -> ${P}.tar.bz2"
-	KEYWORDS="~amd64 ~x86 ~x86-linux"
-	S="${WORKDIR}/main-v${PV}"
+	SRC_URI="https://gitlab.com/${PN}/${PN}/-/archive/v${PV}/${PN}-v${PV}.tar.bz2"
+	KEYWORDS="~amd64 ~x86"
+	S="${WORKDIR}/${PN}-v${PV}"
 fi
 
 DESCRIPTION="Lightweight user-defined software stacks for high-performance computing"
-HOMEPAGE="https://hpc.github.io/charliecloud/"
+HOMEPAGE="https://charliecloud.io/"
 LICENSE="Apache-2.0"
 
 SLOT="0"
-IUSE="ch-image doc"
+IUSE="ch-image doc +fuse +gc +json"
 
 # Extensive test suite exists, but downloads container images
 # directly and via Docker and installs packages inside using apt/yum.
@@ -32,6 +32,10 @@ DOCS=( NOTICE README.rst )
 
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
+# Configure check, only recent (not yet released) dev-libs/boehm-gc carry this function
+# in non-threaded mode, see #968001.
+QA_CONFIG_IMPL_DECL_SKIP=( GC_set_markers_count )
+
 DEPEND="elibc_musl? ( sys-libs/argp-standalone )"
 COMMON_DEPEND="
 	ch-image? (
@@ -41,6 +45,16 @@ COMMON_DEPEND="
 		')
 		dev-vcs/git
 		net-misc/rsync
+	)
+	fuse? (
+		sys-fs/fuse:3=
+		sys-fs/squashfuse
+	)
+	gc? (
+		dev-libs/boehm-gc:=
+	)
+	json? (
+		dev-libs/cJSON
 	)
 "
 RDEPEND="
@@ -72,6 +86,10 @@ src_configure() {
 	local econf_args=(
 		$(use_enable doc html)
 		$(use_enable ch-image)
+		$(use_with json)
+		# activates linking against both fuse and squashfuse
+		$(use_with fuse squashfuse)
+		$(use_with gc)
 		# Libdir is used as a libexec-style destination.
 		--libdir="${EPREFIX}"/usr/lib
 		# Attempts to call python-exec directly otherwise.
@@ -100,6 +118,5 @@ pkg_postinst() {
 	optfeature "Building with Podman" app-containers/podman
 	optfeature "Progress bars during long operations" sys-apps/pv
 	optfeature "Pack and unpack squashfs images" sys-fs/squashfs-tools
-	optfeature "Mount and umount squashfs images" sys-fs/squashfuse
 	optfeature "Build versioning with ch-image" dev-vcs/git
 }

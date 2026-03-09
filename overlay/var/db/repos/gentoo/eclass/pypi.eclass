@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: pypi.eclass
@@ -11,21 +11,30 @@
 # @DESCRIPTION:
 # The pypi.eclass can be used to easily obtain URLs for artifacts
 # uploaded to PyPI.org.  When inherited, the eclass defaults SRC_URI
-# and S to fetch .tar.gz sdist.  The project filename is normalized
-# by default (unless PYPI_NO_NORMALIZE is set prior to inheriting
-# the eclass), and the version is translated using
+# and S to fetch .tar.gz sdist.  The eclass defaults to using ${PN}
+# as PyPI project name; PYPI_PN can be set prior to inheriting it
+# to override that.  The source distribution filename is assumed
+# to be normalized by default; PYPI_NO_NORMALIZE can be set prior
+# to inherit to override that.  The version is translated using
 # pypi_translate_version.
 #
-# If necessary, SRC_URI and S can be overridden by the ebuild.  Two
-# helper functions, pypi_sdist_url and pypi_wheel_url are provided
-# to generate URLs to artifacts of specified type, with customizable
-# URL components.  Additionally, pypi_wheel_name can be used to generate
-# wheel filename.
+# If PYPI_VERIFY_REPO is set to a non-empty value, verify-provenance
+# flag is added along with necessary BDEPEND.  The provenance file
+# for the default source distribution is added to SRC_URI, and a default
+# src_unpack() is exported to verify its provenance.
+#
+# If necessary, SRC_URI and S can be overridden by the ebuild.  Three
+# helper functions, pypi_sdist_url, pypi_wheel_url
+# and pypi_provenance_url are provided to generate URLs to artifacts
+# of specified type, with customizable URL components.  Additionally,
+# pypi_wheel_name can be used to generate the wheel filename.
 #
 # pypi_normalize_name can be used to normalize an arbitrary project name
 # according to sdist/wheel normalization rules.  pypi_translate_version
 # can be used to translate a Gentoo version string into its PEP 440
 # equivalent.
+#
+# pypi_verify_provenance can be used to verify the provenance directly.
 #
 # @EXAMPLE:
 # @CODE
@@ -63,6 +72,18 @@ _PYPI_ECLASS=1
 # @CODE
 : "${PYPI_PN:=${PN}}"
 
+# @ECLASS_VARIABLE: PYPI_VERIFY_REPO
+# @DEFAULT_UNSET
+# @PRE_INHERIT
+# @DESCRIPTION:
+# The publisher to verify provenance against.  If set to a non-empty
+# value, the eclass will add a "verify-provenance" flag that can be used
+# to download and verify the provenance for the distribution.
+#
+# This can be:
+# - the repository URL when the provenance was signed by a repository
+# - gcp:<email address> when it was signed by a Google Cloud account
+
 # @FUNCTION: _pypi_normalize_name
 # @INTERNAL
 # @USAGE: <name>
@@ -98,6 +119,7 @@ pypi_normalize_name() {
 
 # @FUNCTION: _pypi_translate_version
 # @USAGE: <version>
+# @INTERNAL
 # @DESCRIPTION:
 # Internal version translation function, returns the result
 # via _PYPI_TRANSLATED_VERSION variable.
@@ -161,7 +183,7 @@ _pypi_sdist_url() {
 # generated using build systems that did not follow PEP 625
 # (i.e. the sdist name contains uppercase letters, hyphens or dots).
 #
-# If <package> is unspecified, it defaults to ${PYPI_PN}.  The package
+# If <project> is unspecified, it defaults to ${PYPI_PN}.  The package
 # name is normalized according to the specification unless
 # `--no-normalize` is passed.
 #
@@ -183,7 +205,7 @@ pypi_sdist_url() {
 # @DESCRIPTION:
 # Output the wheel filename for the specified project/version tuple.
 #
-# If <package> is unspecified, it defaults to ${PYPI_PN}.  The package
+# If <project> is unspecified, it defaults to ${PYPI_PN}.  The package
 # name is normalized according to the wheel specification.
 #
 # If <version> is unspecified, it defaults to ${PV} translated
@@ -221,7 +243,7 @@ pypi_wheel_name() {
 # the wheel contents will be unpacked straight into ${WORKDIR}.
 # You need to add a BDEPEND on app-arch/unzip.
 #
-# If <package> is unspecified, it defaults to ${PYPI_PN}.
+# If <project> is unspecified, it defaults to ${PYPI_PN}.
 #
 # If <version> is unspecified, it defaults to ${PV} translated
 # via pypi_translate_version.  If it is specified, then it is used
@@ -257,6 +279,86 @@ pypi_wheel_url() {
 	fi
 }
 
+# @FUNCTION: _pypi_provenance_url
+# @INTERNAL
+# @USAGE: <dist> [<project> [<version>]]
+# @DESCRIPTION:
+# Internal function to generate provenance URL for <dist>, using
+# specified <project> and <version>.  Returns the result
+# via _PYPI_ATTESTATION_URL.
+_pypi_provenance_url() {
+	if [[ ${#} -lt 1 || ${#} -gt 3 ]]; then
+		die "Usage: ${FUNCNAME} <dist> [<project> [<version>]]"
+	fi
+
+	local dist=${1}
+	local project=${2-"${PYPI_PN}"}
+	local version=${3-"$(pypi_translate_version "${PV}")"}
+	_PYPI_ATTESTATION_URL="https://pypi.org/integrity/${project}/v${version}/${dist}/provenance"
+}
+
+# @FUNCTION: pypi_provenance_url
+# @USAGE: <dist> [<project> [<version>]]
+# @DESCRIPTION:
+# Output the URL to PyPI provenance for the specified artifact.
+pypi_provenance_url() {
+	local _PYPI_ATTESTATION_URL
+	_pypi_provenance_url "${@}"
+	echo "${_PYPI_ATTESTATION_URL}"
+}
+
+# @FUNCTION: pypi_verify_provenance
+# @USAGE: <dist> <provenance> [<repo>]
+# @DESCRIPTION:
+# Verify the specified artifact's provenance.  <dist> is the path
+# to the artifact to verify, while <provenance> is the provenance file.
+#
+# The function defaults to using PYPI_VERIFY_REPO as the expected
+# provider info.  This can be overridden by specfying <provider>.
+#
+# The function dies on verification failure.
+pypi_verify_provenance() {
+	if [[ ${#} -lt 2 || ${#} -gt 3 ]]; then
+		die "Usage: ${FUNCNAME} <dist> <provenance> [<provider>]"
+	fi
+
+	local dist=${1}
+	local provenance=${2}
+	local provider=${3-"${PYPI_VERIFY_REPO}"}
+	local args=(
+		--offline
+		--provenance-file "${provenance}"
+		"${dist}"
+	)
+
+	case ${provider} in
+		gcp:*)
+			args+=( --gcp-service-account "${provider#gcp:}" )
+			;;
+		*)
+			args+=( --repository "${provider}" )
+	esac
+
+	einfo "Verifying ${dist##*/} ..."
+	pypi-attestations verify pypi "${args[@]}" ||
+		die "Provenance verification failed for ${dist##*/}"
+}
+
+# @FUNCTION: pypi_src_unpack
+# @DESCRIPTION:
+# A src_unpack implementation that verifies provenances.  Exported only
+# with PYPI_VERIFY_REPO.
+pypi_src_unpack() {
+	if use verify-provenance; then
+		local sdist_url=$(pypi_sdist_url)
+		local filename=${sdist_url##*/}
+
+		pypi_verify_provenance "${DISTDIR}/${filename}"{,.provenance}
+	fi
+
+	default
+}
+
 # @FUNCTION: _pypi_set_globals
 # @INTERNAL
 # @DESCRIPTION:
@@ -276,8 +378,31 @@ _pypi_set_globals() {
 	fi
 
 	SRC_URI=${_PYPI_SDIST_URL}
+
+	if [[ -n ${PYPI_VERIFY_REPO} ]]; then
+		local dist=${_PYPI_SDIST_URL##*/}
+		local _PYPI_ATTESTATION_URL
+		_pypi_provenance_url "${dist}" "${PYPI_PN}" \
+			"${_PYPI_TRANSLATED_VERSION}"
+
+		IUSE="verify-provenance"
+		SRC_URI+="
+			verify-provenance? (
+				${_PYPI_ATTESTATION_URL} -> ${dist}.provenance
+			)
+		"
+		BDEPEND="
+			verify-provenance? (
+				dev-python/pypi-attestations
+			)
+		"
+	fi
 }
 
 _pypi_set_globals
+
+if [[ -n ${PYPI_VERIFY_REPO} ]]; then
+	EXPORT_FUNCTIONS src_unpack
+fi
 
 fi

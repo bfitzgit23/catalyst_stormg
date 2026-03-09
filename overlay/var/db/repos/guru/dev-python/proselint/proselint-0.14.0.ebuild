@@ -5,7 +5,7 @@ EAPI=8
 
 DISTUTILS_USE_PEP517=poetry
 PYPI_PN=${PN^}
-PYTHON_COMPAT=(python3_{11..13} )
+PYTHON_COMPAT=(python3_{11..14} pypy3_11 )
 
 inherit distutils-r1 pypi
 
@@ -23,5 +23,7 @@ KEYWORDS="~amd64"
 RDEPEND="
 	>=dev-python/click-8.0.0[${PYTHON_USEDEP}]
 "
+
+EPYTEST_PLUGINS=( )
 
 distutils_enable_tests pytest

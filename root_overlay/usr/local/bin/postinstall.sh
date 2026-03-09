@@ -15,10 +15,41 @@
 ##############################################################################
 echo "FONT=ter-p16n" >> /etc/vconsole.conf
 
-rm -rf /usr/share/calamares
-rm -rf $HOME/xinnixos-user/Desktop/calamares.desktop
-#rm -rf $HOME/xinnixos-user/Desktop/Install XinnixOS-CLI.desktop
-#rm -rf /usr/bin/install-xinnixos.sh
+#!/bin/bash
+# /etc/calamares/scripts/post-install.sh
+
+# Mount live ISO if needed
+mkdir -p /mnt/cdrom
+mount /dev/sr0 /mnt/cdrom 2>/dev/null || true
+
+# Generate fstab
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# Chroot setup
+chroot /mnt /bin/bash <<EOF
+  # Root password
+  echo "root:gentoo" | chpasswd
+
+  # Enable services
+  rc-update add elogind boot
+  rc-update add dbus default
+  rc-update add NetworkManager default
+  rc-update add dmcrypt boot  # LUKS
+
+  # GRUB (BIOS + UEFI)
+  grub-install --target=i386-pc /dev/sda
+  grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable
+  grub-mkconfig -o /boot/grub/grub.cfg
+
+  # LUKS crypttab
+  if [ -n "\$(lsblk -o FSTYPE | grep crypto_LUKS)" ]; then
+    echo "luksroot UUID=\$(blkid -s UUID -o value /dev/sda2) none luks" >> /etc/crypttab
+EOF
+
+mkdir -p /usr/share/backgrounds/xfce
+cp /usr/share/backgrounds/.* /usr/share/backgrounds/xfce/ || true
+
+sudo chmod +x /usr/local/bin/trust.sh
 
 # Continue cleanup
 rm /usr/local/bin/postinstall.sh

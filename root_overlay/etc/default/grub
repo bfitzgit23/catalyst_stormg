@@ -49,7 +49,7 @@ GRUB_GFXMODE=auto
 # Path to theme spec txt file.
 # The starfield is by default provided with use truetype.
 # NOTE: when enabling custom theme, ensure you have required font/etc.
-GRUB_THEME="/usr/share/grub/themes/natural-gentoo-remastered-grub/theme.txt"
+GRUB_THEME="/usr/share/grub/themes/gentoo_glass/theme.txt"
 
 # Background image used on graphical terminal.
 # Can be in various bitmap formats.

@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/botan.asc
 inherit edo dot-a flag-o-matic multiprocessing ninja-utils python-r1 toolchain-funcs verify-sig
 
@@ -17,7 +17,7 @@ S="${WORKDIR}/${MY_P}"
 LICENSE="BSD-2"
 # New major versions are parallel-installable
 SLOT="$(ver_cut 1)/$(ver_cut 1-2)" # soname version
-KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~ppc-macos"
+KEYWORDS="amd64 arm arm64 ~hppa ~loong ppc ppc64 ~riscv ~s390 ~sparc x86 ~ppc-macos"
 IUSE="doc boost bzip2 lzma python static-libs sqlite test tools zlib"
 CPU_USE=(
 	cpu_flags_arm_{aes,neon,sha1,sha2}
@@ -64,15 +64,8 @@ pkg_pretend() {
 	[[ ${MERGE_TYPE} == binary ]] && return
 
 	# bug #908958
-	if tc-is-gcc && ver_test $(gcc-version) -lt 11 ; then
-		eerror "Botan needs >=gcc-11 or >=clang-14 to compile."
-		eerror "Please upgrade GCC: emerge -v1 sys-devel/gcc"
-		die "GCC version is too old to compile Botan!"
-	elif tc-is-clang && ver_test $(clang-version) -lt 14 ; then
-		eerror "Botan needs >=gcc-11 or >=clang-14 to compile."
-		eerror "Please upgrade Clang: emerge -v1 llvm-core/clang"
-		die "Clang version is too old to compile Botan!"
-	fi
+	tc-check-min_ver gcc 11
+	tc-check-min_ver clang 14
 }
 
 src_configure() {

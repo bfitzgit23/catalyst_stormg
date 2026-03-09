@@ -6,7 +6,7 @@ EAPI=8
 DISTUTILS_EXT=1
 DISTUTILS_OPTIONAL=1
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{10..13} pypy3 pypy3_11 )
+PYTHON_COMPAT=( python3_{12..14} )
 
 inherit bash-completion-r1 desktop distutils-r1 elisp-common flag-o-matic pax-utils toolchain-funcs xdg-utils
 
@@ -53,7 +53,7 @@ COMMON_DEPEND="
 	dev-libs/gmime:3.0[crypt]
 	>=dev-libs/xapian-1.4.0:=
 	sys-libs/talloc
-	sys-libs/zlib:=
+	virtual/zlib:=
 	emacs? ( >=app-editors/emacs-${NEED_EMACS}:* )
 	python? (
 		${PYTHON_DEPS}
@@ -95,6 +95,7 @@ SITEFILE="50${PN}-gentoo.el"
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-0.39-no-compress-man-pages.patch
+	"${FILESDIR}"/${PN}-0.39-test-skip-debug-symbols.patch
 )
 
 pkg_setup() {

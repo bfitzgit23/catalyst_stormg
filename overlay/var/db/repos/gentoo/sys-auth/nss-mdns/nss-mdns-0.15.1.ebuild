@@ -1,7 +1,8 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
+
 inherit autotools multilib-minimal
 
 DESCRIPTION="Name Service Switch module for Multicast DNS"
@@ -10,7 +11,7 @@ SRC_URI="https://github.com/lathiat/nss-mdns/releases/download/v${PV}/${P}.tar.g
 
 LICENSE="GPL-2+"
 SLOT="0"
-KEYWORDS="amd64 ~arm ~arm64 ~hppa ~mips ppc ~ppc64 x86"
+KEYWORDS="amd64 ~arm arm64 ~hppa ~mips ppc ~ppc64 ~riscv x86"
 IUSE="test"
 RESTRICT="!test? ( test )"
 
@@ -32,7 +33,6 @@ multilib_src_configure() {
 	local myconf=(
 		# $(localstatedir)/run/... is used to locate avahi-daemon socket
 		--localstatedir=/var
-
 		$(use_enable test tests)
 	)
 

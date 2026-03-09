@@ -14,6 +14,12 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_BRANCH="openxr"
 else
 	KEYWORDS="~amd64"
+	OPENXR_COMMIT=91a8a8d9d70f4b469bca0726122c3b5a6096010e
+	SRC_URI="
+		https://gitlab.com/znixian/OpenOVR/-/archive/${PV}/OpenOVR-${PV}.tar.bz2 -> ${P}.tar.bz2
+		https://github.com/KhronosGroup/OpenXR-SDK/archive/${OPENXR_COMMIT}.tar.gz -> OpenXR-SDK-${OPENXR_COMMIT}.tar.gz
+	"
+	S="${WORKDIR}/OpenOVR-${PV}"
 fi
 
 LICENSE="GPL-3 Apache-2.0 MIT"
@@ -25,8 +31,17 @@ DEPEND="
 	media-libs/glm
 	media-libs/libglvnd[${MULTILIB_USEDEP},X]
 	media-libs/openxr-loader[${MULTILIB_USEDEP}]
+	virtual/glu[${MULTILIB_USEDEP}]
 "
 RDEPEND="${DEPEND}"
+
+if [[ ${PV} != 9999 ]] ; then
+src_unpack()
+{
+	default_src_unpack
+	mv --no-target-directory "${WORKDIR}/OpenXR-SDK-${OPENXR_COMMIT}" "${S}/libs/openxr-sdk"
+}
+fi
 
 multilib_src_configure()
 {

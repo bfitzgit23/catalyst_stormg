@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -9,9 +9,9 @@ DESCRIPTION="A collection of tools to let /etc be stored in a repository"
 HOMEPAGE="https://etckeeper.branchable.com/"
 SRC_URI="https://git.joeyh.name/index.cgi/etckeeper.git/snapshot/${P}.tar.gz"
 
-LICENSE="GPL-2"
+LICENSE="GPL-2+"
 SLOT="0"
-KEYWORDS="amd64 arm arm64 hppa ~ppc ppc64 ~riscv ~sparc x86"
+KEYWORDS="amd64 arm arm64 ~hppa ~ppc ppc64 ~riscv ~sparc x86"
 IUSE="cron test"
 
 BDEPEND="test? (
@@ -34,7 +34,7 @@ src_prepare() {
 	default
 	hprefixify *.d/* etckeeper
 	local systemdunitdir="$(systemd_get_systemunitdir)"
-	systemdunitdir="${systemdunitdir#${EPREFIX}}"
+	systemdunitdir="${systemdunitdir#"${EPREFIX}"}"
 	sed -i \
 		-e s'@zsh/vendor-completions@zsh/site-functions@' \
 		-e s"@/lib/systemd/system@"${systemdunitdir}"@" \

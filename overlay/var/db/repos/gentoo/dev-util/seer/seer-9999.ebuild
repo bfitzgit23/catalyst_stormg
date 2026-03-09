@@ -5,7 +5,7 @@ EAPI=8
 
 inherit cmake desktop xdg
 
-DESCRIPTION="A GUI frontend to gdb"
+DESCRIPTION="GUI frontend to gdb"
 HOMEPAGE="https://github.com/epasveer/seer"
 if [[ ${PV} == 9999 ]] ; then
 	EGIT_REPO_URI="https://github.com/epasveer/seer"
@@ -24,7 +24,7 @@ LICENSE="GPL-3+ CC-BY-3.0 CC-BY-4.0 MIT"
 SLOT="0"
 
 DEPEND="
-	dev-qt/qtbase:6[gui,widgets]
+	dev-qt/qtbase:6[gui,opengl,widgets]
 	dev-qt/qtcharts:6
 	dev-qt/qtsvg:6
 "

@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..11} pypy3 )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit linux-info python-single-r1 systemd toolchain-funcs
 
@@ -14,7 +14,7 @@ S="${WORKDIR}"/${PN%2}-${PV}
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~ppc ~ppc64 ~sparc ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~alpha ~amd64 ~arm ~ppc ~ppc64 ~sparc ~x86"
 IUSE="+cairo"
 
 REQUIRED_USE="cairo? ( ${PYTHON_REQUIRED_USE} )"
@@ -37,7 +37,7 @@ PATCHES=(
 )
 
 pkg_setup() {
-	use cairo && python-single_r1_pkg_setup
+	use cairo && python-single-r1_pkg_setup
 }
 
 src_prepare() {
@@ -47,6 +47,7 @@ src_prepare() {
 
 	# Redirects systemd unit directory,
 	# as well as disable the built-in python setup.
+	export NO_PYTHON_COMPILE=1
 	sed -i \
 		-e "/^SYSTEMD_UNIT_DIR/s:=.*:= $(systemd_get_systemunitdir):g" \
 		-e "/^install/s:py-install-compile::g" \

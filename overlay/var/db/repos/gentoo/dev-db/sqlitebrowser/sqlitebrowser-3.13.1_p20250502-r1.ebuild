@@ -15,7 +15,7 @@ if [[ ${PV} == *9999* ]]; then
 else
 	SRC_URI="https://github.com/sqlitebrowser/sqlitebrowser/archive/${COMMIT}.tar.gz -> ${P}-${COMMIT:0:8}.tar.gz"
 	S="${WORKDIR}/${PN}-${COMMIT}"
-	KEYWORDS="~amd64 ~x86"
+	KEYWORDS="amd64 x86"
 fi
 
 LICENSE="GPL-3+ MPL-2.0"
@@ -39,7 +39,10 @@ BDEPEND="dev-qt/qttools:6[linguist]"
 
 DOCS=( images/ {BUILDING,CHANGELOG,README}.md )
 
-PATCHES=( "${FILESDIR}/${P}-no-git.patch" )
+PATCHES=(
+	"${FILESDIR}/${P}-no-git.patch"
+	"${FILESDIR}/${P}-qt-6.9.patch"
+)
 
 src_configure() {
 	local mycmakeargs=(

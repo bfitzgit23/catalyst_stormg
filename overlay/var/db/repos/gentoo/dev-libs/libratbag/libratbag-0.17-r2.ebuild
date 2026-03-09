@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..12} )
+PYTHON_COMPAT=( python3_12 )
 
 inherit linux-info meson python-single-r1 systemd udev
 
@@ -39,7 +39,7 @@ BDEPEND="
 	)
 	test? (
 		dev-libs/check
-		dev-libs/gobject-introspection
+		>=dev-libs/gobject-introspection-1.82.0-r2
 		dev-debug/valgrind
 		$(python_gen_cond_dep '
 			dev-python/evdev[${PYTHON_USEDEP}]
@@ -64,13 +64,14 @@ RDEPEND="
 "
 DEPEND="
 	${RDEPEND}
-	dev-libs/gobject-introspection
+	>=dev-libs/gobject-introspection-1.82.0-r2
 "
 
 CONFIG_CHECK="~HIDRAW"
 
 PATCHES=(
-	"${FILESDIR}"/libratbag-0.17-python3.12-imp.patch
+	"${FILESDIR}"/${PN}-0.17-python3.12-imp.patch
+	"${FILESDIR}"/${PN}-0.17-basename.patch
 )
 
 pkg_setup() {

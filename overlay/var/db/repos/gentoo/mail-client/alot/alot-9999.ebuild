@@ -1,10 +1,10 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_12 )
 
 inherit distutils-r1
 
@@ -23,27 +23,27 @@ SLOT="0"
 IUSE="doc"
 
 RDEPEND="
-	app-crypt/gpgme[python,${PYTHON_USEDEP}]
-	dev-python/configobj[${PYTHON_USEDEP}]
+	dev-python/gpgmepy[${PYTHON_USEDEP}]
+	>=dev-python/configobj-4.7.0[${PYTHON_USEDEP}]
 	dev-python/python-magic[${PYTHON_USEDEP}]
-	dev-python/urwid[${PYTHON_USEDEP}]
-	dev-python/urwidtrees[${PYTHON_USEDEP}]
-	dev-python/twisted[${PYTHON_USEDEP}]
+	>=dev-python/urwid-1.3.0[${PYTHON_USEDEP}]
+	>=dev-python/urwidtrees-1.0.3[${PYTHON_USEDEP}]
+	>=dev-python/twisted-18.4.0[${PYTHON_USEDEP}]
 	net-mail/mailbase
-	net-mail/notmuch[crypt,python,${PYTHON_USEDEP}]
+	>=net-mail/notmuch-0.34.2[crypt(+),python,${PYTHON_USEDEP}]
 "
 BDEPEND="
+	dev-python/setuptools-scm[${PYTHON_USEDEP}]
 	dev-python/sphinx[${PYTHON_USEDEP}]
 "
 
-PATCHES=(
-	"${FILESDIR}/0.9-0001-remove-non-working-test.patch"
-	"${FILESDIR}/${PN}-0.10-no-intersphinx-docs.patch"
-)
+export SETUPTOOLS_SCM_PRETEND_VERSION=${PV}
 
 distutils_enable_tests unittest
 
 python_compile_all() {
+	# sphinx uses importlib to get the package version
+	local -x PYTHONPATH="${BUILD_DIR}/install$(python_get_sitedir):${PYTHONPATH}"
 	emake -C docs man
 	use doc && emake -C docs html
 }

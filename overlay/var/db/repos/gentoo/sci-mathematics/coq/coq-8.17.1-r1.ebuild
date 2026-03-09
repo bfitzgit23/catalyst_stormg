@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -9,15 +9,16 @@ MY_P="${PN}-${MY_PV}"
 inherit check-reqs desktop dune edo
 
 DESCRIPTION="Proof assistant written in O'Caml"
-HOMEPAGE="http://coq.inria.fr/
-	https://github.com/coq/coq/"
+HOMEPAGE="https://rocq-prover.org
+	https://github.com/rocq-prover/rocq/"
+
 SRC_URI="https://github.com/coq/coq/archive/V${MY_PV}.tar.gz
 	-> ${P}.tar.gz"
 S="${WORKDIR}/${MY_P}"
 
 LICENSE="LGPL-2.1"
 SLOT="0/${PV}"
-KEYWORDS="~amd64 ~arm64 ~x86"
+KEYWORDS="amd64 ~arm64 ~x86"
 IUSE="debug doc gui +ocamlopt test"
 
 # TODO: Lots of failing tests. Maybe investigate later.

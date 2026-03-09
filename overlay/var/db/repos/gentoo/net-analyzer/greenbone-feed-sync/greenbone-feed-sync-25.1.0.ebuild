@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} pypy3 pypy3_11 )
+PYTHON_COMPAT=( python3_{11..13} pypy3_11 )
 DISTUTILS_USE_PEP517=poetry
 inherit distutils-r1 systemd
 
@@ -13,16 +13,13 @@ SRC_URI="https://github.com/greenbone/greenbone-feed-sync/archive/refs/tags/v${P
 
 LICENSE="GPL-3+"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 IUSE="cron"
 
 COMMON_DEPEND="
 	acct-user/gvm
 	net-misc/rsync
 	>=net-analyzer/gvmd-22.5.0
-	$(python_gen_cond_dep '
-		>dev-python/tomli-2.0.1[${PYTHON_USEDEP}]
-	' 3.10)
 	>=dev-python/rich-13.2.0[${PYTHON_USEDEP}]
 	>=dev-python/shtab-1.7.0[${PYTHON_USEDEP}]
 "

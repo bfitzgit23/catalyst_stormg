@@ -45,7 +45,7 @@ BDEPEND="
 	nls? ( sys-devel/gettext )
 	test? ( dev-util/dejagnu )
 "
-DEPEND="sys-libs/zlib[${MULTILIB_USEDEP}]"
+DEPEND="virtual/zlib:=[${MULTILIB_USEDEP}]"
 # Need a newer binutils-config that'll reset include/lib symlinks for us.
 RDEPEND="${DEPEND}
 	>=sys-devel/binutils-config-5
@@ -131,8 +131,6 @@ src_configure() {
 }
 
 multilib_src_configure() {
-	filter-lto
-
 	local myconf=(
 		# portage's econf() does not detect presence of --d-d-t
 		# because it greps only top-level ./configure. But not
@@ -210,9 +208,37 @@ multilib_src_configure() {
 }
 
 multilib_src_test() {
-	# Without this, the default `src_test` check for the 'check' target
-	# with `-n` may fail with parallel make and silently skip tests (bug #955595)
-	emake check
+	(
+		# Tests don't expect LTO
+		filter-lto
+
+		# If we have e.g. -mfpmath=sse -march=pentium4 in CFLAGS,
+		# we'll get lto1 warnings for some tests which cause
+		# spurious failures because -mfpmath isn't passed at
+		# link-time. Filter accordingly.
+		#
+		# Alternatively, we could pass C{C,XX}_FOR_TARGET with
+		# some (ideally not all, surely would break some tests)
+		# stuffed in.
+		filter-flags '-mfpmath=*'
+
+		# lto-wrapper warnings which confuse tests
+		filter-flags '-Wa,*'
+
+		# bug #637066
+		filter-flags -Wall -Wreturn-type
+
+		# Note that we need 'check' explicitly if ever cleaning this
+		# up: the default `src_test` check for the 'check' target
+		# with `-n` may fail with parallel make and silently skip tests (bug #955595)
+		emake -k check \
+			CFLAGS_FOR_TARGET="${CFLAGS_FOR_TARGET:-${CFLAGS}}" \
+			CXXFLAGS_FOR_TARGET="${CXXFLAGS_FOR_TARGET:-${CXXFLAGS}}" \
+			LDFLAGS_FOR_TARGET="${LDFLAGS_FOR_TARGET:-${LDFLAGS}}" \
+			CFLAGS="${CFLAGS}" \
+			CXXFLAGS="${CXXFLAGS}" \
+			LDFLAGS="${LDFLAGS}"
+	)
 }
 
 multilib_src_install() {
@@ -229,5 +255,6 @@ multilib_src_install() {
 
 multilib_src_install_all() {
 	use static-libs || find "${ED}"/usr -name '*.la' -delete
-	strip-lto-bytecode
+	# Explicit "${ED}" as we need it to do things even w/ USE=-static-libs
+	strip-lto-bytecode "${ED}"
 }

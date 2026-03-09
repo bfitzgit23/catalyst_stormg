@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -15,7 +15,7 @@ SRC_URI="http://ceres-solver.org/${P}.tar.gz"
 
 LICENSE="sparse? ( BSD ) !sparse? ( LGPL-2.1 )"
 SLOT="0/1"
-KEYWORDS="amd64 ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 ~x86"
 IUSE="examples cuda gflags lapack +schur sparse test"
 
 REQUIRED_USE="test? ( gflags ) sparse? ( lapack ) abi_x86_32? ( !sparse !lapack )"
@@ -97,7 +97,7 @@ src_configure() {
 
 src_test() {
 	use cuda && cuda_add_sandbox -w
-	cmake_src_test
+	cmake-multilib_src_test
 }
 
 src_install() {

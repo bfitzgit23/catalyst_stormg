@@ -1,11 +1,11 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 MAJOR="$(ver_cut 1)"
 
-DOTNET_PKG_COMPAT="9.0"
+DOTNET_PKG_COMPAT="10.0"
 NUGETS="
 coverlet.collector@6.0.2
 microsoft.codecoverage@17.12.0
@@ -29,7 +29,7 @@ HOMEPAGE="https://gitlab.gentoo.org/dotnet/csharp-gentoodotnetinfo/"
 if [[ "${PV}" == *9999* ]] ; then
 	inherit git-r3
 
-	EGIT_REPO_URI="https://gitlab.gentoo.org/dotnet/${PN}.git"
+	EGIT_REPO_URI="https://anongit.gentoo.org/git/proj/dotnet/${PN}.git"
 else
 	SRC_URI="https://gitlab.gentoo.org/dotnet/${PN}/-/archive/${PV}/${P}.tar.bz2"
 

@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -17,7 +17,7 @@ IUSE="collada doc samples test"
 RESTRICT="!test? ( test )"
 
 RDEPEND="
-	sys-libs/zlib[minizip]
+	virtual/minizip:=
 	collada? ( media-libs/opencollada )
 	doc? ( app-text/doxygen )
 	samples? (
@@ -33,6 +33,7 @@ DEPEND="${RDEPEND}"
 PATCHES=(
 	"${FILESDIR}/${PN}-5.2.5-gtest.patch"
 	"${FILESDIR}/${PN}-5.2.5-float-comparison.patch"
+	"${FILESDIR}/${PN}-6.0.2-zlib-1.3.2.patch"
 )
 
 DOCS=( CodeConventions.md Readme.md )
@@ -75,6 +76,7 @@ src_configure() {
 		# -DASSIMP_BUILD_NONFREE_C4D_IMPORTER=no # Build the C4D importer, which relies on the non-free Cineware SDK.
 		-DASSIMP_BUILD_SAMPLES=$(usex samples) # If the official samples are built as well (needs Glut).
 		-DASSIMP_BUILD_TESTS=$(usex test) # If the test suite for Assimp is built in addition to the library.
+		-DASSIMP_BUILD_USE_CCACHE=off
 		-DASSIMP_BUILD_ZLIB=no # Build your own zlib
 		-DASSIMP_COVERALLS=$(usex test) # Enable this to measure test coverage.
 		# breaks tests

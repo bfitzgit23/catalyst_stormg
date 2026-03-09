@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,12 +6,12 @@ EAPI=8
 inherit gnome.org gnome2-utils greadme meson systemd xdg
 
 DESCRIPTION="System-wide Linux Profiler"
-HOMEPAGE="http://sysprof.com/"
+HOMEPAGE="https://www.sysprof.com/"
 
 LICENSE="GPL-3+ GPL-2+"
 API_VERSION="4"
 SLOT="0/${API_VERSION}"
-KEYWORDS="~amd64 ~arm64 ~loong ~x86"
+KEYWORDS="amd64 ~arm64 ~loong x86"
 IUSE="gtk systemd test"
 RESTRICT="!test? ( test )"
 
@@ -38,7 +38,7 @@ DEPEND="
 "
 BDEPEND="
 	dev-libs/appstream-glib
-	dev-util/gdbus-codegen
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/itstool
 	>=sys-devel/gettext-0.19.8
 	>=sys-kernel/linux-headers-2.6.32

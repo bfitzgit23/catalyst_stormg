@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,8 +6,8 @@ EAPI=8
 inherit cmake
 
 DESCRIPTION="clog is a colorized log tail utility"
-HOMEPAGE="https://taskwarrior.org/docs/clog/"
-SRC_URI="https://gothenburgbitfactory.org/download/${P}.tar.gz"
+HOMEPAGE="https://gothenburgbitfactory.org/clog/"
+SRC_URI="https://github.com/GothenburgBitFactory/clog/releases/download/v${PV}/${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
@@ -16,6 +16,7 @@ RESTRICT="test" # No test suite on tar.gz
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-1.3.0-gcc13.patch
+	"${FILESDIR}"/${PN}-1.3.0-musl.patch
 )
 
 src_prepare() {

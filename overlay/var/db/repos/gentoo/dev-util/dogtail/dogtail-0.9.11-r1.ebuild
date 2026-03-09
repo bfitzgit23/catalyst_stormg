@@ -14,10 +14,10 @@ SRC_URI="https://gitlab.com/${PN}/${PN}/raw/released/${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 arm64 ~loong ~ppc64 ~riscv x86"
+KEYWORDS="amd64 arm64 ~loong ~ppc64 ~riscv x86"
 
 RDEPEND="
-	dev-libs/gobject-introspection
+	>=dev-libs/gobject-introspection-1.82.0-r2
 	dev-python/pyatspi[${PYTHON_USEDEP}]
 	dev-python/pycairo[${PYTHON_USEDEP}]
 	dev-python/pygobject:3[${PYTHON_USEDEP}]

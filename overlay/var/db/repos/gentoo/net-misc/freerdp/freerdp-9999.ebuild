@@ -1,4 +1,4 @@
-# Copyright 2011-2025 Gentoo Authors
+# Copyright 2011-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -37,7 +37,7 @@ BDEPEND+="
 "
 COMMON_DEPEND="
 	dev-libs/openssl:0=
-	sys-libs/zlib:0
+	virtual/zlib:=
 	aad? ( dev-libs/cJSON )
 	alsa? ( media-libs/alsa-lib )
 	cups? ( net-print/cups )
@@ -70,10 +70,6 @@ COMMON_DEPEND="
 	kerberos? ( virtual/krb5 )
 	openh264? ( media-libs/openh264:0= )
 	pulseaudio? ( media-libs/libpulse )
-	sdl? (
-		media-libs/libsdl2[haptic(+),joystick(+),sound(+),video(+)]
-		media-libs/sdl2-ttf
-	)
 	server? (
 		X? (
 			x11-libs/libXcursor
@@ -88,6 +84,10 @@ COMMON_DEPEND="
 	smartcard? ( sys-apps/pcsc-lite )
 	systemd? ( sys-apps/systemd:0= )
 	client? (
+		sdl? (
+			media-libs/libsdl3
+			media-libs/sdl3-ttf
+		)
 		wayland? (
 			dev-libs/wayland
 			x11-libs/libxkbcommon
@@ -120,22 +120,12 @@ option_client() {
 	fi
 }
 
-run_for_testing() {
-	if use test; then
-		local BUILD_DIR="${WORKDIR}/${P}_testing"
-		"$@"
-	fi
-}
-
 src_configure() {
 	use debug || append-cppflags -DNDEBUG
-	freerdp_configure -DBUILD_TESTING=OFF
-	run_for_testing freerdp_configure -DBUILD_TESTING=ON
-}
-
-freerdp_configure() {
 	local mycmakeargs=(
 		-Wno-dev
+
+		-DBUILD_TESTING=$(option test)
 
 		# https://bugs.gentoo.org/927037
 		-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
@@ -144,11 +134,10 @@ freerdp_configure() {
 		-DWITH_AAD=$(option aad)
 		-DWITH_ALSA=$(option alsa)
 		-DWITH_CCACHE=OFF
-		-DWITH_CLIENT=$(option client)
 
-		-DWITH_CLIENT_SDL=$(option sdl)
-		# https://bugs.gentoo.org/951452
-		-DWITH_CLIENT_SDL3=OFF
+		-DWITH_CLIENT=$(option client)
+		-DWITH_CLIENT_SDL2=OFF
+		-DWITH_CLIENT_SDL3=$(option_client sdl)
 
 		-DWITH_SAMPLE=OFF
 		-DWITH_CUPS=$(option cups)
@@ -180,15 +169,8 @@ freerdp_configure() {
 		-DWITH_WAYLAND=$(option_client wayland)
 		-DWITH_WEBVIEW=OFF
 		-DWITH_WINPR_TOOLS=$(option server)
-
-		"$@"
 	)
 	cmake_src_configure
-}
-
-src_compile() {
-	cmake_src_compile
-	run_for_testing cmake_src_compile
 }
 
 src_test() {
@@ -198,7 +180,7 @@ src_test() {
 	if has network-sandbox ${FEATURES}; then
 		CMAKE_SKIP_TESTS+=( TestConnect )
 	fi
-	run_for_testing cmake_src_test
+	cmake_src_test
 }
 
 src_install() {

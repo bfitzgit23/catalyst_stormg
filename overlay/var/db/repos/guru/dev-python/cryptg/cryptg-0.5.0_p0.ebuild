@@ -8,7 +8,7 @@ EAPI=8
 CARGO_OPTIONAL=1
 DISTUTILS_USE_PEP517=setuptools
 DISTUTILS_EXT=1
-PYTHON_COMPAT=( python3_{11..13} )  # needs pyo3 crate bump for pypy3_11
+PYTHON_COMPAT=( python3_{11..13} )  # needs pyo3 crate bump for pypy3_11 and py3.14
 
 CRATES="
 	aes@0.8.4
@@ -75,10 +75,15 @@ LICENSE+="
 SLOT="0"
 KEYWORDS="~amd64"
 
-BDEPEND="dev-python/setuptools-rust[${PYTHON_USEDEP}]"
+BDEPEND="
+	${RUST_DEPEND}
+	dev-python/setuptools-rust[${PYTHON_USEDEP}]
+"
 
 # rust does not use *FLAGS from make.conf, silence portage warning
 QA_FLAGS_IGNORED=".*"
+
+EPYTEST_PLUGINS=( pytest-import-check )
 
 distutils_enable_tests import-check
 

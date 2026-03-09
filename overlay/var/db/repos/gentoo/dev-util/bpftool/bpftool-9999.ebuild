@@ -1,11 +1,11 @@
-# Copyright 2021-2025 Gentoo Authors
+# Copyright 2021-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-LLVM_COMPAT=( {15..20} )
+LLVM_COMPAT=( {15..22} )
 LLVM_OPTIONAL=1
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit bash-completion-r1 linux-info llvm-r1 python-any-r1 toolchain-funcs
 
@@ -48,7 +48,7 @@ RDEPEND="
 	caps? ( sys-libs/libcap:= )
 	llvm? ( $(llvm_gen_dep 'llvm-core/llvm:${LLVM_SLOT}') )
 	!llvm? ( sys-libs/binutils-libs:= )
-	sys-libs/zlib:=
+	virtual/zlib:=
 	virtual/libelf:=
 "
 DEPEND="
@@ -86,7 +86,10 @@ src_prepare() {
 	sed -i -e 's/-Werror//g' src/Makefile.feature || die
 
 	# remove hardcoded/unhelpful flags from bpftool
-	sed -i -e '/CFLAGS += -O2/d' -e 's/-W //g' -e 's/-Wextra //g' src/Makefile || die
+	sed -e '/CFLAGS += -O2$/d' \
+		-e '/CFLAGS += -W$/d' \
+		-e '/CFLAGS += -Wextra$/d' \
+		-i src/Makefile || die
 
 	# always build bpf bits with std=gnu11 for kernel compatibility (bug 955156)
 	sed -i 's/-fno-stack-protector/& -std=gnu11/g' src/Makefile || die

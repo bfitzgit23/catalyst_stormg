@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit autotools toolchain-funcs
+inherit autotools toolchain-funcs multiprocessing
 
 DESCRIPTION="Package maintenance system for Debian"
 HOMEPAGE="https://packages.qa.debian.org/dpkg"
@@ -11,7 +11,7 @@ SRC_URI="mirror://debian/pool/main/d/${PN}/${P/-/_}.tar.xz"
 
 LICENSE="GPL-2+"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 hppa ~loong ~m68k ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ppc ppc64 ~riscv ~s390 ~sparc x86"
 IUSE="+bzip2 +lzma nls selinux static-libs test +update-alternatives +zlib +zstd"
 RESTRICT="!test? ( test )"
 
@@ -26,7 +26,7 @@ RDEPEND="
 	lzma? ( app-arch/xz-utils )
 	nls? ( virtual/libintl )
 	selinux? ( sys-libs/libselinux )
-	zlib? ( >=sys-libs/zlib-1.1.4 )
+	zlib? ( >=virtual/zlib-1.1.4:= )
 	zstd? ( app-arch/zstd:= )
 "
 DEPEND="
@@ -36,7 +36,6 @@ DEPEND="
 	test? (
 		dev-perl/IO-String
 		dev-perl/Test-Pod
-		virtual/perl-Test-Harness
 	)
 "
 BDEPEND="
@@ -63,11 +62,17 @@ src_prepare() {
 src_configure() {
 	tc-export AR CC
 
+	# dpkg uses LT_INIT([disable-shared]) in configure.ac where GNU libtool
+	# enables static if both --disable-shared and --disable-static are set while
+	# slibtool disables both so explicitly set --enable-static until upstream
+	# supports shared libraries.
+	# https://bugs.gentoo.org/956332
 	local myconf=(
 		--disable-compiler-warnings
 		--disable-devel-docs
 		--disable-dselect
 		--disable-start-stop-daemon
+		--enable-static
 		--enable-unicode
 		--localstatedir="${EPREFIX}"/var
 		$(use_enable nls)
@@ -84,6 +89,10 @@ src_configure() {
 
 src_compile() {
 	emake AR="$(tc-getAR)"
+}
+
+src_test() {
+	emake -Onone check TEST_PARALLEL="$(makeopts_jobs)" TEST_VERBOSE=1
 }
 
 src_install() {

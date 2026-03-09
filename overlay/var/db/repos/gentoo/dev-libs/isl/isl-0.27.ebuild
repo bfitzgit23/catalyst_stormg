@@ -11,7 +11,7 @@ SRC_URI="https://libisl.sourceforge.io/${P}.tar.xz"
 
 LICENSE="LGPL-2.1"
 SLOT="0/23"
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~ppc-macos ~x64-macos ~x64-solaris"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~x64-macos ~x64-solaris"
 IUSE="static-libs"
 
 RDEPEND=">=dev-libs/gmp-5.1.3-r1:=[${MULTILIB_USEDEP}]"
@@ -33,6 +33,11 @@ src_prepare() {
 }
 
 multilib_src_configure() {
+	# The tests for these bindings look at the system copy of isl (bug #940627),
+	# not the just-built one, but they don't seem to get installed anyway.
+	# If they were to be installed, we'd need proper eclass wiring.
+	export PYTHON=:
+
 	local econf_opts=(
 		$(use_enable static-libs static)
 

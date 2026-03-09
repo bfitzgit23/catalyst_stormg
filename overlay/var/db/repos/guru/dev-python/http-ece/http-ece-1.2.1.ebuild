@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} pypy3_11 )
 DISTUTILS_USE_PEP517=setuptools
 inherit distutils-r1 pypi
 
@@ -19,6 +19,8 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 RDEPEND="dev-python/cryptography[${PYTHON_USEDEP}]"
+
+EPYTEST_PLUGINS=( )
 
 distutils_enable_tests pytest
 

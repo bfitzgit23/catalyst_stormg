@@ -1,14 +1,14 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 DISTUTILS_EXT=1
 DISTUTILS_USE_PEP517="flit"
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 PYTHON_REQ_USE='threads(+)'
 
-inherit distutils-r1 flag-o-matic multiprocessing waf-utils systemd
+inherit dot-a distutils-r1 multiprocessing waf-utils systemd
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
@@ -20,7 +20,7 @@ else
 		https://ftp.ntpsec.org/pub/releases/${P}.tar.gz
 		verify-sig? ( https://ftp.ntpsec.org/pub/releases/${P}.tar.gz.asc )
 	"
-	KEYWORDS="~amd64 ~arm ~arm64 ~riscv ~x86"
+	KEYWORDS="amd64 arm arm64 ~loong ~m68k ~ppc ~ppc64 ~riscv ~s390 ~x86"
 
 	BDEPEND="verify-sig? ( sec-keys/openpgp-keys-ntpsec )"
 fi
@@ -69,12 +69,6 @@ BDEPEND+="
 	app-alternatives/yacc
 "
 
-PATCHES=(
-	"${FILESDIR}/${PN}-1.1.9-remove-asciidoctor-from-config.patch"
-	"${FILESDIR}/${PN}-1.2.2-logrotate.patch"
-	"${FILESDIR}/${PN}-1.2.4-pep517-no-egg.patch"
-)
-
 WAF_BINARY="${S}/waf"
 
 src_unpack() {
@@ -89,19 +83,27 @@ src_unpack() {
 }
 
 src_prepare() {
-	default
+	local PATCHES=(
+		"${FILESDIR}/${PN}-1.1.9-remove-asciidoctor-from-config.patch"
+		"${FILESDIR}/${PN}-1.2.2-logrotate.patch"
+		"${FILESDIR}/${PN}-1.2.4-pep517-no-egg.patch"
+		"${FILESDIR}/${PN}-1.2.4-s390x-tests.patch"
+	)
+	if ! use libbsd ; then
+		PATCHES+=( "${FILESDIR}/${PN}-no-bsd.patch" )
+	fi
+
+	distutils-r1_src_prepare
 
 	# Remove autostripping of binaries
 	sed -i -e '/Strip binaries/d' wscript || die
-	if ! use libbsd ; then
-		eapply "${FILESDIR}/${PN}-no-bsd.patch"
-	fi
 	# remove extra default pool servers
 	sed -i '/use-pool/s/^/#/' "${S}"/etc/ntp.d/default.conf || die
 }
 
 src_configure() {
-	filter-lto
+	# endianness configure test fails otherwise
+	lto-guarantee-fat
 
 	local string_127=""
 	local rclocks="";

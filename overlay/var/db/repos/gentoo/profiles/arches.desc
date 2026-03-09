@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Gentoo Authors
+# Copyright 2020-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # This file specifies keyword level for profiles
@@ -15,7 +15,7 @@ alpha		testing
 amd64		stable
 arm		stable
 arm64		stable
-hppa		stable
+hppa		testing
 loong		testing
 m68k		testing
 mips		testing
@@ -23,19 +23,11 @@ ppc		stable
 ppc64		stable
 riscv		testing
 s390		testing
-sparc		stable
+sparc		testing
 x86		stable
 
 # Prefix keywords
-amd64-linux	testing
-arm-linux	testing
-arm64-linux	testing
-ppc64-linux	testing
-riscv-linux	testing
-x86-linux	testing
 arm64-macos	testing
-ppc-macos	testing
-x86-macos	testing
 x64-macos	testing
 x64-solaris	testing
 

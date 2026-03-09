@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..12} )
+PYTHON_COMPAT=( python3_12 )
 
 inherit cmake python-single-r1
 
@@ -27,7 +27,7 @@ RDEPEND="
 	python? ( dev-libs/imath:=[python,${PYTHON_SINGLE_USEDEP}] )
 	hdf5? (
 		>=sci-libs/hdf5-1.10.2:=[zlib(+)]
-		>=sys-libs/zlib-1.2.11-r1
+		>=virtual/zlib-1.2.11-r1:=
 	)
 	python? ( $(python_gen_cond_dep 'dev-libs/boost[python,${PYTHON_USEDEP}]') )
 "

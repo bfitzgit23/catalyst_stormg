@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Gentoo Authors
+# Copyright 2019-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -15,8 +15,8 @@ else
 
 	MY_P="${PN}-$(ver_rs 3 - 4 .)"
 	SRC_URI="
-		https://distfiles.hacktivis.me/releases/${MY_P}.tar.gz
-		verify-sig? ( https://distfiles.hacktivis.me/releases/${MY_P}.tar.gz.sign )
+		https://distfiles.hacktivis.me/releases/badwolf/${MY_P}.tar.gz
+		verify-sig? ( https://distfiles.hacktivis.me/releases/badwolf/${MY_P}.tar.gz.sign )
 	"
 	KEYWORDS="~amd64 ~arm64 ~ppc64"
 	S="${WORKDIR}/${MY_P}"
@@ -29,24 +29,23 @@ SLOT="0"
 
 DOCS=("README.md" "KnowledgeBase.md")
 
-IUSE="+webkit41 test"
+IUSE="test"
 RESTRICT="!test? ( test )"
 
 DEPEND="
 	dev-libs/glib
 	dev-libs/libxml2
 	x11-libs/gtk+:3
-	webkit41? ( net-libs/webkit-gtk:4.1= )
-	!webkit41? ( net-libs/webkit-gtk:4= )
+	net-libs/webkit-gtk:4.1=
 "
 RDEPEND="${DEPEND}"
 BDEPEND="test? ( app-text/mandoc )"
 
 if [[ "${PV}" != "9999" ]]
 then
-	BDEPEND="${BDEPEND} verify-sig? ( sec-keys/signify-keys-lanodan:2021-04 )"
+	BDEPEND="${BDEPEND} verify-sig? ( sec-keys/signify-keys-lanodan:2025 )"
 
-	VERIFY_SIG_OPENPGP_KEY_PATH="/usr/share/signify-keys/signify-keys-lanodan-2021.04.pub"
+	VERIFY_SIG_OPENPGP_KEY_PATH="/usr/share/signify-keys/signify-keys-lanodan-2025.pub"
 
 	src_unpack() {
 		if use verify-sig; then
@@ -64,11 +63,11 @@ src_configure() {
 	[[ "${PV}" == "9999" ]] || restore_config config.h
 
 	CC="${CC:-cc}" \
-	ED="false" \
+	CMD_ED="false" \
 	CFLAGS="${CFLAGS:--02 -Wall -Wextra}" \
 	LDFLAGS="${LDFLAGS}" \
 	DOCDIR="/usr/share/doc/${PF}" \
-	WITH_WEBKITGTK=$(usex webkit41 4.1 4.0) \
+	WITH_WEBKITGTK="4.1" \
 	PREFIX="/usr" \
 	./configure
 }

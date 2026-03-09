@@ -12,8 +12,11 @@ DESCRIPTION="Allows users or groups to run commands as other users"
 HOMEPAGE="https://www.sudo.ws/"
 
 if [[ ${PV} == 9999 ]] ; then
-	inherit autotools mercurial
-	EHG_REPO_URI="https://www.sudo.ws/repos/sudo"
+	EGIT_REPO_URI="
+		https://github.com/sudo-project/sudo
+		https://git.sudo.ws/sudo
+	"
+	inherit autotools git-r3
 else
 	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/sudo.ws.asc
 	inherit libtool verify-sig
@@ -46,7 +49,7 @@ SLOT="0"
 IUSE="gcrypt ldap nls offensive pam sasl +secure-path selinux +sendmail skey ssl sssd"
 
 DEPEND="
-	sys-libs/zlib:=
+	virtual/zlib:=
 	virtual/libcrypt:=
 	gcrypt? ( dev-libs/libgcrypt:= )
 	ldap? (

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,7 +6,7 @@ EAPI=8
 PHP_EXT_INI="yes"
 PHP_EXT_NAME="apcu"
 PHP_EXT_ZENDEXT="no"
-USE_PHP="php8-1 php8-2 php8-3 php8-4"
+USE_PHP="php8-2 php8-3 php8-4"
 
 inherit php-ext-pecl-r3
 
@@ -14,7 +14,7 @@ DESCRIPTION="Stripped down version of APC supporting only user cache"
 
 LICENSE="PHP-3.01"
 SLOT="7"
-KEYWORDS="~amd64 ~arm ~arm64 ~x86"
+KEYWORDS="amd64 ~arm arm64 x86"
 
 LOCKS="pthreadmutex pthreadrw spinlock semaphore"
 LUSE=""

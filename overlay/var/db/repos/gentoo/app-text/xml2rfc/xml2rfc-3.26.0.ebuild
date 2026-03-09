@@ -21,7 +21,7 @@ SRC_URI="
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 RDEPEND="
 	>=dev-python/platformdirs-3.6.0[${PYTHON_USEDEP}]
@@ -43,7 +43,7 @@ BDEPEND="
 		dev-python/decorator[${PYTHON_USEDEP}]
 		dev-python/dict2xml[${PYTHON_USEDEP}]
 		dev-python/weasyprint[${PYTHON_USEDEP}]
-		media-fonts/noto[cjk]
+		media-fonts/noto-cjk
 	)
 "
 

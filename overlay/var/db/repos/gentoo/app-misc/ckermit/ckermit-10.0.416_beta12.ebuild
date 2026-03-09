@@ -5,7 +5,7 @@ EAPI=8
 
 inherit flag-o-matic toolchain-funcs
 
-# Columbia University only uses the third component, e.g. cku211.tar.gz for
+# Kermit only uses the third component, e.g. cku211.tar.gz for
 # what we would call 8.0.211. 4-5 are for betas if used.
 MY_P="cku$(ver_cut 3-5)"
 MY_P=${MY_P/_/-}
@@ -44,7 +44,7 @@ src_prepare() {
 }
 
 src_compile() {
-	# "ckcfn3.c:224:16: error: type of ‘sndfilter’ does not match original declaration"
+	# "ckcfn3.c:224:16: error: type of 'sndfilter' does not match original declaration"
 	filter-lto
 
 	# We don't enable any of the telnet/ftp authentication stuff

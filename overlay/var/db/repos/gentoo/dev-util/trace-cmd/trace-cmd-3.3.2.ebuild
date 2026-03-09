@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_OPTIONAL=1
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 
 inherit linux-info meson python-single-r1
 
@@ -16,7 +16,7 @@ if [[ ${PV} == *9999 ]] ; then
 	inherit git-r3
 else
 	SRC_URI="https://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git/snapshot/${PN}-v${PV}.tar.gz"
-	KEYWORDS="~amd64 ~arm64 ~riscv ~x86"
+	KEYWORDS="amd64 ~arm64 ~riscv ~x86"
 	S="${WORKDIR}/${PN}-v${PV}"
 fi
 
@@ -31,7 +31,7 @@ RDEPEND="
 	>=app-arch/zstd-1.4
 	>=dev-libs/libtracefs-1.8
 	>=dev-libs/libtraceevent-1.6.3
-	sys-libs/zlib
+	virtual/zlib:=
 	sys-process/audit
 	python? ( ${PYTHON_DEPS} )
 "

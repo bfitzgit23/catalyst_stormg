@@ -1,4 +1,4 @@
-# Copyright 2023 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -13,21 +13,33 @@ LICENSE="BSD"
 SLOT="0"
 
 DEPEND="
-	dev-libs/libusb
-	dev-libs/libxml2
+	dev-libs/libusb:1
+	dev-libs/libxml2:=
 "
 RDEPEND="${DEPEND}"
 
-BDEPEND="virtual/pkgconfig"
+BDEPEND="
+	sys-apps/help2man
+	virtual/pkgconfig
+"
 
 src_compile() {
-	PKG_CONFIG=$(tc-getPKG_CONFIG)
-	emake CC=$(tc-getCC) \
-		"CFLAGS=${CFLAGS} `${PKG_CONFIG} --cflags libxml-2.0 libusb-1.0`" \
-		"LDFLAGS=${LDFLAGS} `${PKG_CONFIG} --libs libxml-2.0 libusb-1.0`"
+	# $(VERSION) needs to be consistent in all make invocations
+	export VERSION="${PV}"
+
+	local PKG_CONFIG="$(tc-getPKG_CONFIG)"
+	emake CC="$(tc-getCC)" \
+		CFLAGS="${CFLAGS} $(${PKG_CONFIG} --cflags libxml-2.0 libusb-1.0 || die)" \
+		LDFLAGS="${LDFLAGS} $(${PKG_CONFIG} --libs libxml-2.0 libusb-1.0 || die)"
+	emake manpages
+}
+
+src_test() {
+	emake tests
 }
 
 src_install() {
 	emake prefix="${EPREFIX}/usr" DESTDIR="${D}" install
-	dodoc {README,LICENSE}
+	doman *.1
+	einstalldocs
 }

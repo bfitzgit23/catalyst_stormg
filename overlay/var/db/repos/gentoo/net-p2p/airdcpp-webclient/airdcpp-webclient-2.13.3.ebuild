@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( pypy3 python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 
 inherit cmake python-any-r1 systemd
 
@@ -13,7 +13,7 @@ SRC_URI="https://github.com/airdcpp-web/${PN}/archive/${PV}.tar.gz -> ${P}.tar.g
 
 LICENSE="GPL-3+"
 SLOT="0"
-KEYWORDS="~amd64 ~riscv ~x86"
+KEYWORDS="amd64 ~riscv x86"
 IUSE="nat-pmp +tbb +webui"
 
 RDEPEND="
@@ -26,7 +26,7 @@ RDEPEND="
 	dev-libs/libmaxminddb:=
 	dev-libs/openssl:0=[-bindist(-)]
 	net-libs/miniupnpc:=
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/libiconv
 	nat-pmp? ( net-libs/libnatpmp:= )
 	tbb? ( dev-cpp/tbb:= )

@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Gentoo Authors
+# Copyright 2019-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: sgml-catalog-r1.eclass
@@ -6,19 +6,19 @@
 # Michał Górny <mgorny@gentoo.org>
 # @AUTHOR:
 # Michał Górny <mgorny@gentoo.org>
-# @SUPPORTED_EAPIS: 7
+# @SUPPORTED_EAPIS: 7 8 9
 # @BLURB: Functions for installing SGML catalogs
 # @DESCRIPTION:
 # This eclass regenerates /etc/sgml/catalog as necessary for the DocBook
 # tooling. This is done via exported pkg_postinst and pkg_postrm phases.
 
-case ${EAPI} in
-	7) ;;
-	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
-esac
-
 if [[ -z ${_SGML_CATALOG_R1_ECLASS} ]]; then
 _SGML_CATALOG_R1_ECLASS=1
+
+case ${EAPI} in
+	7|8|9) ;;
+	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
+esac
 
 if [[ ${CATEGORY}/${PN} != app-text/sgml-common ]]; then
 	RDEPEND=">=app-text/sgml-common-0.6.3-r7"

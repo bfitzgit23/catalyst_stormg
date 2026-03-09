@@ -23,7 +23,7 @@ DEPEND="
 	app-arch/zstd:=
 	dev-cpp/gflags:=
 	sys-libs/liburing:=
-	sys-libs/zlib:=
+	virtual/zlib:=
 	sys-process/numactl
 	jemalloc? ( dev-libs/jemalloc:= )
 	tbb? ( dev-cpp/tbb:= )
@@ -32,6 +32,7 @@ RDEPEND="${DEPEND}"
 
 PATCHES=(
 	"${FILESDIR}"/${P}-gcc-13.patch
+	"${FILESDIR}/rocksdb-10.1-fixincludes.patch"
 )
 
 src_prepare() {

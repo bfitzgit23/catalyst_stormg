@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -79,10 +79,10 @@ RDEPEND="dev-db/sqlite:3
 	media-libs/soxr
 	media-sound/lame
 	sys-apps/util-linux
-	sys-libs/zlib:=
+	virtual/zlib:=
 	x11-libs/gdk-pixbuf:2
 	x11-libs/gtk+:3
-	x11-libs/wxGTK:${WX_GTK_VER}[X]
+	x11-libs/wxGTK:${WX_GTK_VER}=[X]
 	alsa? ( media-libs/alsa-lib )
 	audiocom? (
 		net-misc/curl

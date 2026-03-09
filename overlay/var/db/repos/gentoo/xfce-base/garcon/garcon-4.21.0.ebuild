@@ -14,7 +14,7 @@ SRC_URI="https://archive.xfce.org/src/xfce/${PN}/${PV%.*}/${P}.tar.xz"
 
 LICENSE="LGPL-2+ FDL-1.1+"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86"
 IUSE="gtk-doc introspection test"
 RESTRICT="!test? ( test )"
 
@@ -23,7 +23,7 @@ DEPEND="
 	>=x11-libs/gtk+-3.24.0:3
 	>=xfce-base/libxfce4util-4.18.0:=[introspection?]
 	>=xfce-base/libxfce4ui-4.21.0:=[introspection?]
-	introspection? ( >=dev-libs/gobject-introspection-1.72:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 "
 RDEPEND="
 	${DEPEND}
@@ -33,7 +33,7 @@ BDEPEND="
 	>=sys-devel/gettext-0.19.8
 	virtual/pkgconfig
 	gtk-doc? ( dev-util/gtk-doc )
-	introspection? ( >=dev-libs/gobject-introspection-1.72 )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2 )
 "
 
 src_configure() {

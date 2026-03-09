@@ -1,18 +1,26 @@
-# Copyright 2020-2021 Gentoo Authors
+# Copyright 2020-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-# CMake picked to avoid automagic dependencies in meson.build
-inherit cmake git-r3
+inherit cmake flag-o-matic
 
 DESCRIPTION="The open source OpenXR runtime."
 HOMEPAGE="https://monado.dev"
-EGIT_REPO_URI="https://gitlab.freedesktop.org/monado/monado.git"
+
+if [[ "${PV}" = *9999* ]]; then
+	inherit git-r3
+	EGIT_REPO_URI="https://gitlab.freedesktop.org/monado/monado.git"
+else
+	SRC_URI="https://gitlab.freedesktop.org/monado/monado/-/archive/v${PV}/monado-v${PV}.tar.gz"
+	S="${WORKDIR}/monado-v${PV}/"
+	KEYWORDS="~amd64"
+fi
+
 LICENSE="Boost-1.0"
 SLOT="0"
 
-IUSE="dbus ffmpeg gles gstreamer opencv opengl psvr sdl systemd uvc vive vulkan wayland X"
+IUSE="dbus gstreamer onnxruntime opencv opengl psvr sdl systemd uvc vive vulkan wayland X"
 
 # TODO: OpenHMD, percetto?, libsurvive?
 DEPEND="
@@ -41,15 +49,14 @@ DEPEND="
 	)
 	opengl? ( virtual/opengl )
 	opencv? ( media-libs/opencv:= )
-	gles? ( media-libs/mesa[gles1,gles2] )
 	dbus? ( sys-apps/dbus )
 	systemd? ( sys-apps/systemd:= )
 	uvc? ( media-libs/libuvc )
-	ffmpeg? ( media-video/ffmpeg:= )
 	sdl? ( media-libs/libsdl2 )
 	gstreamer? ( media-libs/gstreamer )
 	psvr? ( dev-libs/hidapi )
-	vive? ( sys-libs/zlib:= )
+	vive? ( virtual/zlib:= )
+	onnxruntime? ( sci-libs/onnxruntime )
 "
 RDEPEND="${DEPEND}"
 
@@ -62,27 +69,25 @@ src_configure() {
 
 		-DXRT_HAVE_VULKAN=$(usex vulkan)
 		-DXRT_HAVE_OPENGL=$(usex opengl)
-		-DXRT_HAVE_OPENGLES=$(usex gles)
+		-DXRT_HAVE_OPENGLES=$(usex opengl)
 		-DXRT_HAVE_EGL=ON
 		-DXRT_HAVE_LIBBSD=ON
 		-DXRT_HAVE_SYSTEMD=$(usex systemd)
-		-DXRT_INSTALL_SYSTEMD_UNIT_FILES=ON
+		-DXRT_INSTALL_SYSTEMD_UNIT_FILES=$(usex systemd)
 
 		-DXRT_HAVE_LIBUSB=ON
 		-DXRT_HAVE_JPEG=ON
 		-DXRT_HAVE_OPENCV=$(usex opencv)
 		-DXRT_HAVE_LIBUVC=$(usex uvc)
-		-DXRT_HAVE_FFMPEG=$(usex ffmpeg)
 		-DXRT_HAVE_SDL2=$(usex sdl)
 		-DXRT_HAVE_SYSTEM_CJSON=ON
 		-DXRT_HAVE_GST=$(usex gstreamer)
 		-DXRT_HAVE_PERCETTO=OFF
 
 		-DXRT_BUILD_DRIVER_PSVR=$(usex psvr)
-		-DXRT_BUILD_DRIVER_RS=OFF
 		-DXRT_BUILD_DRIVER_VIVE=$(usex vive)
 		-DXRT_BUILD_DRIVER_OHMD=OFF
-		-DXRT_BUILD_DRIVER_HANDTRACKING=ON
+		-DXRT_BUILD_DRIVER_HANDTRACKING=$(usex onnxruntime)
 		-DXRT_BUILD_DRIVER_DAYDREAM=$(usex dbus)
 		-DXRT_BUILD_DRIVER_ARDUINO=$(usex dbus)
 		-DXRT_BUILD_DRIVER_ILLIXR=OFF
@@ -91,6 +96,10 @@ src_configure() {
 		-DXRT_BUILD_DRIVER_SURVIVE=OFF
 		-DXRT_BUILD_DRIVER_QWERTY=$(usex sdl)
 	)
+
+	# Causes Werror-incompatible-pointer-types-discards-qualifiers
+	# with some string literals used in struct initialization
+	filter-flags -Wwrite-strings
 
 	cmake_src_configure
 }

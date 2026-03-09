@@ -1,5 +1,61 @@
-# Copyright 2022-2025 Gentoo Authors
+# Copyright 2022-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
+
+# Sam James <sam@gentoo.org> (2026-01-16)
+# Unkeyworded dependencies (bug #968238)
+media-video/pipewire libcamera
+
+# WANG Xuerui <xen0n@gentoo.org> (2025-12-11)
+# Mysterious segfault at build time (building splash image), during exiv2
+# XMP namespace registration, due to unidentified interaction between C++
+# exception handling and loongarch64 libunwind operation.
+media-gfx/gimp unwind
+
+# WANG Xuerui <xen0n@gentoo.org> (2025-12-10)
+# Test case "c_test" fails with "free: invalid size".
+dev-libs/rocksdb jemalloc
+
+# WANG Xuerui <xen0n@gentoo.org> (2025-12-10)
+# Requires ocamlopt which has not been ported to loong.
+# See https://github.com/ocaml/ocaml/pull/11974
+sys-libs/libnbd ocaml
+
+# WANG Xuerui <xen0n@gentoo.org> (2025-12-10)
+# postgresql:14 is not keyworded on loong.
+www-servers/uwsgi postgres_targets_postgres14
+
+# Michal Rostecki <vadorovsky@protonmail.com> (2025-11-26)
+# llvm-core/lld supports loong from 17.x.
+<=llvm-core/clang-linker-config-16 default-lld
+
+# Ionen Wolkens <ionen@gentoo.org> (2025-11-13)
+# media-libs/libvmaf is keyworded here
+media-libs/x265 -vmaf
+
+# PPN-SD <nicolas.parlant@parhuet.fr> (2025-10-04)
+# media-libs/libemf is not keyworded here
+app-office/dia wmf
+
+# Michał Górny <mgorny@gentoo.org> (2025-09-12)
+# These BLAS/LAPACK providers are keyworded here.
+sci-libs/flexiblas -openblas
+
+# Eli Schwartz <eschwartz@gentoo.org> (2025-09-05)
+# dev-python/sphinx-tabs is not keyworded.
+dev-python/anyio doc
+
+# Mike Gilbert <floppym@gentoo.org> (2025-06-18)
+# media-libs/libsdl3 is missing keywords.
+>=net-misc/freerdp-3.16.0 sdl
+
+# WANG Xuerui <xen0n@gentoo.org> (2025-02-28)
+# Upstream only supports the 64-bit UEFI configuration for loong.
+sys-apps/memtest86+ bios32 bios64 uefi32 iso32
+
+# WANG Xuerui <xen0n@gentoo.org> (2025-05-29)
+# dist-server pulls in the libmount crate which is unmaintained and depends
+# on outdated nix that does not support loong
+dev-util/sccache dist-server
 
 # NRK <nrk@disroot.org> (2025-04-07)
 # media-libs/libyuv is not keyworded
@@ -30,10 +86,6 @@ media-libs/zxing-cpp experimental
 # tests require qtwebengine which is unavailable
 dev-python/qtconsole test
 dev-python/qtpy test
-
-# WANG Xuerui <xen0n@gentoo.org> (2025-01-12)
-# Vulkan works on loong.
-media-video/mpv -vulkan
 
 # Sam James <sam@gentoo.org> (2025-01-10)
 # dev-lang/ada-bootstrap exists here
@@ -120,10 +172,6 @@ dev-lang/python jit
 # loong yet.
 net-misc/chrony html
 
-# Sam James <sam@gentoo.org> (2024-03-27)
-# No rust-bin available for profiler
-<virtual/rust-1.73.0 profiler
-
 # Robin H. Johnson <robbat2@gentoo.org) (2024-03-13)
 # sys-cluster/corosync not yet keyworded, niche use case for mdadm
 sys-fs/mdadm corosync
@@ -181,7 +229,6 @@ dev-python/requests-cache test
 # WANG Xuerui <xen0n@gentoo.org> (2023-07-26)
 # no llvm:15 or lld:16 on loong
 <dev-db/postgresql-16 llvm
-<dev-lang/rust-1.73.0 wasm
 
 # Ionen Wolkens <ionen@gentoo.org> (2023-07-26)
 # MPV currently[1] has no plans to support >=lua5-3 making luajit
@@ -230,10 +277,6 @@ sys-cluster/knem modules
 >=sys-apps/systemd-utils-254 -boot -ukify
 sys-kernel/installkernel -systemd-boot -ukify -uki
 
-# WANG Xuerui <xen0n@gentoo.org> (2023-04-16)
-# dev-python/pyopengl fails tests
-dev-python/sympy opengl
-
 # WANG Xuerui <xen0n@gentoo.org> (2022-12-06)
 # dev-cpp/glog fails tests, needs checking
 media-libs/opencv glog contribsfm
@@ -260,16 +303,17 @@ sci-libs/spqr tbb
 dev-cpp/eigen test
 
 # WANG Xuerui <xen0n@gentoo.org> (2022-12-05)
-# app-misc/tracker fails tests on loong.
+# app-misc/tinysparql fails tests on loong.
 app-cdr/brasero tracker
 
 # WANG Xuerui <xen0n@gentoo.org> (2022-12-05)
 # Respective dependency fails to build, pending investigation, mask for the
 # time being
 dev-cpp/libcmis man
+kde-plasma/plasma-meta ocr
 media-libs/opencv tesseract
-media-video/ffmpeg libtesseract
-media-video/ffmpeg-compat libtesseract
+media-video/ffmpeg ocr
+media-video/ffmpeg-compat ocr
 
 # WANG Xuerui <xen0n@gentoo.org> (2022-12-05)
 # sys-auth/sssd isn't keyworded here yet
@@ -290,6 +334,7 @@ app-admin/syslog-ng test
 # WANG Xuerui <xen0n@gentoo.org> (2022-12-02)
 # sys-cluster/ceph is not keyworded yet.
 net-analyzer/rrdtool rados
+www-servers/uwsgi uwsgi_plugins_rados
 
 # WANG Xuerui <xen0n@gentoo.org> (2022-12-02)
 # Boost.Context has had support for loong since 1.79.0.
@@ -322,6 +367,7 @@ media-plugins/gst-plugins-meta libvisual
 # Profile: https://reviews.llvm.org/D154405 (LLVM 17 since 20230706)
 # XRay: https://reviews.llvm.org/D140727 (LLVM 17 since 20230714)
 # libFuzzer: https://reviews.llvm.org/D140601 (LLVM 17 since 20230718)
+# ORC: 79231a86846b7dff09497fc58ea1e82e892052bd (21 since 2025-01-21)
 >=llvm-runtimes/compiler-rt-sanitizers-15 -asan
 >=llvm-runtimes/compiler-rt-sanitizers-16 -lsan -safestack -scudo -tsan -ubsan
 >=llvm-runtimes/compiler-rt-sanitizers-17.0.0_pre20230630 -msan
@@ -329,6 +375,7 @@ media-plugins/gst-plugins-meta libvisual
 >=llvm-runtimes/compiler-rt-sanitizers-17.0.0_pre20230717 -profile -xray
 >llvm-runtimes/compiler-rt-sanitizers-17.0.0_pre20230717 -libfuzzer
 >=llvm-runtimes/compiler-rt-sanitizers-19 -cfi
+>=llvm-runtimes/compiler-rt-sanitizers-21 -orc
 
 # WANG Xuerui <xen0n@gentoo.org> (2022-07-08)
 # virtual/{jdk,jre} is not available on loong yet.
@@ -343,7 +390,6 @@ net-libs/libssh mbedtls
 # WANG Xuerui <xen0n@gentoo.org> (2022-04-24)
 # Unmask experimental-loong on packages; we're loong.
 sys-libs/glibc -experimental-loong
-sys-libs/libseccomp -experimental-loong
 
 # WANG Xuerui <xen0n@gentoo.org> (2022-04-18)
 # Mask io-uring & zbc pending keywording
@@ -363,5 +409,6 @@ sys-libs/libxcrypt compat
 # These aren't ported to LoongArch yet
 dev-libs/libpcre jit
 www-servers/nginx pcre-jit
+www-apache/mod_security jit
 
 # End snippets taken from riscv

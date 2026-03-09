@@ -1,4 +1,4 @@
-# Copyright 2020-2025 Gentoo Authors
+# Copyright 2020-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: dist-kernel-utils.eclass
@@ -180,7 +180,14 @@ dist-kernel_reinstall_initramfs() {
 	local kernel_dir=${1:-${KV_DIR}}
 	local ver=${2:-${KV_FULL}}
 
+	# If this is set it will have an effect on the name of the output
+	# image. Set this variable to track this setting.
+	if grep -q "CONFIG_EFI_ZBOOT=y" "${kernel_dir}/.config"; then
+		KERNEL_EFI_ZBOOT=1
+	fi
+
 	local image_path=${kernel_dir}/$(dist-kernel_get_image_path)
+
 	if [[ ! -f ${image_path} ]]; then
 		eerror "Kernel install missing, image not found:"
 		eerror "  ${image_path}"
@@ -206,6 +213,43 @@ dist-kernel_PV_to_KV() {
 	[[ -z $(ver_cut 3- "${kv}") ]] && kv+=".0"
 	[[ ${pv} == *_* ]] && kv+=-${pv#*_}
 	echo "${kv}"
+}
+
+# @FUNCTION: dist-kernel_get_compressor
+# @USAGE: <kernel_config>
+# @DESCRIPTION:
+# Returns the compressor with arguments for compressing kernel modules
+# based on the CONFIG_MODULES_COMPESS_* setting in the kernel config.
+dist-kernel_get_compressor() {
+	debug-print-function ${FUNCNAME} "$@"
+
+	[[ ${#} -eq 1 ]] || die "${FUNCNAME}: invalid arguments"
+
+	local suffix=$(dist-kernel_get_module_suffix "${1}")
+	local compress=()
+	# Options taken from linux-mod-r1.eclass.
+	# We don't instruct the compressor to parallelize because it applies
+	# multithreading per file, so it works only for big files, and we have
+	# lots of small files instead.
+	case ${suffix} in
+		.ko)
+			return
+			;;
+		.ko.gz)
+			compress+=( gzip )
+			;;
+		.ko.xz)
+			compress+=( xz --check=crc32 --lzma2=dict=1MiB )
+			;;
+		.ko.zst)
+			compress+=( zstd -q --rm )
+			;;
+		*)
+			die "Unknown compressor: ${suffix}"
+			;;
+	esac
+
+	echo "${compress[@]}"
 }
 
 # @FUNCTION: dist-kernel_get_module_suffix

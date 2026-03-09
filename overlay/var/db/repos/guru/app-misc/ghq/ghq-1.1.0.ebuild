@@ -72,10 +72,10 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 src_compile() {
-	go build -work -o "bin/${PN}" ./ || die
+	ego build -o "bin/${PN}"
 }
 
 src_install() {
-	dobin bin/${PN}
+	dobin "bin/${PN}"
 	dodoc README.adoc
 }

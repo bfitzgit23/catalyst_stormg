@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: ruby-ng.eclass
@@ -649,7 +649,7 @@ doruby() {
 	[[ -z ${RUBY} ]] && die "\$RUBY is not set"
 	( # don't want to pollute calling env
 		sitelibdir=$(ruby_rbconfig_value 'sitelibdir')
-		insinto "${sitelibdir#${EPREFIX}}"
+		insinto "${sitelibdir#"${EPREFIX}"}"
 		insopts -m 0644
 		doins "$@"
 	)
@@ -704,7 +704,8 @@ ruby_get_implementation() {
 	esac
 }
 
-# @FUNCTION: ruby-ng_rspec <arguments>
+# @FUNCTION: ruby-ng_rspec
+# @USAGE: <arguments>
 # @DESCRIPTION:
 # This is simply a wrapper around the rspec command (executed by $RUBY})
 # which also respects TEST_VERBOSE and NOCOLOR environment variables.

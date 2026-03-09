@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -9,7 +9,7 @@ HOMEPAGE="https://gitlab.gnome.org/GNOME/gnome-desktop/"
 
 LICENSE="GPL-2+ LGPL-2+ FDL-1.1+"
 SLOT="3/20" # subslot = libgnome-desktop-3 soname version
-KEYWORDS="~alpha amd64 ~arm arm64 ~loong ~ppc ~ppc64 ~riscv ~sparc x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~alpha amd64 ~arm arm64 ~loong ~ppc ~ppc64 ~riscv ~sparc x86"
 IUSE="debug +introspection seccomp systemd udev"
 
 COMMON_DEPEND="
@@ -25,7 +25,7 @@ COMMON_DEPEND="
 	seccomp? ( sys-libs/libseccomp )
 
 	x11-libs/cairo
-	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 "
 DEPEND="${COMMON_DEPEND}
 	media-libs/fontconfig
@@ -36,7 +36,7 @@ RDEPEND="${COMMON_DEPEND}
 "
 BDEPEND="
 	app-text/docbook-xml-dtd:4.1.2
-	dev-util/gdbus-codegen
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/itstool
 	>=sys-devel/gettext-0.19.8
 	virtual/pkgconfig

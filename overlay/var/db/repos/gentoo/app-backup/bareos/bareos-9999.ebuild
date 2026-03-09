@@ -1,9 +1,9 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} python3_13t )
+PYTHON_COMPAT=( python3_{11..14} )
 CMAKE_WARN_UNUSED_CLI=no
 
 inherit python-any-r1 systemd cmake tmpfiles flag-o-matic
@@ -63,7 +63,7 @@ DEPEND="
 		dev-libs/lzo[static-libs]
 		dev-libs/openssl:0=[static-libs]
 		sys-libs/ncurses:=[static-libs]
-		sys-libs/zlib[static-libs]
+		virtual/zlib:=[static-libs]
 	)
 	!static? (
 		acl? ( virtual/acl )
@@ -71,7 +71,7 @@ DEPEND="
 		dev-libs/lzo
 		dev-libs/openssl:0=
 		sys-libs/ncurses:=
-		sys-libs/zlib
+		virtual/zlib:=
 	)
 	X? (
 		dev-qt/qtbase:6[widgets]
@@ -84,6 +84,7 @@ RDEPEND="${DEPEND}
 			app-arch/mt-st
 		)
 	)
+	sys-libs/libcap
 	vim-syntax? ( || ( app-editors/vim app-editors/gvim ) )
 	"
 
@@ -107,6 +108,7 @@ REQUIRED_USE="
 
 PATCHES=(
 	"${FILESDIR}/${PN}-21-cmake-gentoo.patch"
+	"${FILESDIR}/${PN}-25.0.1-no-xxhash-dispatch.patch"
 )
 
 pkg_pretend() {
@@ -189,6 +191,7 @@ src_configure() {
 		-DCPM_USE_LOCAL_PACKAGES=1
 		-DCPM_LOCAL_PACKAGES_ONLY=1
 		-DENABLE_WEBUI=0
+		-DENABLE_BARRI=0
 		-Darchivedir=/var/lib/bareos/storage
 		-Dbackenddir=/usr/$(get_libdir)/${PN}/backend
 		-Dbasename="`hostname -s`"

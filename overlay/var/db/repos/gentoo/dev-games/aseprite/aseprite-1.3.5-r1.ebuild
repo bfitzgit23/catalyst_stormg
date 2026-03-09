@@ -1,9 +1,9 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{11..12} )
 inherit cmake desktop flag-o-matic python-any-r1 toolchain-funcs xdg-utils
 
 SKIA_VER="m102"
@@ -34,7 +34,7 @@ COMMON_DEPEND="
 	media-libs/libjpeg-turbo:=
 	media-libs/libpng:=
 	net-misc/curl
-	sys-libs/zlib:=
+	virtual/zlib:=
 	virtual/opengl
 	x11-libs/libX11
 	x11-libs/libXcursor
@@ -64,8 +64,6 @@ PATCHES=(
 	"${FILESDIR}/${PN}-1.3.2_shared_webp.patch"
 	"${FILESDIR}/${PN}-1.2.35_laf_fixes.patch"
 	"${FILESDIR}/${PN}-1.3.2_shared_fmt.patch"
-	"${FILESDIR}/${PN}-1.3.2_strict-aliasing.patch"
-	"${FILESDIR}/${P}_laf-strict-aliasing.patch"
 	"${FILESDIR}/${P}-no-fetch-in-cmake-kthx.patch" # bug 935448
 )
 

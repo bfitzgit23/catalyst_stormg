@@ -1,0 +1,106 @@
+- name: "Extra TTF Fonts"
+  description: "Installs Additional Fonts"
+  critical: false
+  hidden: true
+  selected: true
+  expanded: false
+  packages:
+    - ttf-anonymous-pro
+    - ttf-caladea
+    - ttf-carlito
+    - ttf-cascadia-code
+    - ttf-cormorant
+    - ttf-croscore
+    - ttf-droid
+    - ttf-eurof
+    - ttf-fantasque-sans-mono
+    - ttf-font-awesome
+    - ttf-inconsolata
+    - ttf-joypixels
+    - ttf-ionicons
+    - ttf-liberation
+    - ttf-monofur
+    - ttf-nerd-fonts-symbols
+    - ttf-nerd-fonts-symbols-mono
+    - ttf-proggy-clean
+    - ttf-roboto
+    - ttf-roboto-mono
+    - ttf-ubuntu-font-family
+- name: "Gaming Applications"
+  description: "Installs Gaming Applications"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
+  packages:
+    - lutris
+    - steam
+    - steam-native-runtime
+- name: "Software"
+  description: "Software"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
+  packages:
+   - obs-studio
+   - v4l2loopback-dkms
+   - v4l2loopback-utils
+   - vesktop
+   - discord
+   - libreoffice
+- name: "Browsers"
+  description: "Browsers"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
+  packages:
+   - google-chrome
+   - brave-bin
+   - microsoft-edge-stable-bin
+- name: "VirtualBox"
+  description: "Installs VirtualBox"
+  critical: false
+  hidden: true
+  selected: false
+  expanded: false
+  packages: 
+    - virtualbox
+    - virtualbox-host-dkms
+    - virtualbox-guest-utils
+- name: "Acreetoin Loaded Software"
+  description: "Cinnamon Config files"
+  critical: false
+  hidden: true
+  selected: true
+  expanded: false
+  packages:
+    - fastfetch
+    - nano 
+    - webapp-manager
+    - vlc
+    - loupe
+    - xarchiver
+    - timeshift
+    - pkunzip
+    - pamac-aur-git
+    - gedit
+    - gnome-disk-utility
+    - seahorse
+    - yay-bin
+    - pamac-aur-git
+    - firefox
+    - gnome-calculator
+    - gnome-system-monitor
+- name: "Graphic's Cards"
+  description: "Install NVidia Drivers"
+  critical: false
+  hidden: false
+  selected: false
+  expanded: true
+  packages:
+    - nvidia-dkms
+    - nvidia-settings
+    - intel-compute-runtime
+    - intel-media-driver

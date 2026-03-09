@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -29,7 +29,7 @@ DEPEND="
 	dev-qt/qtsvg:6
 	sci-libs/gdal:=
 	sci-libs/proj:=
-	sys-libs/zlib
+	virtual/zlib:=
 	exif? ( media-gfx/exiv2:= )
 	gps? ( >=sci-geosciences/gpsd-3.17-r2:= )
 	libproxy? ( >=net-libs/libproxy-0.5 )
@@ -48,6 +48,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-0.20.0-disable-git.patch # downstream patch
 	# pending upstream PR: https://github.com/openstreetmap/merkaartor/pull/291
 	"${FILESDIR}"/${PN}-0.20.0-GNUInstallDirs.patch
+	"${FILESDIR}"/${PN}-0.20.0-gdal-3.12-fix.patch # backport from master
 )
 
 src_prepare() {
@@ -68,4 +69,9 @@ src_configure() {
 	)
 
 	cmake_src_configure
+}
+
+src_test() {
+	local -x QT_QPA_PLATFORM=offscreen
+	cmake_src_test
 }

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Gentoo Authors
+# Copyright 2022-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -24,7 +24,7 @@ LICENSE="GPL-3+"
 SLOT="3"
 IUSE="doc test examples python root static-libs"
 RESTRICT="!test? ( test )"
-REQUIRED_USE="${PYTHON_REQUIRED_USE}"
+REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
 
 RDEPEND="
 	python? (
@@ -47,18 +47,22 @@ BDEPEND="
 		dev-texlive/texlive-latexrecommended
 	)
 	test? (
-		sys-libs/zlib
+		virtual/zlib:=
 		app-arch/xz-utils
 		app-arch/bzip2
 		app-arch/zstd
 	)
 	examples? (
-		sys-libs/zlib
+		virtual/zlib:=
 		app-arch/xz-utils
 		app-arch/bzip2
 		app-arch/zstd
 	)
 "
+
+pkg_setup() {
+	use python && python-single-r1_pkg_setup
+}
 
 src_configure() {
 	filter-lto # 941937 941936

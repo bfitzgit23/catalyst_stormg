@@ -1,12 +1,12 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 TMPFILES_OPTIONAL=1
 
-inherit pam python-r1 meson-multilib tmpfiles toolchain-funcs
+inherit flag-o-matic pam python-r1 meson-multilib tmpfiles toolchain-funcs
 
 MY_PV="${PV/_/-}"
 MY_P="${PN}-${MY_PV}"
@@ -22,7 +22,7 @@ else
 	inherit verify-sig
 
 	if [[ ${PV} != *_rc* ]] ; then
-		KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos"
+		KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~arm64-macos"
 	fi
 
 	SRC_URI="https://www.kernel.org/pub/linux/utils/util-linux/v${PV:0:4}/${MY_P}.tar.xz"
@@ -41,7 +41,7 @@ RDEPEND="
 	virtual/libcrypt:=
 	audit? ( >=sys-process/audit-2.6:= )
 	caps? ( sys-libs/libcap-ng )
-	cramfs? ( sys-libs/zlib:= )
+	cramfs? ( virtual/zlib:= )
 	cryptsetup? ( >=sys-fs/cryptsetup-2.1.0 )
 	hardlink? ( dev-libs/libpcre2:= )
 	ncurses? (
@@ -114,12 +114,9 @@ src_unpack() {
 		return
 	fi
 
-	# Upstream sign the decompressed .tar
 	if use verify-sig; then
-		einfo "Unpacking ${MY_P}.tar.xz ..."
-		verify-sig_verify_detached - "${DISTDIR}"/${MY_P}.tar.sign \
-			< <(xz -cd "${DISTDIR}"/${MY_P}.tar.xz | tee >(tar -xf -))
-		assert "Unpack failed"
+		verify-sig_uncompress_verify_unpack "${DISTDIR}"/${MY_P}.tar.xz \
+			"${DISTDIR}"/${MY_P}.tar.sign
 	else
 		default
 	fi
@@ -127,6 +124,11 @@ src_unpack() {
 
 src_prepare() {
 	default
+
+	# Workaround for bug #961040 (gcc PR120006)
+	if tc-is-gcc && [[ $(gcc-major-version) == 15 && $(gcc-minor-version) -lt 2 ]] ; then
+		append-flags -fno-ipa-pta
+	fi
 
 	if use test ; then
 		# Known-failing tests

@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,7 +6,7 @@ EAPI=8
 LUA_REQ_USE="deprecated(+)"
 LUA_COMPAT=( lua5-{1,2} luajit )
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit flag-o-matic lua-single meson python-any-r1 xdg
 
@@ -16,7 +16,7 @@ SRC_URI="https://download.enlightenment.org/rel/libs/${PN}/${P}.tar.xz"
 
 LICENSE="BSD-2 GPL-2 LGPL-2.1 ZLIB"
 SLOT="0"
-KEYWORDS="amd64 ~arm ~arm64 ~ppc ~ppc64 ~riscv x86"
+KEYWORDS="amd64 ~arm arm64 ~ppc ~ppc64 ~riscv x86"
 IUSE="+X avif bmp connman cpu_flags_arm_neon dds debug doc drm +eet efl-one elogind examples fbcon"
 IUSE+=" +fontconfig fribidi gif glib +gstreamer harfbuzz heif hyphen ibus ico jpeg2k jpegxl json"
 IUSE+=" nls mono opengl +pdf physics pmaps postscript psd pulseaudio raw scim sdl +sound +svg"
@@ -48,7 +48,7 @@ RDEPEND="${LUA_DEPS}
 	media-libs/libpng:=
 	sys-apps/dbus
 	sys-apps/util-linux
-	sys-libs/zlib
+	virtual/zlib:=
 	X? (
 		!opengl? ( media-libs/libglvnd )
 		media-libs/freetype
@@ -288,6 +288,10 @@ src_configure() {
 	if use elibc_musl ; then
 		append-cflags -D_LARGEFILE64_SOURCE
 	fi
+
+	# https://bugs.gentoo.org/944215
+	# https://git.enlightenment.org/enlightenment/efl/issues/93
+	append-cflags -std=gnu17
 
 	meson_src_configure
 }

@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit check-reqs cmake flag-o-matic llvm llvm.org python-any-r1
 
 DESCRIPTION="Compiler runtime libraries for clang (sanitizers & xray)"
@@ -11,7 +11,7 @@ HOMEPAGE="https://llvm.org/"
 
 LICENSE="Apache-2.0-with-LLVM-exceptions || ( UoI-NCSA MIT )"
 SLOT="${LLVM_MAJOR}"
-KEYWORDS="amd64 arm arm64 ~loong ppc64 ~riscv x86 ~amd64-linux ~ppc-macos ~x64-macos"
+KEYWORDS="amd64 arm arm64 ~loong ppc64 ~riscv x86 ~x64-macos"
 IUSE="+abi_x86_32 abi_x86_64 +clang debug test"
 # base targets
 IUSE+=" +libfuzzer +memprof +orc +profile +xray"
@@ -54,7 +54,7 @@ BDEPEND="
 "
 
 LLVM_COMPONENTS=( compiler-rt cmake llvm/cmake )
-LLVM_PATCHSET=${PV}-r5
+LLVM_PATCHSET=${PV}-r6
 LLVM_TEST_COMPONENTS=( llvm/lib/Testing/Support third-party )
 llvm.org_set_globals
 
@@ -83,6 +83,9 @@ pkg_setup() {
 src_prepare() {
 	sed -i -e 's:-Werror::' lib/tsan/go/buildgo.sh || die
 
+	# builds freestanding code
+	filter-flags -fstack-protector*
+
 	local flag
 	for flag in "${SANITIZER_FLAGS[@]}"; do
 		if ! use "${flag}"; then
@@ -108,6 +111,17 @@ src_prepare() {
 		# https://github.com/llvm/llvm-project/issues/60678
 		rm test/dfsan/custom.cpp || die
 		rm test/dfsan/release_shadow_space.c || die
+	fi
+	if has_version -b ">=sys-libs/glibc-2.38"; then
+		# On glibc 2.38, the "nohang" test fails by... hanging.
+		# "fixed" in llvm 19.
+		# https://github.com/google/sanitizers/issues/1733
+		# https://github.com/llvm/llvm-project/commit/deebf6b312227e028dd3258b162306b9cdb21cf7
+		rm test/tsan/getline_nohang.cpp || die
+	fi
+	if has_version ">=sys-libs/glibc-2.40"; then
+		# https://github.com/llvm/llvm-project/issues/100877
+		rm test/asan/TestCases/Linux/printf-fortify-5.c || die
 	fi
 
 	llvm.org_src_prepare

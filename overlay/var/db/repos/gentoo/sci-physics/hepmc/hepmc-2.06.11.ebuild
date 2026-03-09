@@ -14,7 +14,7 @@ S="${WORKDIR}/${MYP}"
 
 LICENSE="GPL-2"
 SLOT="2"
-KEYWORDS="amd64 ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 ~x86"
 IUSE="cm doc examples gev test"
 RESTRICT="!test? ( test )"
 
@@ -70,7 +70,7 @@ src_prepare() {
 }
 
 src_configure() {
-	# error: ‘hepevt_’ violates the C++ One Definition Rule [-Werror=odr]
+	# error: 'hepevt_' violates the C++ One Definition Rule [-Werror=odr]
 	# Bug 863284
 	filter-lto
 	# use MeV over GeV and mm over cm

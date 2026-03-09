@@ -1,8 +1,9 @@
-# Copyright 2019-2025 Gentoo Authors
+# Copyright 2019-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
+# https://codeberg.org/ziglang/zig/src/tag/${PV}#building-from-source
 LLVM_COMPAT=( 18 )
 LLVM_OPTIONAL=1
 
@@ -12,9 +13,9 @@ ZIG_OPTIONAL=1
 inherit check-reqs cmake flag-o-matic edo llvm-r2 toolchain-funcs zig
 
 DESCRIPTION="A robust, optimal, and maintainable programming language"
-HOMEPAGE="https://ziglang.org/ https://github.com/ziglang/zig/"
+HOMEPAGE="https://ziglang.org/ https://codeberg.org/ziglang/zig/"
 if [[ ${PV} == 9999 ]]; then
-	EGIT_REPO_URI="https://github.com/ziglang/zig.git"
+	EGIT_REPO_URI="https://codeberg.org/ziglang/zig.git"
 	inherit git-r3
 else
 	VERIFY_SIG_METHOD=minisig
@@ -26,7 +27,7 @@ else
 		verify-sig? ( https://ziglang.org/download/${PV}/${P}.tar.xz.minisig )
 		https://codeberg.org/BratishkaErik/distfiles/releases/download/dev-lang%2Fzig-${PV}/${P}-llvm-18.1.8-r6-fix.patch
 	"
-	KEYWORDS="~amd64 ~arm ~arm64"
+	KEYWORDS="amd64 ~arm ~arm64"
 
 	BDEPEND="verify-sig? ( sec-keys/minisig-keys-zig-software-foundation )"
 fi
@@ -56,7 +57,7 @@ BUILD_DIR="${WORKDIR}/${P}_build"
 # Zig requires zstd and zlib compression support in LLVM, if using LLVM backend.
 # (non-LLVM backends don't require these)
 # They are not required "on their own", so please don't add them here.
-# You can check https://github.com/ziglang/zig-bootstrap in future, to see
+# You can check https://codeberg.org/ziglang/zig-bootstrap in future, to see
 # options that are passed to LLVM CMake building (excluding "static" ofc).
 LLVM_DEPEND="$(llvm_gen_dep '
 	llvm-core/clang:${LLVM_SLOT}
@@ -80,7 +81,7 @@ PATCHES=(
 # zig.eclass does not set this for us since we use ZIG_OPTIONAL=1
 QA_FLAGS_IGNORED="usr/.*/zig/${PV}/bin/zig"
 
-# Since commit https://github.com/ziglang/zig/commit/e7d28344fa3ee81d6ad7ca5ce1f83d50d8502118
+# Since commit https://codeberg.org/ziglang/zig/commit/e7d28344fa3ee81d6ad7ca5ce1f83d50d8502118
 # Zig uses self-hosted compiler only
 CHECKREQS_MEMORY="4G"
 
@@ -89,7 +90,7 @@ pkg_setup() {
 	declare -r -g ZIG_VER="${PV}"
 	ZIG_EXE="not-applicable" zig_pkg_setup
 
-	declare -r -g ZIG_SYS_INSTALL_DEST="${EPREFIX}/usr/$(get_libdir)/zig/${PV}"
+	declare -r -g ZIG_SYS_INSTALL_DEST="/usr/$(get_libdir)/zig/${PV}"
 
 	if use llvm; then
 		[[ ${MERGE_TYPE} != binary ]] && llvm_cbuild_setup
@@ -144,7 +145,7 @@ src_configure() {
 	local my_zbs_args=(
 		--zig-lib-dir "${S}/lib/"
 
-		--prefix "${ZIG_SYS_INSTALL_DEST}/"
+		--prefix "${EPREFIX}/${ZIG_SYS_INSTALL_DEST}/"
 		--prefix-lib-dir lib/
 
 		# These are built separately
@@ -326,7 +327,7 @@ src_install() {
 
 	ZIG_EXE="./zig2" zig_src_install
 
-	cd "${D}/${ZIG_SYS_INSTALL_DEST}" || die
+	cd "${ED}/${ZIG_SYS_INSTALL_DEST}" || die
 	mv lib/zig/ lib2/ || die
 	rm -rf lib/ || die
 	mv lib2/ lib/ || die

@@ -1,45 +1,105 @@
-# Copyright 2020-2022 Gentoo Authors
+# Copyright 2020-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit git-r3
+if [[ "${PV}" == "9999" ]]; then
+	inherit git-r3
+	EGIT_REPO_URI="git://git.drumgizmo.org/${PN}.git"
+else
+	SRC_URI="https://www.drumgizmo.org/releases/${P}/${P}.tar.gz"
+	KEYWORDS="~amd64"
+fi
 
-DESCRIPTION="Cross-platform drum plugin and stand-alone application"
-HOMEPAGE="https://www.drumgizmo.org/wiki"
-EGIT_REPO_URI="https://git.drumgizmo.org/${PN}.git"
+DESCRIPTION="Audio sampler plugin and stand-alone app that simulates a real drum kit"
+HOMEPAGE="https://drumgizmo.org/"
 
-LICENSE="LGPL-3"
+inherit autotools
+
+LICENSE="LGPL-3+"
 SLOT="0"
-IUSE="alsa jack lv2 vst cpu_flags_x86_sse cpu_flags_x86_sse2 cpu_flags_x86_sse3"
+IUSE="alsa cli jack +lv2 midi nls test"
+REQUIRED_USE="|| ( cli lv2 )"
+RESTRICT="!test? ( test )"
 
-DEPEND="
-	alsa? ( media-libs/alsa-lib )
-	lv2? ( media-libs/lv2 )
-	media-libs/libsmf
+# TODO:
+# Unbundle media-libs/zita-resampler. This requires a massive patch for build system.
+
+RDEPEND="
 	media-libs/libsndfile
-	media-libs/zita-resampler
-	x11-libs/libX11
+	cli? (
+		alsa? ( media-libs/alsa-lib )
+		jack? ( virtual/jack )
+		midi? ( media-libs/libsmf )
+	)
+	lv2? (
+		media-libs/lv2
+		x11-libs/libX11
+		x11-libs/libXext
+	)
 "
-RDEPEND="${DEPEND}"
+DEPEND="${RDEPEND}
+	test? (
+		dev-libs/serd
+		media-libs/lilv
+	)
+"
+BDEPEND="
+	virtual/pkgconfig
+	nls? ( sys-devel/gettext )
+"
 
-REQUIRED_USE="|| ( alsa jack )"
+PATCHES=(
+	"${FILESDIR}"/${PN}-0.9.20-configure-portable-shell.patch
+	"${FILESDIR}"/${PN}-0.9.20-include-cstdint.patch
+	"${FILESDIR}"/${PN}-0.9.20-disable-lv2-test.patch
+	"${FILESDIR}"/${PN}-0.9.20-disable-translation-test.patch
+	"${FILESDIR}"/${PN}-0.9.20-fix-painter-test.patch
+)
+
+pkg_pretend() {
+	if ! use cli; then
+		use alsa && ewarn "Ignoring USE=alsa since cli is disabled"
+		use jack && ewarn "Ignoring USE=jack since cli is disabled"
+		use midi && ewarn "Ignoring USE=midi since cli is disabled"
+	fi
+}
+
+src_prepare() {
+	default
+	eautoreconf
+}
 
 src_configure() {
-	local sse=0
-	use cpu_flags_x86_sse  && sse=1
-	use cpu_flags_x86_sse2 && sse=2
-	use cpu_flags_x86_sse3 && sse=3
+	local myeconfargs=(
+		--enable-gui=x11
+		# requres VST2 SDK
+		--disable-vst
+		# all SSE conditionals were removed in 0.9.16
+		--enable-sse=no
+		$(use_enable cli)
+		$(use_enable lv2)
+		$(use_with nls)
+		$(use_with test)
+	)
 
-	econf --enable-cli=yes \
-		--enable-static=no \
-		$(usex alsa '' '--disable-output-alsa') \
-		$(usex jack '' '--disable-input-jackmidi') \
-		$(usex jack '' '--disable-output-jackaudio') \
-		--enable-gui=x11 \
-		--enable-lv2=$(usex lv2) \
-		--enable-sse=${sse} \
-		--enable-vst=$(usex vst) \
-		--with-debug=no \
-		--with-test=no
+	if use cli; then
+		myeconfargs+=(
+			$(use_enable alsa input-alsamidi)
+			$(use_enable alsa output-alsa)
+			$(use_enable jack input-jackmidi)
+			$(use_enable jack output-jackaudio)
+			$(use_enable midi input-midifile)
+		)
+	else
+		myeconfargs+=(
+			--disable-input-alsamidi
+			--disable-output-alsa
+			--disable-input-jackmidi
+			--disable-output-jackaudio
+			--disable-input-midifile
+		)
+	fi
+
+	econf "${myeconfargs[@]}"
 }

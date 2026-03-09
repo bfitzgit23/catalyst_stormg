@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -9,8 +9,11 @@ if [[ ${PV} == "9999" ]] ; then
 	ESVN_REPO_URI="https://svn.code.sf.net/p/sdcc/code/trunk/sdcc"
 	inherit subversion
 else
+	BINUTILS_PV=2.41
 	SRC_URI="
 		https://downloads.sourceforge.net/project/${PN}/sdcc/${PV}/${PN}-src-${PV}.tar.bz2
+		mirror://gnu/binutils/binutils-${BINUTILS_PV}.tar.xz
+		https://sourceware.org/pub/binutils/releases/binutils-${BINUTILS_PV}.tar.xz
 		doc? ( https://downloads.sourceforge.net/project/${PN}/sdcc-doc/${PV}/${PN}-doc-${PV}.tar.bz2 )
 	"
 
@@ -50,7 +53,7 @@ IUSE="
 
 RDEPEND="
 	dev-libs/boost:=
-	sys-libs/zlib:=
+	virtual/zlib:=
 	pic14? ( >=dev-embedded/gputils-0.13.7 )
 	pic16? ( >=dev-embedded/gputils-0.13.7 )
 	boehm-gc? ( dev-libs/boehm-gc:= )
@@ -67,6 +70,7 @@ PATCHES=(
 	"${FILESDIR}"/${P}-fix-binutils-dependency.patch
 	"${FILESDIR}"/${P}-fix-mkdir-autoconf-test.patch
 	"${FILESDIR}"/${P}-autoreconf-libiberty.patch
+	"${FILESDIR}"/${P}-fix-elf-type.patch
 )
 
 src_prepare() {
@@ -89,8 +93,8 @@ src_prepare() {
 
 	mkdir -p support/sdbinutils/bfd/doc || die
 
-	# add acinclude.m4 from binutils to run autoreconf for libiberty
-	cp "${FILESDIR}"/binutils-2.41-acinclude.m4 support/sdbinutils/libiberty/acinclude.m4 || die
+	# add m4 files from binutils to run autoreconf for libiberty
+	cp "${WORKDIR}"/binutils-${BINUTILS_PV}/libiberty/acinclude.m4 support/sdbinutils/libiberty/acinclude.m4 || die
 	# libiberty configure will check this file and fail if not found
 	cp install-sh support/sdbinutils/libiberty/ || die
 	# libiberty configure will fail if this was not set

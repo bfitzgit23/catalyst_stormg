@@ -34,6 +34,7 @@
 		<remote-id type="github">boostorg/beast</remote-id>
 		<remote-id type="github">boostorg/bimap</remote-id>
 		<remote-id type="github">boostorg/bind</remote-id>
+		<remote-id type="github">boostorg/bloom</remote-id>
 		<remote-id type="github">boostorg/callable_traits</remote-id>
 		<remote-id type="github">boostorg/charconv</remote-id>
 		<remote-id type="github">boostorg/chrono</remote-id>
@@ -104,6 +105,8 @@
 		<remote-id type="github">boostorg/multiprecision</remote-id>
 		<remote-id type="github">boostorg/mysql</remote-id>
 		<remote-id type="github">boostorg/nowide</remote-id>
+		<remote-id type="github">boostorg/numeric_conversion</remote-id>
+		<remote-id type="github">boostorg/openmethod</remote-id>
 		<remote-id type="github">boostorg/optional</remote-id>
 		<remote-id type="github">boostorg/outcome</remote-id>
 		<remote-id type="github">boostorg/parameter</remote-id>

@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{12..13} )
 
 inherit cmake python-single-r1 virtualx
 
@@ -37,7 +37,7 @@ RDEPEND="
 	dev-libs/expat
 	>=dev-libs/imath-3.1.5:=
 	sys-libs/minizip-ng
-	sys-libs/zlib
+	virtual/zlib:=
 	apps? (
 		media-libs/lcms:2
 		>=media-libs/openexr-3.1.5:=

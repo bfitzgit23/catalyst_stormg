@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -11,7 +11,7 @@ SRC_URI="https://github.com/theseer/${MY_PN}/archive/${PV}.tar.gz -> ${P}.tar.gz
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 arm ~arm64 ~hppa ppc64 ~s390 sparc x86"
+KEYWORDS="amd64 arm ~arm64 ~hppa ppc64 ~s390 ~sparc x86"
 IUSE="test"
 RESTRICT="!test? ( test )"
 
@@ -57,9 +57,9 @@ src_prepare() {
 		vendor/zetacomponents/console-tools \
 		|| die
 
-	ln -s /usr/share/php/TheSeer/DirectoryScanner	vendor/theseer/directoryscanner/src || die
-	ln -s /usr/share/php/ezc/Base			vendor/zetacomponents/base/src || die
-	ln -s /usr/share/php/ezc/ConsoleTools		vendor/zetacomponents/console-tools/src  || die
+	ln -s "${EPREFIX}"/usr/share/php/TheSeer/DirectoryScanner	vendor/theseer/directoryscanner/src || die
+	ln -s "${EPREFIX}"/usr/share/php/ezc/Base			vendor/zetacomponents/base/src || die
+	ln -s "${EPREFIX}"/usr/share/php/ezc/ConsoleTools		vendor/zetacomponents/console-tools/src  || die
 
 	./phpab.php \
 		--output src/autoload.php \

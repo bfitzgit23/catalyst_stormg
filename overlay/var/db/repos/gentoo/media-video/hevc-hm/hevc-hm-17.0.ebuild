@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Gentoo Authors
+# Copyright 2023-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,12 +6,12 @@ EAPI=8
 inherit cmake
 
 DESCRIPTION="HEVC HM reference software"
-HOMEPAGE="https://hevc.hhi.fraunhofer.de/"
+HOMEPAGE="https://hevc.hhi.fraunhofer.de/ https://vcgit.hhi.fraunhofer.de/jvet/HM"
 SRC_URI="https://vcgit.hhi.fraunhofer.de/jvet/HM/-/archive/HM-${PV}/HM-HM-${PV}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv sparc x86"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~sparc x86"
 
 S="${WORKDIR}/HM-HM-${PV}"
 

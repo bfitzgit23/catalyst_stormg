@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{9..13} python3_13t )
+PYTHON_COMPAT=( python3_{9..14} python3_14t )
 DISTUTILS_EXT=1
 DISTUTILS_OPTIONAL=1
 DISTUTILS_USE_PEP517="setuptools"
@@ -27,7 +27,7 @@ if [[ ${PV} =~ "9999" ]] ; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/xrootd/xrootd.git"
 else
-	KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux"
+	KEYWORDS="~amd64 ~x86"
 	SRC_URI="https://xrootd.web.cern.ch/download/v${PV}/${P}.tar.gz"
 fi
 
@@ -43,7 +43,7 @@ REQUIRED_USE="
 CDEPEND="acct-group/xrootd
 	acct-user/xrootd
 	dev-libs/openssl:0=
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/libcrypt:=
 	ceph? ( sys-cluster/ceph )
 	fuse? ( sys-fs/fuse:0= )
@@ -159,6 +159,11 @@ src_test() {
 			XrdCl::FileSystemTest.XAttrTest
 			XrdCl::WorkflowTest.XAttrWorkflowTest
 			XrdCl::WorkflowTest.CheckpointTest
+			XRootD::authenticated_cluster
+			XRootD::httpnoclient
+			XRootD::xcachewithcsi
+			XRootD::badredir
+			XRootD::posix
 		')
 		# server fails to start due to long path to unix domain socket
 		$(usev scitokens '

@@ -1,20 +1,20 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: user-info.eclass
 # @MAINTAINER:
 # base-system@gentoo.org (Linux)
 # Michał Górny <mgorny@gentoo.org> (NetBSD)
-# @SUPPORTED_EAPIS: 7 8
+# @SUPPORTED_EAPIS: 7 8 9
 # @BLURB: Read-only access to user and group information
-
-case ${EAPI} in
-	7|8) ;;
-	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
-esac
 
 if [[ -z ${_USER_INFO_ECLASS} ]]; then
 _USER_INFO_ECLASS=1
+
+case ${EAPI} in
+	7|8|9) ;;
+	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
+esac
 
 # @FUNCTION: egetent
 # @USAGE: <database> <key>
@@ -165,13 +165,18 @@ egetgroups() {
 	[[ $# -eq 1 ]] || die "usage: egetgroups <user>"
 
 	local egroups_arr
-	if [[ -n "${ROOT}" ]]; then
-		local pgroup=$(egetent passwd "$1" | cut -d: -f1)
-		local sgroups=( $(grep -E ":([^:]*,)?$1(,[^:]*)?$" "${ROOT}/etc/group" | cut -d: -f1) )
 
-		# Remove primary group from list
-		sgroups=${sgroups#${pgroup}}
-		egroups_arr=( ${pgroup} ${sgroups[@]} )
+	if [[ -n "${ROOT}" ]]; then
+		local pgid=$(egetent passwd "$1" | cut -d: -f4)
+		local pgroup=$(egetent group "${pgid}" | cut -d: -f1)
+		local sgroups=( $(grep -E ":([^:]*,)?$1(,[^:]*)?$" "${ROOT}/etc/group" | cut -d: -f1) )
+		egroups_arr=( "${pgroup}" )
+		local sg
+		for sg in "${sgroups[@]}"; do
+			if [[ ${sg} != ${pgroup} ]]; then
+				egroups_arr+=( "${sg}" )
+			fi
+		done
 	else
 		read -r -a egroups_arr < <(id -G -n "$1")
 	fi

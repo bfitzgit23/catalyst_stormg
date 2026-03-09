@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -49,7 +49,7 @@ DEPEND="
 	fftw? ( sci-libs/fftw:3.0= )
 	fits? ( sci-libs/cfitsio:= )
 	hdf5? ( sci-libs/hdf5:= )
-	libcerf? ( sci-libs/libcerf )
+	libcerf? ( sci-libs/libcerf:= )
 	markdown? ( app-text/discount:= )
 	matio? ( sci-libs/matio:= )
 	netcdf? ( sci-libs/netcdf:= )
@@ -60,7 +60,7 @@ DEPEND="
 	origin? ( sci-libs/liborigin:2 )
 	root? (
 		app-arch/lz4
-		sys-libs/zlib
+		virtual/zlib:=
 	)
 	serial? ( >=dev-qt/qtserialport-${QTMIN}:6 )
 	share? ( >=kde-frameworks/purpose-${KFMIN}:6 )
@@ -76,6 +76,9 @@ BDEPEND="
 "
 
 src_prepare() {
+	# bug 958185
+	rm -r src/3rdparty/kdmactouchbar || die
+
 	ecm_src_prepare
 
 	sed -e "/^ *find_package.*QT NAMES/s/Qt5 //" \

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -56,7 +56,7 @@ ruby_add_rdepend "=dev-ruby/addressable-2.8*
 	>=dev-ruby/oauth-0.5.8
 	>=dev-ruby/pluggaloid-1.7.0
 	!>=dev-ruby/pluggaloid-2.0
-	=dev-ruby/prime-0.1.2*
+	=dev-ruby/prime-0.1* >=dev-ruby/prime-0.1.2
 	dev-ruby/rcairo
 	>=dev-ruby/ruby-gettext-3.4
 	!>=dev-ruby/ruby-gettext-3.5

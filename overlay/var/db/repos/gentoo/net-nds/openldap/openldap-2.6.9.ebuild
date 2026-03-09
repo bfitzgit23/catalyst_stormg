@@ -28,7 +28,7 @@ VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/openldap.asc
 LICENSE="OPENLDAP GPL-2"
 # Subslot added for bug #835654
 SLOT="0/$(ver_cut 1-2)"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 
 IUSE_DAEMON="argon2 +cleartext crypt experimental minimal samba tcpd"
 IUSE_OVERLAY="overlays perl autoca"
@@ -787,6 +787,7 @@ multilib_src_install() {
 			einfo "Install the smbk5pwd module"
 			cd "${S}/contrib/slapd-modules/smbk5pwd" || die
 			emake DESTDIR="${D}" \
+				prefix="${EPREFIX}/usr" \
 				LDAP_BUILD="${BUILD_DIR}" \
 				libexecdir="${EPREFIX}/usr/$(get_libdir)/openldap" install
 			newdoc README smbk5pwd-README

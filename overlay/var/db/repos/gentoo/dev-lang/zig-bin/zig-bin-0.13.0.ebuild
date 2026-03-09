@@ -8,7 +8,7 @@ VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/minisig-keys/zig-software-foundation.pub
 inherit verify-sig
 
 DESCRIPTION="A robust, optimal, and maintainable programming language"
-HOMEPAGE="https://ziglang.org/"
+HOMEPAGE="https://ziglang.org/ https://codeberg.org/ziglang/zig/"
 SRC_URI="
 	amd64? ( https://ziglang.org/download/${PV}/zig-linux-x86_64-${PV}.tar.xz )
 	arm? ( https://ziglang.org/download/${PV}/zig-linux-armv7a-${PV}.tar.xz )
@@ -39,7 +39,7 @@ SRC_URI="
 # lib/libc/glibc: BSD HPND ISC inner-net LGPL-2.1+
 LICENSE="MIT Apache-2.0-with-LLVM-exceptions || ( UoI-NCSA MIT ) || ( Apache-2.0-with-LLVM-exceptions Apache-2.0 MIT BSD-2 ) public-domain BSD-2 ZPL ISC HPND BSD inner-net LGPL-2.1+"
 SLOT="$(ver_cut 1-2)"
-KEYWORDS="-* ~amd64 ~arm ~arm64 ~ppc64 ~riscv ~x86"
+KEYWORDS="-* amd64 ~arm ~arm64 ~ppc64 ~riscv ~x86"
 
 BDEPEND="verify-sig? ( sec-keys/minisig-keys-zig-software-foundation )"
 IDEPEND="app-eselect/eselect-zig"

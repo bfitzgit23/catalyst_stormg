@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -17,7 +17,7 @@ S="${WORKDIR}/${PN}-${COMMIT}"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 ~arm arm64 ~ppc ~x86"
 IUSE="cuda doc examples mpi octave openmp test"
 RESTRICT="!test? ( test )"
 
@@ -53,8 +53,9 @@ DEPEND="${RDEPEND}
 PATCHES=(
 	"${FILESDIR}"/${PN}-1.9.1-build-oct-rather-than-mex-files-for-octave.patch # bug 830424
 	"${FILESDIR}"/${PN}-1.9.2-asio-boost187.patch
-	"${FILESDIR}"/${PN}-1.9.2-boost-config.patch
+	"${FILESDIR}"/${PN}-1.9.2-boost-config-1.89.patch
 	"${FILESDIR}"/${PN}-1.9.2-system-gtest.patch
+	"${FILESDIR}"/${PN}-1.9.2-gettimeofday.patch
 
 	# "${FILESDIR}/${PN}-1.9.2-lz4-dependency-fix.patch" # https://github.com/flann-lib/flann/pull/523
 	# "${FILESDIR}/${PN}-1.9.2-fix-build.patch"

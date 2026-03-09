@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -22,7 +22,7 @@ REQUIRED_USE="ogre? ( !opengl )
 	opengl? ( !ogre )"
 
 RDEPEND="media-libs/freetype:2
-	sys-libs/zlib
+	virtual/zlib:=
 	ogre? (
 		>=dev-games/ogre-1.12:0=[freeimage,opengl]
 		samples? ( dev-games/ois )
@@ -43,6 +43,9 @@ PATCHES=(
 	"${FILESDIR}"/mygui-3.4.1-build.patch
 	"${FILESDIR}"/mygui-3.4.1-FHS.patch
 	"${FILESDIR}"/mygui-3.4.3-werror.patch
+
+	# backport
+	"${FILESDIR}"/${P}-libcxx-18.patch
 )
 
 pkg_setup() {

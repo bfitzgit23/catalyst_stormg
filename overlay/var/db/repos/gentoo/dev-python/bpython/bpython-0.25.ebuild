@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{12..13} )
 
 inherit distutils-r1 pypi
 
@@ -31,9 +31,6 @@ RDEPEND="
 	clipboard? ( dev-python/pyperclip[${PYTHON_USEDEP}] )
 	jedi? ( dev-python/jedi[${PYTHON_USEDEP}] )
 	watch? ( dev-python/watchdog[${PYTHON_USEDEP}] )
-	$(python_gen_cond_dep '
-		>=dev-python/typing-extensions-4.0.0[${PYTHON_USEDEP}]
-	' 3.10)
 "
 # sphinx is used implicitly to build manpages
 BDEPEND="

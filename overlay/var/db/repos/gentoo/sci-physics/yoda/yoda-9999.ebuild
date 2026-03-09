@@ -17,23 +17,24 @@ if [[ ${PV} == 9999 ]]; then
 else
 	SRC_URI="https://yoda.hepforge.org/downloads?f=${P^^}.tar.bz2 -> ${P^^}.tar.bz2"
 	S="${WORKDIR}/${P^^}"
-	KEYWORDS="~amd64"
+	KEYWORDS="~amd64 ~x86"
 fi
 
 LICENSE="GPL-3"
 SLOT="0/${PV}"
-IUSE="test +highfive +python +zlib"
+IUSE="test +eigen +highfive +python +zlib"
 RESTRICT="!test? ( test )"
 REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
 
 RDEPEND="
 	dev-cpp/yaml-cpp
+	eigen? ( dev-cpp/eigen:3= )
 	highfive? (
-		sci-libs/HighFive
+		sci-libs/highfive
 		sci-libs/hdf5[cxx]
 	)
 	python? ( ${PYTHON_DEPS} )
-	zlib? ( sys-libs/zlib )
+	zlib? ( virtual/zlib:= )
 "
 DEPEND="${RDEPEND}"
 BDEPEND="
@@ -64,6 +65,7 @@ src_configure() {
 	# we need to use the prefix cython here
 	econf --disable-static \
 		--with-yaml-cpp="${EPREFIX}/usr" \
+		$(use_with eigen eigen "${EPREFIX}/usr/include/eigen3") \
 		$(use_enable highfive h5) \
 		$(use_with highfive highfive "${ESYSROOT}/usr") \
 		$(use_enable python pyext) \

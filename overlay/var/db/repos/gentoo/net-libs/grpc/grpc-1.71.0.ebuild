@@ -1,10 +1,10 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 CMAKE_IN_SOURCE_BUILD=1
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 inherit cmake flag-o-matic python-any-r1
 
 MY_PV="${PV//_pre/-pre}"
@@ -35,7 +35,7 @@ S="${WORKDIR}/${PN}-${MY_PV}"
 LICENSE="Apache-2.0"
 # format is 0/${CORE_SOVERSION//./}.${CPP_SOVERSION//./} , check top level CMakeLists.txt
 SLOT="0/46.$(ver_rs 1-2 '' "$(ver_cut 1-2)")"
-KEYWORDS="~alpha ~amd64 ~arm arm64 ~loong ~ppc64 ~riscv ~x86"
+KEYWORDS="~alpha amd64 ~arm arm64 ~loong ppc64 ~riscv x86"
 IUSE="doc examples test systemd"
 RESTRICT="!test? ( test )"
 
@@ -47,7 +47,7 @@ RDEPEND="
 	>=dev-libs/protobuf-27.0:=
 	dev-libs/xxhash
 	>=net-dns/c-ares-1.19.1:=
-	sys-libs/zlib:=
+	virtual/zlib:=
 	systemd? ( sys-apps/systemd:= )
 "
 DEPEND="
@@ -240,6 +240,14 @@ src_test() {
 		^posix_event_engine_test$
 		^resolve_address_using_ares_resolver_test$
 		^resolve_address_using_native_resolver_test$
+
+		# 954185
+		'^server_test$'
+
+		# '^xds_audit_logger_registry_test$'
+		# '^xds_common_types_test$'
+		# '^xds_lb_policy_registry_test$'
+		# '^xds_route_config_resource_type_test$'
 	)
 
 	use amd64 && CMAKE_SKIP_TESTS+=(
@@ -252,6 +260,26 @@ src_test() {
 		^event_poller_posix_test$ # fails on alpha
 		^tcp_posix_test$ # fails on alpha
 	)
+
+	local GTEST_SKIP_TESTS=(
+		CustomPolicy.Basic
+		ExtractXdsExtensionTest.TypedStruct
+		ExtractXdsExtensionTest.TypedStructJsonConversion
+		ExtractXdsExtensionTest.TypedStructTypeUrlNoSlash
+		ExtractXdsExtensionTest.TypedStructTypeUrlNothingAfterSlash
+		ExtractXdsExtensionTest.TypedStructWithInvalidProtobufStruct
+		ExtractXdsExtensionTest.UdpaTypedStruct
+		RlsTest.Basic
+		RlsTest.DuplicateClusterSpecifierPluginNames
+		RlsTest.InvalidGrpcLbPolicyConfig
+		RlsTest.NotUsedInAllVirtualHosts
+		RlsTest.PluginDefinedButNotUsed
+		XdsAuditLoggerRegistryTest.ValidThirdPartyLogger
+		XdsAuditLoggerRegistryTest.InvalidThirdPartyLoggerConfig
+	)
+
+	local -x GTEST_FILTER
+	[[ -n ${GTEST_SKIP_TESTS} ]] && GTEST_FILTER+="-$( IFS=':'; echo "${GTEST_SKIP_TESTS[*]}")"
 
 	# BUG this should be nonfatal and we kill the server even when tests fail
 	# nonfatal \

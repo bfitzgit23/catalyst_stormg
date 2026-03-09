@@ -1,9 +1,9 @@
-# Copyright 2024 Gentoo Authors
+# Copyright 2024-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{12..13} )
 
 inherit python-single-r1
 
@@ -16,7 +16,11 @@ SRC_URI="
 
 LICENSE="GPL-2+"
 SLOT="0"
-KEYWORDS="~x86"
+
+KEYWORDS="-m68k ~x86"
+# This can't work on m68k. We use the opportunity to switch to -maligned-int,
+# and then the ABI changes too much...
+
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 RDEPEND="

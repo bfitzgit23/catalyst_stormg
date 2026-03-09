@@ -14,7 +14,9 @@ SLOT="0"
 DOCS=("README.md" "scripts/auth-script.sh")
 
 DEPEND="
+	dev-libs/lzo
 	dev-libs/wayland-protocols
+	x11-libs/libdrm
 "
 RDEPEND="
 	dev-libs/aml

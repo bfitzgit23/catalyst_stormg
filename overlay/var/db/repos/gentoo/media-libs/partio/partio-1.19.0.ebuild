@@ -11,7 +11,7 @@ if [[ ${PV} == *9999 ]]; then
 	EGIT_REPO_URI="https://github.com/wdas/partio.git"
 else
 	SRC_URI="https://github.com/wdas/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64 ~arm ~arm64 ~ppc64 ~x86"
+	KEYWORDS="amd64 ~arm ~arm64 ~ppc64 x86"
 fi
 
 DESCRIPTION="Library for particle IO and manipulation"
@@ -27,7 +27,7 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 RDEPEND="${PYTHON_DEPS}
 	media-libs/freeglut
 	media-libs/glu
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/opengl
 "
 
@@ -100,5 +100,8 @@ src_install() {
 
 	python_optimize
 
-	rm -r "${ED}/usr/share/partio" || die
+	# only remove test binaries when they are built #955625
+	if use test; then
+		rm -r "${ED}/usr/share/partio" || die
+	fi
 }

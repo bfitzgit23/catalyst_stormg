@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # Nowa Ammerlaan <nowa@gentoo.org> (2021-03-29)
@@ -18,93 +18,51 @@
 
 # New entries go on top.
 
-# Takuya Wakazono <pastalian46@gmail.com> (2025-05-05)
-# Upstream has been archived.
-# An active fork is packaged as x11-misc/pywal16.
-# Removal on 2025-06-05. Bug #955253.
-x11-misc/pywal
+# Lucio Sauer <watermanpaint@posteo.net> (2026-02-10)
+# The hyprland suite is moving to the unofficial 'hyproverlay' repository at
+#  https://codeberg.org/hyproverlay/hyproverlay.git
+# For more information please take a look at
+#  https://gitweb.gentoo.org/repo/gentoo.git/commit/?id=1d4db2ff53c5461db0c8aa1a93f4707593c8a4f3
+# The following list depends on last-rited packages.
+# Removal on 2026-03-11. Bugs #939727 #945878 #967011
+<=gui-apps/hypridle-0.1.7
+<=gui-apps/hyprlock-0.9.2
+<=gui-apps/hyprpaper-0.7.6
+<=gui-apps/hyprpicker-0.4.5
+<=gui-apps/hyprshade-3.2.1
+<=gui-apps/hyprshot-1.3.0-r1
+<=gui-apps/hyprsunset-0.2.0
+<=gui-apps/hyprsysteminfo-0.1.3
+<=gui-apps/nwg-dock-hyprland-0.4.8-r1
+<=gui-libs/xdg-desktop-portal-hyprland-1.3.11
+<=gui-wm/hyprland-contrib-0.1-r1
+<=sys-auth/hyprpolkitagent-0.1.2
 
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
-# Archived repo on GitHub, no revdeps left.
-# Removal on 2025-06-01.
-dev-python/codecov
+# Lucio Sauer <watermanpaint@posteo.net> (2026-02-09)
+# Depends on masked KF5 packages, no porting to KF6 in sight.
+# Removal on 2026-03-09
+kde-apps/kwalletcli
 
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
-# No activity upstream, no revdeps left.
-# There is a compatible fork named stringcase-new on PyPI.
-# Removal on 2025-06-01.
-dev-python/stringcase
+# Florian Schmaus <flow@gentoo.org) (2026-02-09)
+# bcachefs 1.33 through 1.35 has a serious bug in the early reconcile
+# data update path on multi-device setups. Upgrade to 1.36 as soon as
+# possible.
+# See https://www.reddit.com/r/bcachefs/comments/1qyryzn/psa_if_youre_on_133135_upgrade_asap/
+<sys-fs/bcachefs-kmod-1.36.0
 
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
-# No activity upstream, no revdeps left.
-# There is a fork named playsound3 on PyPI.
-# Removal on 2025-06-01.
-dev-python/playsound
+# dsaf <ghostyn678+git@gmail.com> (2026-02-02)
+# Requires systemd. Cannot be masked per profile (see top comment)
+app-admin/run0edit
 
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
-# No activity upstream, no revdeps left. Open bugs: #901147.
-# Removal on 2025-06-01.
-dev-python/aiopg
+# Daichi Yamamoto <dev@dyama.net> (2026-02-02)
+# It will only be used in COSMIC DE, Should use the package in ::cosmic-overlay.
+# Removal on 2026-03-04.
+gui-apps/pop-launcher
 
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
-# Dead upstream, no revdeps left.
-# Removal on 2025-06-01.
-dev-python/pyagentx
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
-# Unmaintained in GURU, no revdeps left. Open bugs: #856874.
-# Removal on 2025-06-01.
-dev-python/sse-starlette
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-01)
-# Unmaintained in GURU, no revdeps left. Open bugs: #928254.
-# Removal on 2025-06-01.
-dev-python/graphene
-
-# David (stkw0) Roman <davidroman96@gmail.com> (2025-04-30)
-# Depends on removed dev-qt/qtwebengine:5, they should be moved to qtwebengine:6
-# Removal on 2025-06-30
-dev-vcs/gitqlient-gitserver-plugin
-dev-vcs/gitqlient-jenkins-plugin
-media-video/stremio
-sci-physics/openmodelica
-
-# David (stkw0) Roman <davidroman96@gmail.com> (2025-04-25)
-# No revdeps. PyQt5 is being deprecated
-# Removal on 2025-05-25.
-dev-python/PyQt5-stubs
-
-# David (stkw0) Roman <davidroman96@gmail.com> (2025-04-22)
-# Unmaintained in GURU. Last release on 2021
-# Removal on 2025-05-22.
-dev-util/reflex
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-04-21)
-# Unmaintained in GURU, no revdeps left.
-# Removal on 2025-05-21.
-dev-ml/bheap
-dev-ml/cdrom
-dev-ml/domain-name
-dev-ml/gmap
-dev-ml/pecu
-dev-ml/randomconv
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-04-21)
-# Unmaintained upstream, no revdeps left. Breaks dev-python/pytest-recording.
-# Removal on 2025-05-21.
-dev-python/pytest-vcr
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-04-21)
-# Unmaintained upstream, not compatible with Mastodon.py v2.
-# Removal on 2025-05-21.
-net-misc/fedigroup
-acct-user/fedigroup
-acct-group/fedigroup
-
-# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-04-21)
-# Unmaintained in GURU, no revdeps left.
-# Removal on 2025-05-21.
-dev-python/glicko2
+# Anna (cybertailor) Vyalkova <cyber+gentoo@sysrq.in> (2025-05-24)
+# Depends on masked net-libs/stem.
+# Masked until upstream supports running without stem.
+www-apps/whoogle-search
 
 # Vivian Heisz (demize) <demize@unstable.systems> (2025-04-20)
 # Depends on ~dev-ruby/prawn-2.34.0, which was removed in
@@ -114,19 +72,6 @@ dev-python/glicko2
 # Please unmask when appropriate.
 # Bug #954116.
 dev-ruby/asciidoctor-pdf
-
-# Yuan Liao <liaoyuan@gmail.com> (2025-04-16)
-# No reverse dependencies left.  Was added only for
-# <gnome-extra/extension-manager-0.6.0; not widely used by
-# other applications.
-# Removal on 2025-05-16.
-gui-libs/text-engine
-
-
-# David Roman <davidroman96@gmail.com> (2025-03-12)
-# Uses deprecated EGO_SUM. Last release in 2023.
-# Removal on 2025-05-12
-www-misc/gorss
 
 # Julien Roy <julien@jroy.ca> (2024-03-21)
 # sys-libs/libucontext is masked in ::gentoo

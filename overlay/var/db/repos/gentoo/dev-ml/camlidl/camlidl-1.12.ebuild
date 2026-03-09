@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -13,7 +13,7 @@ S="${WORKDIR}"/${PN}-${PN}$(ver_rs 0-1 '')
 
 LICENSE="QPL-1.0 LGPL-2"
 SLOT="0/${PV}"
-KEYWORDS="amd64 ~ppc x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 ~ppc x86"
 
 DEPEND="dev-lang/ocaml:=[ocamlopt]"
 RDEPEND="${DEPEND}"
@@ -52,7 +52,7 @@ src_test() {
 
 src_install() {
 	libdir=$(ocamlc -where || die)
-	dodir "${libdir#${EPREFIX}}"/caml
+	dodir "${libdir#"${EPREFIX}"}"/caml
 
 	dodir /usr/bin
 	dodir /usr/$(get_libdir)/ocaml/stublibs

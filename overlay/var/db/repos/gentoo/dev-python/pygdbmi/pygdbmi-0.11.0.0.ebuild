@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit distutils-r1
 
@@ -28,4 +28,5 @@ RDEPEND="
 	>=dev-debug/gdb-9.6
 "
 
+EPYTEST_PLUGINS=()
 distutils_enable_tests pytest

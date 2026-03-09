@@ -11,7 +11,23 @@ SRC_URI="https://download.jetbrains.com/rustrover/RustRover-${PV}.tar.gz"
 # to keep it tidy.
 S="${WORKDIR}/RustRover-${PV}"
 
-LICENSE="idea-eap-EULA"
+LICENSE="|| ( JetBrains-business JetBrains-classroom JetBrains-educational JetBrains-individual )
+		Apache-2.0
+		BSD
+		CC0-1.0
+		CDDL
+		CDDL-1.1
+		EPL-1.0
+		GPL-2
+		GPL-2-with-classpath-exception
+		ISC
+		LGPL-2.1
+		LGPL-3
+		MIT
+		MPL-1.1
+		OFL-1.1
+		ZLIB
+"
 SLOT="0"
 KEYWORDS="-* ~amd64"
 IUSE="+bundled-jdk"
@@ -34,7 +50,7 @@ RDEPEND="!bundled-jdk? ( >=virtual/jre-1.8 )
 	media-libs/mesa
 	net-print/cups
 	sys-apps/dbus
-	sys-libs/zlib
+	virtual/zlib:=
 	x11-libs/cairo
 	x11-libs/libdrm
 	x11-libs/libX11

@@ -27,8 +27,13 @@ groupadd ntp
 useradd -M -g messagebus messagebus
 groupadd avahi
 useradd -M -g avahi avahi
+gpasswd -a gentoo avahi
 groupadd power
-groupadd storage
+gpasswd -a gentoo power
+groupadd netdev
+gpasswd -a gentoo netdev
+groupadd plugdev
+gpasswd -a gentoo netdev
 
 emerge --sync -q && eix-update
 
@@ -61,7 +66,6 @@ chsh -s /bin/bash root
 chsh -s /bin/bash gentoo
 
 mkdir -p /home/gentoo/.config/autostart
-cp -a /usr/share/applications/calamares.desktop /home/gentoo/.config/autostart/calamares.desktop
 
 chown -R gentoo /home/gentoo/.config
 
@@ -71,18 +75,16 @@ chown -R gentoo /home/gentoo/*
 cp /xfce-configs/.face /home/gentoo/.face
 
 # Desktop icon setups
-DESKTOP_APPS=( firefox chromium calamares )
+DESKTOP_APPS=( firefox chromium stormg_installer.desktop )
 for i in "${APPS[@]}"; do
 	ln -sv /usr/share/applications/${i}.desktop Desktop/
 done
 
-groupadd -r autologin
+groupadd autologin
 gpasswd -a gentoo autologin
 
-groupadd -r nopasswdlogin
+groupadd nopasswdlogin
 gpasswd -a gentoo nopasswdlogin
-gpasswd -a gentoo power
-gpasswd -a gentoo storage
 
 cp -af /usr/share/applications/calamares.desktop /home/gentoo/Desktop/calamares.desktop
 chown -R gentoo:users /home/gentoo/Desktop/calamares.desktop
@@ -123,3 +125,19 @@ su -c 'echo "wifi.scan-rand-mac-address=no" >> /etc/NetworkManager.conf'
 
 chmod 644 /etc/passwd
 
+chown root:root /etc/sudoers 
+chmod 440 /etc/sudoers
+chown -R root:root /etc/sudoers.d
+chmod  755 /etc/sudoers.d 
+chmod  440 /etc/sudoers.d/*
+
+mkdir -p /usr/share/backgrounds/xfce
+cp -r /usr/share/backgrounds/.* /usr/share/backgrounds/xfce
+
+
+# Fix desktop file permissions to prevent "Untrusted application launcher" warnings
+find "/home/gentoo/Desktop" -name "*.desktop" -exec chmod +x {} \; 2>/dev/null || true
+chown -R "gentoo:gentoo" "/home/gentoo/Desktop"
+
+sudo chmod +x /usr/local/bin/trust.sh
+sudo chmod +x /usr/bin/gentoo-pkg-manager.sh

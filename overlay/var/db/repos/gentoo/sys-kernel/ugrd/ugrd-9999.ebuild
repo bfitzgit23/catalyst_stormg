@@ -1,10 +1,10 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit distutils-r1 git-r3 optfeature shell-completion
 
 DESCRIPTION="Python based POSIX initramfs generator with TOML definitions"
@@ -18,16 +18,23 @@ PROPERTIES="test_privileged"
 
 RDEPEND="
 	app-misc/pax-utils
+	sys-apps/coreutils
+	sys-apps/kmod
+	sys-apps/util-linux
+	sys-devel/bc
 	>=dev-python/zenlib-9999[${PYTHON_USEDEP}]
 	>=dev-python/pycpio-9999[${PYTHON_USEDEP}]
-	sys-apps/pciutils
 "
 
 BDEPEND="
 	test? (
-		sys-fs/btrfs-progs
-		sys-fs/xfsprogs
 		sys-fs/cryptsetup
+		sys-fs/btrfs-progs
+		sys-fs/e2fsprogs
+		sys-fs/f2fs-tools
+		sys-fs/xfsprogs
+		sys-fs/squashfs-tools
+		dev-python/zstandard
 		amd64? ( app-emulation/qemu[qemu_softmmu_targets_x86_64] )
 		arm64? ( app-emulation/qemu[qemu_softmmu_targets_aarch64] )
 	)
@@ -55,9 +62,14 @@ pkg_postinst() {
 	optfeature "ugrd.crypto.cryptsetup support" sys-fs/cryptsetup
 	optfeature "ugrd.fs.btrfs support" sys-fs/btrfs-progs
 	optfeature "ugrd.crypto.gpg support" app-crypt/gnupg
+	optfeature "ugrd.fs.ext4 support" sys-fs/e2fsprogs
+	optfeature "ugrd.fs.f2s support" sys-fs/f2fs-tools
 	optfeature "ugrd.fs.lvm support" sys-fs/lvm2[lvm]
+	optfeature "ugrd.fs.zfs support" sys-fs/zfs
 	optfeature "ugrd.fs.mdraid support" sys-fs/mdadm
 	optfeature "ugrd.base.plymouth support" sys-boot/plymouth
+	optfeature "ZSTD compression support" dev-python/zstandard
+
 }
 
 distutils_enable_tests unittest

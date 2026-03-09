@@ -7,11 +7,11 @@ GNOME_ORG_MODULE="sysprof"
 inherit gnome.org
 
 DESCRIPTION="Static library for sysprof capture data generation"
-HOMEPAGE="http://sysprof.com/"
+HOMEPAGE="https://www.sysprof.com/"
 
 LICENSE="GPL-3+ GPL-2+"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64 ~loong ~x86"
+KEYWORDS="amd64 ~arm64 ~loong x86"
 
 src_install() {
 	insinto /usr/share/dbus-1/interfaces/

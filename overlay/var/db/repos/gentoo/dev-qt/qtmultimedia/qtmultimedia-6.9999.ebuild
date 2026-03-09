@@ -1,8 +1,9 @@
-# Copyright 2021-2025 Gentoo Authors
+# Copyright 2021-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
+QT6_HAS_STATIC_LIBS=1
 inherit flag-o-matic qt6-build
 
 DESCRIPTION="Multimedia (audio, video, radio, camera) library for the Qt6 framework"
@@ -25,7 +26,7 @@ REQUIRED_USE="
 
 # dlopen/dbus: pipewire
 RDEPEND="
-	~dev-qt/qtbase-${PV}:6[gui,network,opengl=,vulkan=,widgets]
+	~dev-qt/qtbase-${PV}:6[concurrent,gui,network,opengl=,vulkan=,widgets]
 	alsa? (
 		!pulseaudio? ( media-libs/alsa-lib )
 	)
@@ -89,11 +90,6 @@ CMAKE_SKIP_TESTS=(
 	# fails with offscreen rendering
 	tst_qvideoframecolormanagement
 	tst_qwindowcapturebackend
-)
-
-PATCHES=(
-	"${FILESDIR}"/${PN}-6.7.3-eigen-ppc-no-vsx.patch
-	"${FILESDIR}"/${PN}-6.8.1-qversionnumber.patch
 )
 
 src_configure() {

@@ -1,9 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-PYTHON_COMPAT=( python3_{10..13} )
 
+PYTHON_COMPAT=( python3_{11..13} )
 inherit cmake python-single-r1
 
 DESCRIPTION="GNU Radio source block for OsmoSDR and rtlsdr and hackrf"
@@ -12,18 +12,19 @@ HOMEPAGE="
 	https://gitea.osmocom.org/sdr/gr-osmosdr
 "
 
-if [[ ${PV} == 9999* ]]; then
+if [[ ${PV} == *9999* ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://gitea.osmocom.org/sdr/gr-osmosdr.git"
 else
 	SRC_URI="https://gitea.osmocom.org/sdr/gr-osmosdr/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64 ~arm ~riscv ~x86"
+	KEYWORDS="amd64 ~arm ~riscv ~x86"
 	S="${WORKDIR}/${PN}"
 fi
 
 LICENSE="GPL-3"
 SLOT="0/${PV}"
 IUSE="airspy bladerf doc hackrf iqbalance rtlsdr sdrplay soapy uhd xtrx"
+REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 RDEPEND="${PYTHON_DEPS}
 	dev-libs/boost:=
@@ -39,18 +40,16 @@ RDEPEND="${PYTHON_DEPS}
 	soapy? ( net-wireless/soapysdr:= )
 	uhd? ( net-wireless/uhd:=[${PYTHON_SINGLE_USEDEP}] )
 	xtrx? ( net-wireless/libxtrx )
-	"
+"
 DEPEND="${RDEPEND}"
-
 BDEPEND="
-		$(python_gen_cond_dep 'dev-python/pybind11[${PYTHON_USEDEP}]')
-		doc? ( app-text/doxygen )
-	"
-
-REQUIRED_USE="${PYTHON_REQUIRED_USE}"
+	$(python_gen_cond_dep 'dev-python/pybind11[${PYTHON_USEDEP}]')
+	doc? ( app-text/doxygen )
+"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-0.2.3_p20210128-fix-enable-python.patch"
+	"${FILESDIR}/${P}-boost-1.89.patch" # bug #969160
 )
 
 src_configure() {

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -7,37 +7,84 @@ if [[ "${PV}" == "9999" ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://git.code.sf.net/p/quakespasm/quakespasm"
 else
-	SRC_URI="https://downloads.sourceforge.net/project/${PN}/Source/${P}.tar.gz"
+	SRC_URI="https://download.sourceforge.net/quakespasm/Source/${P}.tar.gz"
 	KEYWORDS="~amd64"
 fi
 
-DESCRIPTION="Modern, cross-platform Quake 1 engine based on FitzQuake"
-HOMEPAGE="https://quakespasm.sourceforge.net"
-LICENSE="GPL-2"
+inherit desktop eapi9-ver
+
+DESCRIPTION="A modern, cross-platform Quake game engine based on FitzQuake"
+HOMEPAGE="https://quakespasm.sourceforge.net/"
+
+LICENSE="GPL-2+"
 SLOT="0"
-IUSE="sdl2"
+IUSE="flac mikmod modplug mp3 opus vorbis"
 
 DEPEND="
+	media-libs/libsdl2[opengl]
 	media-libs/libglvnd
-	media-libs/libmad
-	media-libs/libvorbis
-	sdl2? ( media-libs/libsdl2[opengl] )
-	!sdl2? ( media-libs/libsdl[opengl] )
+	flac? ( media-libs/flac:= )
+	mikmod? ( media-libs/libmikmod )
+	modplug? ( media-libs/libmodplug )
+	mp3? ( media-sound/mpg123 )
+	opus? ( media-libs/opusfile )
+	vorbis? ( media-libs/libvorbis )
 "
 RDEPEND="${DEPEND}"
-DOCS=( Quakespasm.html  Quakespasm-Music.txt  Quakespasm.txt )
+BDEPEND="virtual/pkgconfig"
 
-src_prepare() {
-	sed -i '/^CFLAGS += -O2$/d' Quake/Makefile || die
-	default
-}
+DOCS=( Quakespasm.html Quakespasm.txt Quakespasm-Music.txt )
+
+PATCHES=(
+	"${FILESDIR}"/${PN}-0.96.3-cflags.patch
+)
 
 src_compile() {
-	cd Quake || die
-	emake COMMON_LIBS="-lm -lOpenGL" USE_SDL2=$(usex sdl2 1 0) STRIP="/bin/true"
+	local emakeargs=(
+		COMMON_LIBS="-lOpenGL -lm"
+		LDFLAGS="${LDFLAGS}"
+		DO_USERDIRS=1
+		MP3LIB=mpg123
+		STRIP=true
+		USE_SDL2=1
+		USE_CODEC_FLAC=$(usex flac 1 0)
+		USE_CODEC_MIKMOD=$(usex mikmod 1 0)
+		USE_CODEC_MODPLUG=$(usex modplug 1 0)
+		USE_CODEC_MP3=$(usex mp3 1 0)
+		USE_CODEC_VORBIS=$(usex vorbis 1 0)
+		USE_CODEC_OPUS=$(usex opus 1 0)
+	)
+
+	emake -C Quake "${emakeargs[@]}"
+	emake -C Misc/qs_pak
 }
 
 src_install() {
-	einstalldocs
 	dobin Quake/quakespasm
+
+	insinto /usr/share/quakespasm
+	doins Misc/qs_pak/quakespasm.pak
+
+	insinto /usr/share/metainfo
+	doins Linux/net.sourceforge.quakespasm.Quakespasm.appdata.xml
+
+	domenu Linux/net.sourceforge.quakespasm.Quakespasm.desktop
+
+	newicon Misc/QuakeSpasm_512.png net.sourceforge.quakespasm.Quakespasm.png
+
+	einstalldocs
+}
+
+pkg_postinst() {
+	if [[ -z ${REPLACING_VERSIONS} ]] || ver_replacing -lt 0.96.3; then
+		elog
+		elog "Please note that quakespasm doesn't support system-wide game data."
+		elog "In order to play, you must copy game data files into"
+		elog "\"~/.quakespasm/\" directory."
+		elog
+		elog "It is also recommended to copy quakespasm.pak as it contains default"
+		elog "config, custom console background and other minor features:"
+		elog "cp \"${EROOT}/usr/share/quakespasm/quakespasm.pak\" ~/.quakespasm/"
+		elog
+	fi
 }

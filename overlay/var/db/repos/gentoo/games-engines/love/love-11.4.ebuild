@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -24,12 +24,12 @@ IUSE="gme"
 
 REQUIRED_USE="${LUA_REQUIRED_USE}"
 
-RDEPEND="sys-libs/zlib
+RDEPEND="virtual/zlib:=
 	${LUA_DEPS}
 	media-libs/freetype
 	media-libs/libmodplug
 	media-libs/libsdl2[joystick,opengl]
-	media-libs/libtheora
+	media-libs/libtheora:=
 	media-libs/libvorbis
 	media-libs/openal
 	media-sound/mpg123

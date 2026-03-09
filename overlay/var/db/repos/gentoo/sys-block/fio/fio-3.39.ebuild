@@ -3,7 +3,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 
 inherit python-r1 toolchain-funcs
 
@@ -19,7 +19,7 @@ S="${WORKDIR}/${MY_P}"
 LICENSE="GPL-2"
 SLOT="0"
 
-KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
+KEYWORDS="amd64 arm arm64 ~loong ~ppc ppc64 ~riscv x86"
 
 IUSE="aio curl glusterfs gnuplot gtk io-uring nfs numa pandas python rbd rdma static tcmalloc test valgrind zbc zlib"
 REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )
@@ -48,7 +48,7 @@ LIB_DEPEND="aio? ( dev-libs/libaio[static-libs(+)] )
 	rdma? ( sys-cluster/rdma-core[static-libs(+)] )
 	tcmalloc? ( dev-util/google-perftools:=[static-libs(+)] )
 	zbc? ( >=sys-block/libzbc-5 )
-	zlib? ( sys-libs/zlib[static-libs(+)] )"
+	zlib? ( virtual/zlib:=[static-libs(+)] )"
 RDEPEND="!static? ( ${LIB_DEPEND//\[static-libs(+)]} )
 	gtk? ( x11-libs/gtk+:2 )"
 DEPEND="${RDEPEND}

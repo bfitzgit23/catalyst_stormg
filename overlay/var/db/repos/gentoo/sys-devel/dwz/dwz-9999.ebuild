@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -11,10 +11,17 @@ if [[ ${PV} == 9999 ]] ; then
 	EGIT_REPO_URI="https://sourceware.org/git/dwz.git"
 	inherit git-r3
 else
-	SRC_URI="https://sourceware.org/ftp/dwz/releases/${P}.tar.xz"
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/dwz.asc
+	inherit verify-sig
+
+	SRC_URI="
+		https://sourceware.org/ftp/dwz/releases/${P}.tar.xz
+		verify-sig? ( https://sourceware.org/ftp/dwz/releases/${P}.tar.xz.asc )
+	"
 	S="${WORKDIR}/${PN}"
 
-	KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	BDEPEND="verify-sig? ( sec-keys/openpgp-keys-dwz )"
 fi
 
 LICENSE="GPL-2+ GPL-3+"
@@ -31,7 +38,7 @@ RDEPEND="
 	)
 "
 DEPEND="${RDEPEND}"
-BDEPEND="
+BDEPEND+="
 	test? (
 		dev-debug/gdb
 		dev-libs/elfutils[utils]
@@ -48,7 +55,10 @@ src_prepare() {
 src_compile() {
 	export LANG=C LC_ALL=C  # grep find nothing for non-ascii locales
 
-	tc-export PKG_CONFIG
+	local current_binutils_path=$(binutils-config -B)
+	export READELF="${current_binutils_path}/readelf"
+
+	tc-export PKG_CONFIG READELF
 
 	export LIBS="-lelf"
 	if use elibc_musl; then
@@ -56,13 +66,13 @@ src_compile() {
 		export LIBS="${LIBS} $(${PKG_CONFIG} --libs obstack-standalone error-standalone)"
 	fi
 
-	emake CFLAGS="${CFLAGS}" LIBS="${LIBS}" srcdir="${S}"
+	emake CFLAGS="${CFLAGS}" LIBS="${LIBS}" srcdir="${S}" prefix="${EPREFIX}/usr"
 }
 
 src_test() {
-	emake CFLAGS="${CFLAGS}" LIBS="${LIBS}" srcdir="${S}" check
+	emake CFLAGS="${CFLAGS}" LIBS="${LIBS}" srcdir="${S}" prefix="${EPREFIX}/usr" check
 }
 
 src_install() {
-	emake DESTDIR="${D}" CFLAGS="${CFLAGS}" LIBS="${LIBS}" srcdir="${S}" install
+	emake DESTDIR="${D}" CFLAGS="${CFLAGS}" LIBS="${LIBS}" srcdir="${S}" prefix="${EPREFIX}/usr" install
 }

@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Gentoo Authors
+# Copyright 2024-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -8,7 +8,7 @@ DOCS_DIR="${WORKDIR}/${P}_build"
 
 # oneDNN has its own FindBLAS.cmake file to find MKL (in a non-standard way).
 # Removing of CMake modules is disabled.
-CMAKE_REMOVE_MODULES_LIST=( none )
+CMAKE_REMOVE_MODULES_LIST=()
 
 # There is additional sphinx documentation but we are missing dependency doxyrest.
 inherit cmake docs multiprocessing toolchain-funcs
@@ -19,7 +19,7 @@ SRC_URI="https://github.com/oneapi-src/oneDNN/archive/refs/tags/v${PV}.tar.gz ->
 
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 IUSE="test mkl cblas static-libs +openmp"
 
@@ -34,7 +34,7 @@ BDEPEND="
 	openmp? (
 		|| (
 			sys-devel/gcc[openmp]
-			llvm-core/clang-runtime[openmp]
+			llvm-runtimes/clang-runtime[openmp]
 		)
 	)
 "

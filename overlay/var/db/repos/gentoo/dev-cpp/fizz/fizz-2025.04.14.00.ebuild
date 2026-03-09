@@ -23,7 +23,7 @@ SRC_URI="https://github.com/facebookincubator/fizz/archive/refs/tags/v${PV}.tar.
 
 LICENSE="BSD"
 SLOT="0/${PV}"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="amd64 ~arm64"
 IUSE="test"
 RESTRICT="!test? ( test )"
 
@@ -39,7 +39,7 @@ RDEPEND="
 	dev-libs/libfmt:=
 	dev-libs/libsodium:=
 	dev-libs/openssl:=
-	sys-libs/zlib
+	virtual/zlib:=
 "
 uEPEND="
 	${RDEPEND}

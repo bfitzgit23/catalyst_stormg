@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -18,9 +18,9 @@ case ${PV}  in
 	inherit git-r3
 	;;
 *)
-	SRC_URI="https://storage.googleapis.com/golang/go${MY_PV}.src.tar.gz "
+	SRC_URI="https://go.dev/dl/go${MY_PV}.src.tar.gz "
 	S="${WORKDIR}"/go
-#	KEYWORDS="-* ~amd64 ~arm ~arm64 ~loong ~mips ~ppc64 ~riscv ~s390 ~x86 ~amd64-linux ~x86-linux ~x64-macos ~x64-solaris"
+#	KEYWORDS="-* ~amd64 ~arm ~arm64 ~loong ~mips ~ppc64 ~riscv ~s390 ~x86 ~x64-macos ~x64-solaris"
 	;;
 esac
 
@@ -46,11 +46,12 @@ QA_MULTILIB_PATHS="usr/lib/go/pkg/tool/.*/.*"
 
 # This package triggers "unrecognized elf file(s)" notices on riscv.
 # https://bugs.gentoo.org/794046
-QA_PREBUILT='.*'
+QA_PREBUILT="*"
+QA_PRESTRIPPED="*.syso"
 
-# Do not strip this package. Stripping is unsupported upstream and may
-# fail.
-RESTRICT=" strip"
+# The Go data race detector (go test -race) requires an unstripped Go toolchain.
+# https://bugs.gentoo.org/961618
+RESTRICT="strip"
 
 DOCS=(
 	CONTRIBUTING.md
@@ -68,6 +69,7 @@ go_cross_compile() {
 }
 
 PATCHES=(
+	"${FILESDIR}"/go-1.24-skip-gdb-tests.patch
 	"${FILESDIR}"/go-1.24-dont-force-gold-arm.patch
 	"${FILESDIR}"/go-never-download-newer-toolchains.patch
 )

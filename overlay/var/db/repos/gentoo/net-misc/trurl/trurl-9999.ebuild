@@ -1,9 +1,9 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit toolchain-funcs python-any-r1
 
 DESCRIPTION="Command line tool for URL parsing and manipulation"
@@ -13,19 +13,29 @@ if [[ ${PV} == 9999 ]] ; then
 	EGIT_REPO_URI="https://github.com/curl/trurl"
 	inherit git-r3
 else
-	SRC_URI="https://github.com/curl/trurl/releases/download/${P}/${P}.tar.gz"
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/danielstenberg.asc
+	inherit verify-sig
+
+	SRC_URI="
+		https://github.com/curl/trurl/releases/download/${P}/${P}.tar.gz
+		verify-sig? ( https://github.com/curl/trurl/releases/download/${P}/${P}.tar.gz.asc )
+	"
 	KEYWORDS="~amd64 ~arm ~arm64"
+
+	BDEPEND="verify-sig? ( sec-keys/openpgp-keys-danielstenberg )"
 fi
 
 LICENSE="curl"
 SLOT="0"
 IUSE="test"
-RESTRICT="!test? ( test )"
+# Tests fail w/ >=net-misc/curl-8.15
+# https://github.com/curl/trurl/issues/394
+RESTRICT="!test? ( test ) test"
 
 # Older curls may work but not all features will be present
 DEPEND=">=net-misc/curl-7.81.0"
 RDEPEND="${DEPEND}"
-BDEPEND="test? ( ${PYTHON_DEPS} )"
+BDEPEND+=" test? ( ${PYTHON_DEPS} )"
 
 pkg_setup() {
 	use test && python-any-r1_pkg_setup

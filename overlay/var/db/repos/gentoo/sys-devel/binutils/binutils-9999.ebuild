@@ -1,15 +1,15 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-inherit libtool flag-o-matic gnuconfig strip-linguas toolchain-funcs
+inherit dot-a libtool flag-o-matic gnuconfig strip-linguas toolchain-funcs
 
 DESCRIPTION="Tools necessary to build programs"
 HOMEPAGE="https://sourceware.org/binutils/"
 
 LICENSE="GPL-3+"
-IUSE="cet debuginfod doc gprofng hardened multitarget +nls pgo +plugins static-libs test vanilla xxhash zstd"
+IUSE="cet +debuginfod doc gprofng hardened multitarget +nls pgo +plugins static-libs test vanilla xxhash zstd"
 
 # Variables that can be set here  (ignored for live ebuilds)
 # PATCH_VER          - the patchset version
@@ -54,7 +54,7 @@ is_cross() { [[ ${CHOST} != ${CTARGET} ]] ; }
 #
 RDEPEND="
 	>=sys-devel/binutils-config-3
-	sys-libs/zlib
+	virtual/zlib:=
 	debuginfod? (
 		dev-libs/elfutils[debuginfod(-)]
 	)
@@ -92,10 +92,12 @@ src_unpack() {
 		"
 		EGIT_CHECKOUT_DIR=${WORKDIR}/patches-git
 		git-r3_src_unpack
-		mv patches-git/9999 patch || die
 
 		if [[ ${PV} != 9999 ]] ; then
 			EGIT_BRANCH=binutils-$(ver_cut 1)_$(ver_cut 2)-branch
+			mv patches-git/${PV%*.9999} patch || die
+		else
+			mv patches-git/9999 patch || die
 		fi
 		EGIT_REPO_URI="
 			https://sourceware.org/git/binutils-gdb.git
@@ -141,7 +143,7 @@ src_prepare() {
 			# This is applied conditionally for now just out of caution.
 			# It should be okay on non-prefix systems though. See bug #892549.
 			if is_cross || use prefix; then
-				eapply "${FILESDIR}"/binutils-2.43-linker-search-path.patch \
+				eapply "${FILESDIR}"/binutils-2.40-linker-search-path.patch \
 					   "${FILESDIR}"/binutils-2.43-linker-prefix.patch
 			fi
 		fi
@@ -194,6 +196,7 @@ src_configure() {
 	strip-flags
 	use cet && filter-flags -mindirect-branch -mindirect-branch=*
 	use elibc_musl && append-ldflags -Wl,-z,stack-size=2097152
+	lto-guarantee-fat
 
 	local x
 	echo
@@ -357,6 +360,9 @@ src_configure() {
 			# with the testsuite.
 			filter-lto
 
+			# bug #637066
+			filter-flags -Wall -Wreturn-type
+
 			export BUILD_CFLAGS="${CFLAGS}"
 		fi
 	fi
@@ -433,6 +439,8 @@ src_install() {
 	emake DESTDIR="${D}" tooldir="${EPREFIX}${LIBPATH}" install
 	rm -rf "${ED}"/${LIBPATH}/bin || die
 	use static-libs || find "${ED}" -name '*.la' -delete
+	# Explicit "${ED}" as we need it to do things even w/ USE=-static-libs
+	strip-lto-bytecode "${ED}"
 
 	# Newer versions of binutils get fancy with ${LIBPATH}, bug #171905
 	cd "${ED}"/${LIBPATH} || die
@@ -518,6 +526,56 @@ src_install() {
 
 	# Trim all empty dirs
 	find "${ED}" -depth -type d -exec rmdir {} + 2>/dev/null
+}
+
+# Simple test to make sure our new binutils isn't completely broken.
+# Skip if this binutils is a cross compiler.
+binutils_sanity_check() {
+	pushd "${T}" >/dev/null
+
+	einfo "Last-minute run tests with binutils in ${ED}${BINPATH} ..."
+
+	cat <<-EOF > "${T}"/number.c
+	int get_magic_number() {
+		return 42;
+	}
+	EOF
+
+	cat <<-EOF > "${T}"/test.c
+	#include <stdio.h>
+	int get_magic_number();
+
+	int main() {
+		printf("Hello Gentoo! Your magic number is: %d\n", get_magic_number());
+	}
+	EOF
+
+	local -x LD_LIBRARY_PATH="${ED}${LIBPATH}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
+	local opt opt2
+	# TODO: test multilib variants?
+	for opt in '' '-O2' ; do
+		# TODO: add static-pie? we need to check if support exists, though (bug #965478)
+		for opt2 in '-static' '-fno-PIE -no-pie' ; do
+			$(tc-getCC) ${opt} ${opt2} -B"${ED}${BINPATH}" "${T}"/number.c "${T}"/test.c -o "${T}"/test
+			if "${T}"/test | grep -q "Hello Gentoo! Your magic number is: 42" ; then
+				:;
+			else
+				die "Test with '${opt} ${opt2}' failed! Aborting to avoid broken binutils!"
+			fi
+		done
+	done
+
+	popd >/dev/null
+}
+
+pkg_preinst() {
+	[[ -n ${ROOT} ]] && return 0
+	[[ -n ${EPREFIX} ]] && return 0
+	[[ -d ${ED}${BINPATH} ]] || return 0
+	[[ -n ${BOOTSTRAP_RAP} ]] || return 0
+	is_cross && return 0
+	binutils_sanity_check
 }
 
 pkg_postinst() {

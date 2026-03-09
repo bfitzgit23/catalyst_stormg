@@ -1,9 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit gkrellm-plugin toolchain-funcs
+inherit gkrellm-plugin toolchain-funcs flag-o-matic
 
 DESCRIPTION="GKrellm2 plugin to take screen shots and lock screen"
 HOMEPAGE="http://gkrellshoot.sourceforge.net/"
@@ -12,7 +12,7 @@ S="${WORKDIR}/${P/s/S}"
 
 LICENSE="GPL-2"
 SLOT="2"
-KEYWORDS="~alpha amd64 ~ppc sparc x86"
+KEYWORDS="~alpha amd64 ~ppc ~sparc x86"
 
 DEPEND="app-admin/gkrellm:2[X]"
 RDEPEND="
@@ -27,6 +27,8 @@ PATCHES=(
 )
 
 src_compile() {
+	append-cflags -std=gnu17 #944389
+
 	tc-export PKG_CONFIG
 	default
 }

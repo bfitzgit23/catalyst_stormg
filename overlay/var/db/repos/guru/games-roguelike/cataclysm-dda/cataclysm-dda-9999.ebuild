@@ -36,7 +36,7 @@ REQUIRED_USE="soundpack? ( sound ) sound? ( tiles ) \
 RESTRICT="!test? ( test )"
 
 RDEPEND="
-	sys-libs/zlib
+	virtual/zlib:=
 	ncurses? ( sys-libs/ncurses )
 	tiles? (
 		media-libs/libsdl2[video]
@@ -77,6 +77,7 @@ src_prepare() {
 		-e "s/-Werror //" \
 		-e "s/TARGET_NAME = cataclysm/TARGET_NAME = cataclysm-${SLOT}/" \
 		-e "s/\$(TARGET_NAME)-tiles/cataclysm-tiles-${SLOT}/" \
+		-e "s/ZZIP_BIN=zzip/ZZIP_BIN=zzip-${SLOT}/g" \
 		-e "s/CataclysmDDA/CataclysmDDA-${SLOT}/" \
 		-e "s/${PN}/${PN}-${SLOT}/" \
 		"Makefile" || die

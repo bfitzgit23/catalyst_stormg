@@ -4,7 +4,7 @@
 EAPI=8
 
 MODULES_OPTIONAL_IUSE="+modules"
-inherit flag-o-matic linux-mod-r1
+inherit flag-o-matic linux-mod-r1 toolchain-funcs
 
 XTABLES_MODULES=(
 	account chaos delude dhcpmac dnetmap echo ipmark logmark
@@ -23,7 +23,7 @@ SRC_URI="https://inai.de/files/xtables-addons/${P}.tar.xz"
 
 LICENSE="GPL-2+"
 SLOT="0"
-KEYWORDS="amd64 ~x86"
+KEYWORDS="amd64 x86"
 IUSE="${XTABLES_MODULES[*]/#/xtables_addons_}"
 
 XTABLES_SCRIPTS_DEPEND="
@@ -38,9 +38,15 @@ RDEPEND="
 	xtables_addons_asn? ( ${XTABLES_SCRIPTS_DEPEND} )
 	xtables_addons_geoip? ( ${XTABLES_SCRIPTS_DEPEND} )
 "
+BDEPEND="virtual/pkgconfig"
 
 pkg_setup() {
 	local CONFIG_CHECK="NF_CONNTRACK NF_CONNTRACK_MARK"
+
+	if use xtables_addons_ipp2p; then
+		CONFIG_CHECK+=" TEXTSEARCH_BM"
+		local ERROR_TEXTSEARCH_BM="CONFIG_TEXTSEARCH_BM: is not set but is needed to use xt_ipp2p"
+	fi
 
 	if use xtables_addons_pknock; then
 		CONFIG_CHECK+=" ~CONNECTOR"
@@ -76,6 +82,9 @@ src_configure() {
 		--prefix="${EPREFIX:-/}"
 		--libexecdir="${EPREFIX}"/$(get_libdir)
 		$(usex modules --with-kbuild="${KV_OUT_DIR}" --without-kbuild)
+
+		# Needed for cross-compiling and to avoid a clash with the Gentoo ARCH.
+		ARCH="$(tc-arch-kernel)"
 	)
 
 	econf "${econfargs[@]}"

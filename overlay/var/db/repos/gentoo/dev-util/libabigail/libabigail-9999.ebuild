@@ -14,7 +14,7 @@ LIBABIGAIL_DOCS_VERSION="${PV}"
 # bug #830088
 LIBABIGAIL_DOCS_USEFLAG="+doc"
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit libtool bash-completion-r1 python-any-r1 out-of-source
 
@@ -36,14 +36,14 @@ else
 fi
 
 LICENSE="Apache-2.0-with-LLVM-exceptions"
-SLOT="0/6"
+SLOT="0/8"
 IUSE="btf debug ${LIBABIGAIL_DOCS_USEFLAG} test"
 RESTRICT="!test? ( test )"
 
 RDEPEND="
 	app-arch/xz-utils
 	dev-libs/elfutils[lzma]
-	dev-libs/libxml2:2=[lzma(-)]
+	dev-libs/libxml2:2=
 	dev-libs/xxhash
 	btf? ( dev-libs/libbpf:= )
 	elibc_musl? ( sys-libs/fts-standalone )

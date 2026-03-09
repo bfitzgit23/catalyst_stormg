@@ -12,14 +12,20 @@ SRC_URI="https://github.com/jordansissel/xdotool/releases/download/v${PV}/${P}.t
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 arm arm64 ~loong ppc ppc64 ~riscv sparc x86"
+KEYWORDS="amd64 arm arm64 ~loong ppc ppc64 ~riscv ~sparc x86"
 IUSE="examples"
 
 # tests have various troublesome requirements
 RESTRICT="test"
 
+# libXi is "unused" but it still uses headers from it and relies on the
+# compiler optimizing out a function to be dropped by as-needed, so keep
+# until next release (not important to patch given libXtst pulls libXi
+# anyway, so the dependency is not really avoidable either way)
+# https://github.com/jordansissel/xdotool/pull/446
 RDEPEND="
 	x11-libs/libX11
+	x11-libs/libXi
 	x11-libs/libXinerama
 	x11-libs/libXtst
 	x11-libs/libxkbcommon

@@ -53,7 +53,7 @@ DEPEND="${LUA_DEPS}
 	>=dev-libs/libuv-1.50.0:=
 	>=dev-libs/libvterm-0.3.3
 	>=dev-libs/msgpack-3.0.0:=
-	>=dev-libs/tree-sitter-0.25.3:=
+	=dev-libs/tree-sitter-0.26*
 	=dev-libs/tree-sitter-c-0.23*
 	=dev-libs/tree-sitter-lua-0.3*
 	=dev-libs/tree-sitter-markdown-0.4*
@@ -74,7 +74,6 @@ BDEPEND+="
 
 PATCHES=(
 	"${FILESDIR}/${PN}-0.9.0-cmake_lua_version.patch"
-	"${FILESDIR}/${PN}-9999-cmake-darwin.patch"
 )
 
 src_prepare() {
@@ -94,6 +93,8 @@ src_configure() {
 		-DENABLE_LTO=OFF
 		-DPREFER_LUA=$(usex lua_single_target_luajit no "$(lua_get_version)")
 		-DLUA_PRG="${LUA}"
+		# bug 906019: fix hardcoded usage of ccache
+		-DCACHE_PRG=OFF
 	)
 	cmake_src_configure
 }

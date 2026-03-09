@@ -23,19 +23,18 @@ RESTRICT="!test? ( test )"
 
 RDEPEND="
 	dev-cpp/yaml-cpp:=
-	dev-qt/qtwidgets:5
-	dev-qt/qtgui:5
-	dev-qt/qtcore:5
-	dev-qt/qtnetwork:5
-	dev-qt/qtpositioning:5
-	dev-qt/qtserialport:5
+	dev-qt/qtbase:6[gui,network,widgets]
+	dev-qt/qtpositioning:6
+	dev-qt/qtserialport:6
+	dev-qt/qttools[designer,linguist]
 	virtual/libusb:1
 "
 DEPEND="${RDEPEND}
-	dev-qt/designer:5
-	test? ( dev-qt/qttest:5 )
+	test? ( dev-qt/qtbase:6[test] )
 "
-BDEPEND="dev-qt/linguist-tools:5"
+BDEPEND="
+	gnome-base/librsvg
+"
 
 pkg_setup() {
 	CONFIG_CHECK="~USB_ACM"
@@ -43,11 +42,6 @@ pkg_setup() {
 	CONFIG_CHECK="~USB_SERIAL"
 	WARNING_USB_SERIAL="You need to enable CONFIG_USB_SERIAL in your kernel to talk to some radios"
 	check_extra_config
-}
-
-src_prepare() {
-	sed -i -e "s/VERSION 3.0.0/VERSION 3.10.0/" CMakeLists.txt || die
-	cmake_src_prepare
 }
 
 src_configure() {

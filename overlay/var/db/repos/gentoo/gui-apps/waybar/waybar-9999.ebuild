@@ -1,9 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit meson
+inherit meson optfeature
 
 DESCRIPTION="Highly customizable Wayland bar for Sway and Wlroots based compositors"
 HOMEPAGE="https://github.com/Alexays/Waybar"
@@ -19,16 +19,17 @@ fi
 
 LICENSE="MIT"
 SLOT="0"
-IUSE="evdev experimental jack +libinput +logind mpd mpris network pipewire pulseaudio sndio systemd test tray +udev upower wifi"
+IUSE="backlight evdev experimental gps jack +libinput +logind mpd mpris network niri pipewire pulseaudio sndio systemd test tray +udev upower wifi"
 REQUIRED_USE="
 	upower? ( logind )
+	backlight? ( udev logind )
 "
 
 RESTRICT="!test? ( test )"
 
 BDEPEND="
 	>=app-text/scdoc-1.9.2
-	dev-util/gdbus-codegen
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/wayland-scanner
 	virtual/pkgconfig
 "
@@ -48,11 +49,12 @@ RDEPEND="
 	x11-libs/gtk+:3[wayland]
 	x11-libs/libxkbcommon
 	evdev? ( dev-libs/libevdev )
+	gps? ( sci-geosciences/gpsd:= )
 	jack? ( virtual/jack )
 	libinput? ( dev-libs/libinput:= )
 	logind? (
-		|| ( sys-apps/systemd
-			 sys-auth/elogind )
+		systemd? ( sys-apps/systemd )
+		!systemd? ( sys-auth/elogind )
 	)
 	mpd? ( media-libs/libmpdclient )
 	mpris? ( >=media-sound/playerctl-2 )
@@ -77,8 +79,9 @@ DEPEND="${RDEPEND}
 src_configure() {
 	local emesonargs=(
 		-Dman-pages=enabled
-		-Dcava=disabled
+		-Dcava=disabled # depends on LukashonakV/cava fork, but media-sound/cava is karlstav/cava
 		$(meson_feature evdev libevdev)
+		$(meson_feature gps)
 		$(meson_feature jack)
 		$(meson_feature libinput)
 		$(meson_feature logind)
@@ -95,7 +98,13 @@ src_configure() {
 		$(meson_feature udev libudev)
 		$(meson_feature upower upower_glib)
 		$(meson_feature wifi rfkill)
+		$(meson_use backlight login-proxy)
 		$(meson_use experimental)
+		$(meson_use niri) # communicates by socket with gui-wm/niri::guru
 	)
 	meson_src_configure
+}
+
+pkg_postinst() {
+	optfeature "default icons support" "media-fonts/fontawesome"
 }

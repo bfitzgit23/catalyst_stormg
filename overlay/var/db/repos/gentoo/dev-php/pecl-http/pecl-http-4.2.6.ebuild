@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI="8"
@@ -9,9 +9,9 @@ PHP_EXT_INI="yes"
 PHP_EXT_ZENDEXT="no"
 PHP_INI_NAME="50-http"
 
-USE_PHP="php8-1 php8-2 php8-3"
+USE_PHP="php8-2 php8-3"
 
-inherit php-ext-pecl-r3
+inherit php-ext-pecl-r3 flag-o-matic
 
 DESCRIPTION="Extended HTTP Support for PHP"
 LICENSE="BSD-2 MIT"
@@ -21,14 +21,13 @@ IUSE="ssl curl_ssl_gnutls +curl_ssl_openssl"
 
 COMMON_DEPEND="app-arch/brotli:=
 	dev-libs/libevent
-	>=dev-php/pecl-raphf-2.0.1:7[php_targets_php8-1(-)?,php_targets_php8-2(-)?,php_targets_php8-3(-)?]
+	>=dev-php/pecl-raphf-2.0.1:7[php_targets_php8-2(-)?,php_targets_php8-3(-)?]
 	net-dns/libidn2
-	sys-libs/zlib
+	virtual/zlib:=
 	ssl? ( net-misc/curl[ssl,curl_ssl_gnutls(-)=,curl_ssl_openssl(-)=] )
 	!ssl? ( net-misc/curl[-ssl] )
 "
 DEPEND="
-	php_targets_php8-1? ( ${COMMON_DEPEND} dev-lang/php:8.1[session(-),iconv(-)] )
 	php_targets_php8-2? ( ${COMMON_DEPEND} dev-lang/php:8.2[session(-),iconv(-)] )
 	php_targets_php8-3? ( ${COMMON_DEPEND} dev-lang/php:8.3[session(-),iconv(-)] )"
 RDEPEND="${DEPEND}"
@@ -42,6 +41,9 @@ src_prepare() {
 
 	# Respect LDFLAGS, bug 727134
 	export EXTRA_LDFLAGS="${LDFLAGS}"
+
+	# Won't compile with GCC15 otherwise.
+	append-cflags -std=gnu17
 }
 
 src_test() {

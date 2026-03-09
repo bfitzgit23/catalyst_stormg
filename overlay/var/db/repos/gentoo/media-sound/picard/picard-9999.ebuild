@@ -1,20 +1,29 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{12..14} )
 DISTUTILS_USE_PEP517=setuptools
 DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_EXT=1
 
 inherit distutils-r1 xdg
 
-if [[ ${PV} = *9999* ]]; then
+if [[ ${PV} == *9999* ]]; then
 	EGIT_REPO_URI="https://github.com/metabrainz/picard"
 	inherit git-r3
 else
-	SRC_URI="https://data.musicbrainz.org/pub/musicbrainz/${PN}/${P}.tar.gz"
+	if [[ ${PV} == *_p* ]]; then
+		COMMIT="5fb03ea4f2593f224af8c0bd6439faa08c5a7aaf"
+		SRC_URI="https://github.com/metabrainz/${PN}/archive/${COMMIT}.tar.gz -> ${P}-${COMMIT:0:8}.tar.gz"
+		S="${WORKDIR}/${PN}-${COMMIT}"
+	elif [[ ${PV} == *alpha* ]]; then
+		SRC_URI="https://github.com/metabrainz/${PN}/releases/download/release-${PV/_alpha/a}/${PN}-${PV/_alpha/a}.tar.gz"
+		S="${WORKDIR}/${PN}-${PV/_alpha/a}"
+	else
+		SRC_URI="https://data.musicbrainz.org/pub/musicbrainz/${PN}/${P}.tar.gz"
+	fi
 	KEYWORDS="~amd64 ~arm64 ~x86"
 fi
 
@@ -23,17 +32,19 @@ HOMEPAGE="https://picard.musicbrainz.org"
 
 LICENSE="GPL-2+"
 SLOT="0"
-IUSE="discid fingerprints nls"
+IUSE="discid fingerprints markdown multimedia nls"
 
+# Plugin manager, git based(?): dev-python/pygit2[${PYTHON_USEDEP}]
 RDEPEND="
 	$(python_gen_cond_dep '
+		dev-python/charset-normalizer[${PYTHON_USEDEP}]
 		dev-python/fasteners[${PYTHON_USEDEP}]
 		dev-python/pyjwt[${PYTHON_USEDEP}]
-		dev-python/pyqt6[gui,network,qml,widgets,${PYTHON_USEDEP}]
-		dev-python/python-dateutil[${PYTHON_USEDEP}]
+		dev-python/pyqt6[gui,multimedia?,network,qml,widgets,${PYTHON_USEDEP}]
 		dev-python/pyyaml[${PYTHON_USEDEP}]
 		media-libs/mutagen[${PYTHON_USEDEP}]
 		discid? ( dev-python/discid[${PYTHON_USEDEP}] )
+		markdown? ( dev-python/markdown[${PYTHON_USEDEP}] )
 	')
 	fingerprints? ( media-libs/chromaprint[tools] )
 "

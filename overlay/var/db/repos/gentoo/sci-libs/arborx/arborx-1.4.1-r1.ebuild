@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -10,14 +10,14 @@ HOMEPAGE="https://github.com/arborx/ArborX"
 
 SRC_URI="https://github.com/${PN}/ArborX/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
-KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~amd64 ~x86"
 
 LICENSE="LGPL-2.1+"
 SLOT="0"
 IUSE="mpi"
 
 RDEPEND="dev-libs/boost:=
-	mpi? ( virtual/mpi[cxx] )
+	mpi? ( virtual/mpi )
 	sci-libs/trilinos"
 
 DEPEND="${RDEPEND}"

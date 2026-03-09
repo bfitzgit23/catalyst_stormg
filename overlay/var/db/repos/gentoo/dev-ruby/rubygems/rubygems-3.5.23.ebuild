@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -14,7 +14,7 @@ SRC_URI="https://github.com/rubygems/rubygems/archive/v${PV}.tar.gz -> ${P}.tar.
 LICENSE="|| ( Ruby MIT )"
 
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~arm64-macos ~x64-macos ~x64-solaris"
 IUSE="server test"
 RESTRICT="!test? ( test )"
 
@@ -65,7 +65,7 @@ all_ruby_prepare() {
 	# RUBYLIB to ensure that we consistently use the new code for
 	# rubygems and the bundled bundler.
 	if use test; then
-		RUBYLIB=lib rake update_manifest || die
+		ruby -I lib -S rake update_manifest || die
 	fi
 }
 
@@ -97,7 +97,7 @@ each_ruby_install() {
 	popd &>/dev/null
 
 	local sld=$(ruby_rbconfig_value 'sitelibdir')
-	insinto "${sld#${EPREFIX}}"  # bug #320813
+	insinto "${sld#"${EPREFIX}"}"  # bug #320813
 	newins "${FILESDIR}/auto_gem.rb.ruby19" auto_gem.rb
 
 	newbin exe/gem $(basename ${RUBY} | sed -e 's:ruby:gem:')

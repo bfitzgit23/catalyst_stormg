@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -7,7 +7,7 @@ PYTHON_COMPAT=( python3_{10..13} )
 USE_RUBY=( ruby3{2..3} )
 LUA_COMPAT=( lua5-{1..4} luajit )
 
-inherit autotools bash-completion-r1 linux-info lua-single perl-functions\
+inherit autotools bash-completion-r1 dot-a linux-info lua-single perl-functions\
 		python-single-r1 ruby-single toolchain-funcs vala
 
 MY_PV_1="$(ver_cut 1-2)"
@@ -21,7 +21,7 @@ SRC_URI="https://download.libguestfs.org/${MY_PV_1}-${SD}/${P}.tar.gz"
 LICENSE="GPL-2 LGPL-2"
 SLOT="0/${MY_PV_1}"
 if [[ ${SD} == "stable" ]] ; then
-	KEYWORDS="~amd64 ~ppc64 ~x86"
+	KEYWORDS="amd64"
 fi
 
 IUSE="doc erlang +fuse introspection libvirt lua +ocaml +perl python readline ruby selinux static-libs test vala"
@@ -74,7 +74,7 @@ COMMON_DEPEND="
 	fuse? ( sys-fs/fuse:0 )
 	introspection? (
 		dev-libs/glib
-		dev-libs/gobject-introspection
+		>=dev-libs/gobject-introspection-1.82.0-r2
 	)
 	libvirt? ( app-emulation/libvirt[qemu] )
 	perl? (
@@ -150,6 +150,10 @@ src_configure() {
 	# Bug #915339
 	unset LEX YACC
 
+	if use ocaml || use static-libs; then
+		lto-guarantee-fat
+	fi
+
 	local myconf=(
 		--disable-appliance
 		--disable-daemon
@@ -191,15 +195,6 @@ src_configure() {
 	econf "${myconf[@]}"
 }
 
-src_install() {
-	emake INSTALLDIRS=vendor DESTDIR="${D}" install "LINGUAS=""${LINGUAS}"""
-
-	find "${ED}" -name '*.la' -delete || die
-
-	use perl && perl_delete_localpod
-	use python && python_optimize
-}
-
 src_test() {
 	# bash-completions may not exist
 	# Bug #794874
@@ -222,4 +217,15 @@ src_test() {
 	local -x LIBGUESTFS_TRACE=1
 
 	default
+}
+
+src_install() {
+	emake INSTALLDIRS=vendor DESTDIR="${D}" install "LINGUAS=""${LINGUAS}"""
+	# ocaml always installs a static lib even without USE=static-libs
+	strip-lto-bytecode "${ED}"
+
+	find "${ED}" -name '*.la' -delete || die
+
+	use perl && perl_delete_localpod
+	use python && python_optimize
 }

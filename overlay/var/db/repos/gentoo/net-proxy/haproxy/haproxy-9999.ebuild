@@ -29,9 +29,11 @@ else
 	EGIT_BRANCH=master
 fi
 
+S="${WORKDIR}/${MY_P}"
+
 LICENSE="GPL-2 LGPL-2.1"
 SLOT="0/$(ver_cut 1-2)"
-IUSE="+crypt doc examples +slz +net_ns +pcre pcre-jit prometheus-exporter
+IUSE="+crypt doc examples +slz +net_ns +pcre pcre-jit prometheus-exporter quic
 ssl systemd test +threads tools zlib lua 51degrees wurfl"
 REQUIRED_USE="pcre-jit? ( pcre )
 	lua? ( ${LUA_REQUIRED_USE} )
@@ -48,18 +50,19 @@ DEPEND="
 	ssl? (
 		dev-libs/openssl:0=
 	)
+	quic? (
+		>=dev-libs/openssl-3.5.0:0=
+	)
 	systemd? ( sys-apps/systemd )
-	zlib? ( sys-libs/zlib )
+	zlib? ( virtual/zlib:= )
 	lua? ( ${LUA_DEPS} )
 	test? (
 		dev-libs/libpcre2
-		sys-libs/zlib
+		virtual/zlib:=
 	)"
 RDEPEND="${DEPEND}
 	acct-group/haproxy
 	acct-user/haproxy"
-
-S="${WORKDIR}/${MY_P}"
 
 DOCS=( CHANGELOG CONTRIBUTING MAINTAINERS )
 EXTRAS=( admin/halog admin/iprange dev/tcploop dev/hpack )
@@ -114,6 +117,7 @@ src_compile() {
 	args+=( $(haproxy_use 51degrees 51DEGREES) )
 	args+=( $(haproxy_use wurfl WURFL) )
 	args+=( $(haproxy_use prometheus-exporter PROMEX) )
+	args+=( $(haproxy_use quic QUIC) )
 
 	# Bug #668002
 	if use ppc || use arm || use hppa; then
@@ -189,6 +193,9 @@ src_install() {
 			newbin dev/hpack/gen-enc haproxy_gen-enc
 			newbin dev/hpack/decode haproxy_decode
 		}
+
+		dosbin admin/cli/haproxy-dump-certs
+		dosbin admin/cli/haproxy-reload
 	fi
 
 	if use examples ; then

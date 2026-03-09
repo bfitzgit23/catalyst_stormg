@@ -1,8 +1,9 @@
-# Copyright 2021-2025 Gentoo Authors
+# Copyright 2021-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
+QT6_HAS_STATIC_LIBS=1
 inherit flag-o-matic qt6-build toolchain-funcs
 
 DESCRIPTION="Cross-platform application development framework"
@@ -13,7 +14,7 @@ fi
 
 declare -A QT6_IUSE=(
 	[global]="+ssl +udev zstd"
-	[core]="icu journald syslog"
+	[core]="icu io-uring journald syslog"
 	[modules]="+concurrent +dbus +gui +network +sql +xml"
 
 	[gui]="
@@ -42,6 +43,7 @@ REQUIRED_USE="
 	libinput? ( udev )
 	sql? ( || ( ${QT6_IUSE[sql]//+/} ) )
 	test? ( icu sql? ( sqlite ) )
+	wayland? ( opengl )
 "
 
 # groups:
@@ -53,7 +55,7 @@ REQUIRED_USE="
 # - qtsql (src/plugins/sqldrivers/configure.cmake)
 # nolink: renderdoc, systemd
 COMMON_DEPEND="
-	sys-libs/zlib:=
+	virtual/zlib:=
 	ssl? ( dev-libs/openssl:= )
 	udev? ( virtual/libudev:= )
 	zstd? ( app-arch/zstd:= )
@@ -63,10 +65,12 @@ COMMON_DEPEND="
 	dev-libs/glib:2
 	dev-libs/libpcre2:=[pcre16,unicode(+)]
 	icu? ( dev-libs/icu:= )
+	io-uring? ( sys-libs/liburing:= )
 	journald? ( sys-apps/systemd )
 
 	dbus? ( sys-apps/dbus )
 	gui? (
+		dev-libs/md4c
 		media-libs/fontconfig
 		>=media-libs/freetype-2.13.1:2
 		media-libs/harfbuzz:=
@@ -95,6 +99,7 @@ COMMON_DEPEND="
 		)
 		renderdoc? ( media-gfx/renderdoc )
 		tslib? ( x11-libs/tslib )
+		wayland? ( dev-libs/wayland )
 		widgets? (
 			cups? ( net-print/cups )
 			gtk? (
@@ -117,8 +122,41 @@ COMMON_DEPEND="
 		sqlite? ( dev-db/sqlite:3 )
 	)
 "
+# wrt blockers: users do not always depclean regularly and outdated
+# dev-qt packages sometime cause runtime issues (update this when new
+# Qt libraries/plugins are added, and keep old for 2y+ if removed)
 RDEPEND="
 	${COMMON_DEPEND}
+	!<dev-qt/qt3d-${PV}:6
+	!<dev-qt/qt5compat-${PV}:6
+	!<dev-qt/qtcharts-${PV}:6
+	!<dev-qt/qtconnectivity-${PV}:6
+	!<dev-qt/qtdeclarative-${PV}:6
+	!<dev-qt/qtgraphs-${PV}:6
+	!<dev-qt/qthttpserver-${PV}:6
+	!<dev-qt/qtimageformats-${PV}:6
+	!<dev-qt/qtlanguageserver-${PV}:6
+	!<dev-qt/qtlocation-${PV}:6
+	!<dev-qt/qtmultimedia-${PV}:6
+	!<dev-qt/qtnetworkauth-${PV}:6
+	!<dev-qt/qtpositioning-${PV}:6
+	!<dev-qt/qtquick3d-${PV}:6
+	!<dev-qt/qtquicktimeline-${PV}:6
+	!<dev-qt/qtremoteobjects-${PV}:6
+	!<dev-qt/qtscxml-${PV}:6
+	!<dev-qt/qtsensors-${PV}:6
+	!<dev-qt/qtserialbus-${PV}:6
+	!<dev-qt/qtserialport-${PV}:6
+	!<dev-qt/qtshadertools-${PV}:6
+	!<dev-qt/qtspeech-${PV}:6
+	!<dev-qt/qtsvg-${PV}:6
+	!<dev-qt/qttools-${PV}:6
+	!<dev-qt/qtvirtualkeyboard-${PV}:6
+	!<dev-qt/qtwayland-${PV}:6
+	!<dev-qt/qtwebchannel-${PV}:6
+	!<dev-qt/qtwebengine-${PV}:6
+	!<dev-qt/qtwebsockets-${PV}:6
+	!<dev-qt/qtwebview-${PV}:6
 	syslog? ( virtual/logger )
 "
 DEPEND="
@@ -126,6 +164,7 @@ DEPEND="
 	X? ( x11-base/xorg-proto )
 	gui? (
 		vulkan? ( dev-util/vulkan-headers )
+		wayland? ( dev-util/wayland-scanner )
 	)
 	network? (
 		sctp? ( net-misc/lksctp-tools )
@@ -134,10 +173,12 @@ DEPEND="
 		elibc_musl? ( sys-libs/timezone-data )
 	)
 "
-BDEPEND="zstd? ( app-arch/libarchive[zstd] )" #910392
+# libarchive[zstd] is indirectly used by cmake (bug #910392)
+BDEPEND="
+	zstd? ( app-arch/libarchive[zstd] )
+"
 PDEPEND="
 	nls? ( ~dev-qt/qttranslations-${PV}:6 )
-	wayland? ( ~dev-qt/qtwayland-${PV}:6 )
 "
 
 PATCHES=(
@@ -201,8 +242,11 @@ src_configure() {
 
 		# qtcore
 		$(qt_feature icu)
+		$(qt_feature io-uring liburing)
 		$(qt_feature journald)
 		$(qt_feature syslog)
+		# currently jemalloc upstream is dead and tests fail with it
+		-DQT_FEATURE_jemalloc=OFF
 
 		# tools
 		-DQT_FEATURE_androiddeployqt=OFF
@@ -246,7 +290,6 @@ src_configure() {
 		$(qt_feature wayland)
 		$(qt_feature widgets)
 		-DINPUT_opengl=$(usex opengl $(usex gles2-only es2 desktop) no)
-		-DQT_FEATURE_system_textmarkdownreader=OFF # TODO?: package md4c
 	) && use widgets && mycmakeargs+=(
 		# note: qtprintsupport is enabled w/ gui+widgets regardless of USE=cups
 		$(qt_feature cups)
@@ -283,9 +326,20 @@ src_configure() {
 	qt6-build_src_configure
 }
 
+src_compile() {
+	# workaround missing qtest include race condition when building
+	# the new test from qtbase@b412e424b (needs more looking into)
+	cmake_build include/QtTest/QtTest
+	cmake_src_compile
+}
+
 src_test() {
 	local -x TZ=UTC
 	local -x LC_TIME=C
+
+	# users' session setting may break tst_clientextension (bug #927030)
+	unset DESKTOP_SESSION XDG_CURRENT_DESKTOP
+	unset GNOME_DESKTOP_SESSION_ID KDE_FULL_SESSION
 
 	local CMAKE_SKIP_TESTS=(
 		# broken with out-of-source + if qtbase is not already installed
@@ -295,22 +349,27 @@ src_test() {
 		tst_qapplication
 		tst_qt_cmake_create
 		tst_uic
-		# needs x11/opengl, we *could* run these but tend to be flaky
-		# when opengl rendering is involved (even if software-only)
-		tst_qopengl{,config,widget,window}
+		# needs x11/wayland/opengl rather than just Qt offscreen and would
+		# rather to keep this simple
 		tst_qgraphicsview
+		tst_qopengl{,config,widget,window}
 		tst_qx11info
+		tst_surface
+		tst_wl_reconnect
+		tst_xdgdecorationv1
+		# fails for unknown reasons, but seatv4 is not actually used nowadays
+		tst_seatv4
 		# fails with network sandbox
 		tst_qdnslookup
 		# fails with sandbox
 		tst_qsharedmemory
 		# typical to lack SCTP support on non-generic kernels
 		tst_qsctpsocket
-		# randomly fails without -j1, and not worth it over this (bug #916181)
-		tst_qfiledialog{,2}
-		# may randomly hang+timeout, perhaps related to -j as well
+		# flaky tests, may be better with -j1 but not worth using over this
+		tst_qfiledialog{,2} #916181
 		tst_qprocess #936484
 		tst_qtimer
+		tst_wayland_cursor
 		# haystacksWithMoreThan4GiBWork can easily OOM (16GB ram not enough)
 		tst_qlatin1stringmatcher
 		# these can be flaky depending on the environment/toolchain

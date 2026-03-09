@@ -1,0 +1,24 @@
+#lxdm {
+	background-image: url("/usr/share/backgrounds/Kexwc50.jpg");
+	background-repeat: round;
+}
+
+#bottom_pane {
+	background-color: rgba(128,0,255,0.24);
+}
+
+#time {
+	font: xolonium 12;
+	color: #ffffff;
+}
+
+#prompt {
+	font: Xolonium 14;
+	color: #FFFFFF;
+}
+
+#bottom_pane label,
+#bottom_pane GtkLabel {
+	font: Xolonium 12;
+	color: #FFFFFF;
+}

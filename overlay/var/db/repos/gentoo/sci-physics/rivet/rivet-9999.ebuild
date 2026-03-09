@@ -3,14 +3,11 @@
 
 EAPI=8
 
+MY_P=Rivet-${PV}
 PYTHON_COMPAT=( python3_{11..13} )
-
 inherit python-single-r1 flag-o-matic autotools optfeature bash-completion-r1
 
-MY_PN="Rivet"
-MY_PF=${MY_PN}-${PV}
-
-DESCRIPTION="Rivet toolkit (Robust Independent Validation of Experiment and Theory)"
+DESCRIPTION="Robust Independent Validation of Experiment and Theory toolkit"
 HOMEPAGE="
 	https://rivet.hepforge.org/
 	https://gitlab.com/hepcedar/rivet
@@ -20,41 +17,40 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://gitlab.com/hepcedar/rivet"
 	EGIT_BRANCH="main"
 else
-	SRC_URI="https://www.hepforge.org/archive/rivet/${MY_PF}.tar.gz -> ${P}.tar.gz"
-	S=${WORKDIR}/${MY_PF}
+	SRC_URI="https://www.hepforge.org/archive/rivet/${MY_P}.tar.gz"
+	S="${WORKDIR}/${MY_P}"
 	KEYWORDS="~amd64"
 fi
 
 LICENSE="GPL-3+"
-SLOT="4"
+SLOT="4/${PV}"
 IUSE="+zlib +python +highfive"
-REQUIRED_USE="
-	python? ( ${PYTHON_REQUIRED_USE} )
-"
+REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
 
-RDEPEND="
+DEPEND="
 	dev-cpp/yaml-cpp
 	>=sci-physics/fastjet-3.4.0[plugins]
 	>=sci-physics/fastjet-contrib-1.048
 	>=sci-physics/hepmc-3.1.1:3=[-cm(-),gev(+)]
 	highfive? (
-		sci-libs/HighFive
+		sci-libs/highfive
 		sci-libs/hdf5[cxx]
+		sci-physics/yoda[eigen(-),highfive(-)]
 	)
-
 	sci-libs/gsl
-	zlib? ( sys-libs/zlib )
+	zlib? ( virtual/zlib:= )
 	python? (
 		${PYTHON_DEPS}
 		$(python_gen_cond_dep '
 			dev-python/matplotlib[${PYTHON_USEDEP}]
 		')
-		>=sci-physics/yoda-2.1[${PYTHON_SINGLE_USEDEP}]
+		sci-physics/yoda[${PYTHON_SINGLE_USEDEP}]
 	)
-	>=sci-physics/yoda-2.1[highfive(-)?]
+	>=sci-physics/yoda-2.1:=
+"
+RDEPEND="${DEPEND}
 	!sci-physics/rivet:3
 "
-DEPEND="${RDEPEND}"
 BDEPEND="
 	app-shells/bash
 	python? (

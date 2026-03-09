@@ -3,17 +3,17 @@
 
 EAPI=8
 
-DESCRIPTION="The officially unofficial Ziglang language server"
+DESCRIPTION="Non-official language server for Zig"
 HOMEPAGE="https://zigtools.org/zls/ https://github.com/zigtools/zls"
 
-# Sync with "minimum_build_zig_version" from upstream's "build.zig".
 if [[ ${PV} == 9999 ]]; then
 	ZIG_SLOT="9999"
 
 	EGIT_REPO_URI="https://github.com/zigtools/zls"
 	inherit git-r3
 else
-	ZIG_SLOT="0.14"
+	# Should be the "minimum_build_zig_version" from upstream's "build.zig".
+	ZIG_SLOT="$(ver_cut 1-2)" # works only for releases, but that's okay
 
 	SRC_URI="
 		https://github.com/zigtools/zls/archive/refs/tags/${PV}.tar.gz -> zls-${PV}.tar.gz
@@ -35,16 +35,14 @@ RDEPEND="
 	)
 "
 
-DOCS=( "README.md" )
+DOCS=( README.md )
 
-src_unpack() {
-	if [[ ${PV} == 9999 ]]; then
+if [[ ${PV} == 9999 ]]; then
+	src_unpack() {
 		git-r3_src_unpack
 		zig_live_fetch -Denable-tracy=false
-	else
-		zig_src_unpack
-	fi
-}
+	}
+fi
 
 src_configure() {
 	local my_zbs_args=(
@@ -53,9 +51,4 @@ src_configure() {
 	)
 
 	zig_src_configure
-}
-
-pkg_postinst() {
-	elog "You can find configuration guide here:"
-	elog "https://zigtools.org/zls/"
 }

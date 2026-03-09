@@ -1,7 +1,7 @@
 # Copyright 2019-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 PYTHON_COMPAT=( python3_{11..12} )
 DOCS_BUILDER="mkdocs"
@@ -34,7 +34,7 @@ src_prepare() {
 }
 
 src_configure() {
-	local mycmakeoptions=(
+	local mycmakeargs=(
 		-DWANT_STATIC=$(usex static-libs)
 	)
 	cmake_src_configure

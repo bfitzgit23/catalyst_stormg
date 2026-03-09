@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Gentoo Authors
+# Copyright 2019-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: acct-user.eclass
@@ -8,7 +8,7 @@
 # @AUTHOR:
 # Michael Orlitzky <mjo@gentoo.org>
 # Michał Górny <mgorny@gentoo.org>
-# @SUPPORTED_EAPIS: 7 8
+# @SUPPORTED_EAPIS: 7 8 9
 # @BLURB: Eclass used to create and maintain a single user entry
 # @DESCRIPTION:
 # This eclass represents and creates a single user entry.  The name
@@ -45,7 +45,7 @@ if [[ -z ${_ACCT_USER_ECLASS} ]]; then
 _ACCT_USER_ECLASS=1
 
 case ${EAPI} in
-	7|8) ;;
+	7|8|9) ;;
 	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
 esac
 
@@ -144,7 +144,7 @@ ACCT_USER_NAME=${PN}
 # << Boilerplate ebuild variables >>
 : "${DESCRIPTION:="System user: ${ACCT_USER_NAME}"}"
 : "${SLOT:=0}"
-: "${KEYWORDS:=~alpha amd64 arm arm64 hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris}"
+: "${KEYWORDS:=~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~arm64-macos ~x64-macos ~x64-solaris}"
 S=${WORKDIR}
 
 
@@ -337,10 +337,11 @@ acct-user_pkg_preinst() {
 		return
 	fi
 
+	local groups=( ${_ACCT_USER_GROUPS} )
+
 	if egetent passwd "${ACCT_USER_NAME}" >/dev/null; then
 		elog "User ${ACCT_USER_NAME} already exists"
 	else
-		local groups=( ${_ACCT_USER_GROUPS} )
 		local aux_groups=${groups[*]:1}
 		local opts=(
 			--system
@@ -370,14 +371,30 @@ acct-user_pkg_preinst() {
 
 	if [[ ${_ACCT_USER_HOME} != /dev/null ]]; then
 		# default ownership to user:group
-		if [[ -z ${_ACCT_USER_HOME_OWNER} ]]; then
-			if [[ -n ${ROOT} ]]; then
-				local euid=$(egetent passwd ${ACCT_USER_NAME} | cut -d: -f3)
-				local egid=$(egetent passwd ${ACCT_USER_NAME} | cut -d: -f4)
-				_ACCT_USER_HOME_OWNER=${euid}:${egid}
-			else
-				_ACCT_USER_HOME_OWNER=${ACCT_USER_NAME}:${groups[0]}
+		local user=${ACCT_USER_NAME}
+		local group=${groups[0]}
+		if [[ -n ${ROOT} ]]; then
+			# resolve user:group to uid:gid
+			if [[ ${_ACCT_USER_HOME_OWNER} == *:* ]]; then
+				user=${_ACCT_USER_HOME_OWNER%:*}
+				group=${_ACCT_USER_HOME_OWNER#*:}
+			elif [[ -n ${_ACCT_USER_HOME_OWNER} ]]; then
+				user=${_ACCT_USER_HOME_OWNER}
+				group=
 			fi
+			local euid= egid=
+			if [[ -n ${user} ]]; then
+				euid=$(egetent passwd "${user}" | cut -d: -f3)
+				if [[ -z ${group} ]]; then
+					egid=$(egetent passwd "${user}" | cut -d: -f4)
+				fi
+			fi
+			if [[ -n ${group} ]]; then
+				egid=$(egetent group "${group}" | cut -d: -f3)
+			fi
+			_ACCT_USER_HOME_OWNER=${euid}:${egid}
+		elif [[ -z ${_ACCT_USER_HOME_OWNER} ]]; then
+			_ACCT_USER_HOME_OWNER=${user}:${group}
 		fi
 		# Path might be missing due to INSTALL_MASK, etc.
 		# https://bugs.gentoo.org/691478

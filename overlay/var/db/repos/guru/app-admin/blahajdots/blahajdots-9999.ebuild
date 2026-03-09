@@ -3,6 +3,8 @@
 
 EAPI=8
 
+RUST_MIN_VER="1.85.0"
+
 inherit cargo
 
 DESCRIPTION="Bespoke dotfile management for sharkgirls."
@@ -45,4 +47,11 @@ src_configure() {
 	)
 
 	cargo_src_configure --no-default-features
+}
+
+src_install() {
+	cargo_src_install
+
+	insinto /usr/share/blahajdots
+	doins -r builtins/*
 }

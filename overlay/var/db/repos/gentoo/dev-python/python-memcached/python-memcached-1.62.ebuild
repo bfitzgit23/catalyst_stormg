@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( pypy3 pypy3_11 python3_{10..13} )
+PYTHON_COMPAT=( pypy3_11 python3_{11..14} )
 
 inherit distutils-r1
 
@@ -20,7 +20,7 @@ SRC_URI="
 
 LICENSE="PSF-2.4"
 SLOT="0"
-KEYWORDS="amd64 arm64 ppc x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 arm64 ppc x86"
 IUSE="test"
 RESTRICT="!test? ( test )"
 

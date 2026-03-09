@@ -1,3 +1,4 @@
 app-admin/calamares
 dev-libs/boost
-app-misc/calamares-config-livecd
+app-misc/calamares-gentoo-livecd
+dev-qt/*

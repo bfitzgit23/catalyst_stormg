@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI="8"
@@ -18,7 +18,7 @@ if [[ ${PV} != *9999 ]]; then
 	VTEST_DIR="${WORKDIR}/VTest-${VTEST_COMMIT}"
 	SRC_URI="http://haproxy.1wt.eu/download/$(ver_cut 1-2)/src/${MY_P}.tar.gz
 			test? ( https://github.com/vtest/VTest/archive/${VTEST_COMMIT}.tar.gz -> VTest-${VTEST_COMMIT}.tar.gz )"
-	KEYWORDS="amd64 ~arm64 ~ppc x86"
+	KEYWORDS="amd64 arm64 ppc x86"
 elif [[ ${PV} == 9999 ]]; then
 	VTEST_DIR="${WORKDIR}/VTest"
 	EGIT_REPO_URI="https://git.haproxy.org/git/haproxy.git/"
@@ -28,6 +28,8 @@ else
 	EGIT_REPO_URI="https://git.haproxy.org/git/haproxy-$(ver_cut 1-2).git/"
 	EGIT_BRANCH=master
 fi
+
+S="${WORKDIR}/${MY_P}"
 
 LICENSE="GPL-2 LGPL-2.1"
 SLOT="0/$(ver_cut 1-2)"
@@ -49,17 +51,15 @@ DEPEND="
 		dev-libs/openssl:0=
 	)
 	systemd? ( sys-apps/systemd )
-	zlib? ( sys-libs/zlib )
+	zlib? ( virtual/zlib:= )
 	lua? ( ${LUA_DEPS} )
 	test? (
 		dev-libs/libpcre2
-		sys-libs/zlib
+		virtual/zlib:=
 	)"
 RDEPEND="${DEPEND}
 	acct-group/haproxy
 	acct-user/haproxy"
-
-S="${WORKDIR}/${MY_P}"
 
 DOCS=( CHANGELOG CONTRIBUTING MAINTAINERS README )
 EXTRAS=( admin/halog admin/iprange dev/tcploop dev/hpack )

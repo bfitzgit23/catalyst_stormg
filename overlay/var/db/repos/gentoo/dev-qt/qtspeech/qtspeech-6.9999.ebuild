@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -17,13 +17,14 @@ if [[ ${QT6_BUILD_TYPE} == release ]]; then
 fi
 
 IUSE="flite qml +speechd"
-# can build with neither, but then it is just mock tts and may be confusing
-REQUIRED_USE="|| ( flite speechd )"
 
 RDEPEND="
 	~dev-qt/qtbase-${PV}:6
 	~dev-qt/qtmultimedia-${PV}:6
-	flite? ( app-accessibility/flite )
+	flite? (
+		app-accessibility/flite
+		~dev-qt/qtbase-${PV}:6[concurrent]
+	)
 	qml? ( ~dev-qt/qtdeclarative-${PV}:6 )
 	speechd? ( app-accessibility/speech-dispatcher )
 "
@@ -34,10 +35,6 @@ src_configure() {
 		$(cmake_use_find_package qml Qt6Qml)
 		$(qt_feature flite)
 		$(qt_feature speechd)
-
-		# flite_alsa was likely to work around old issues in flite, it does
-		# nothing but add -lasound (no code change, and is unneeded)
-		-DQT_FEATURE_flite_alsa=OFF
 	)
 
 	qt6-build_src_configure

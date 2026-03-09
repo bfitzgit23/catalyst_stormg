@@ -1,9 +1,10 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit autotools toolchain-funcs
+GENTOO_DEPEND_ON_PERL="no"
+inherit autotools toolchain-funcs perl-module
 
 MY_P=${P/graphicsm/GraphicsM}
 DESCRIPTION="Collection of tools and libraries for many image formats"
@@ -20,7 +21,7 @@ else
 	SRC_URI+=" verify-sig? ( https://downloads.sourceforge.net/project/${PN}/${PN}-history/$(ver_cut 1-2)/${MY_P}.tar.xz.asc )"
 	S="${WORKDIR}/${MY_P}"
 
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~ppc ~ppc64 ~riscv ~sparc ~x86 ~x64-macos"
 
 	BDEPEND="verify-sig? ( sec-keys/openpgp-keys-bobfriesenhahn )"
 fi
@@ -28,14 +29,15 @@ fi
 LICENSE="MIT"
 SLOT="0/${PV%.*}"
 IUSE="bzip2 +cxx debug dynamic-loading fpx heif imagemagick jbig jpeg jpeg2k jpegxl lcms lzma"
-IUSE+=" openmp perl postscript png q16 q32 static-libs tcmalloc tiff truetype"
+IUSE+=" openmp perl ${GENTOO_PERL_USESTRING} postscript png q16 q32 static-libs tcmalloc tiff truetype"
 IUSE+=" webp wmf X zip zlib zstd"
 
 RDEPEND="
 	dev-libs/libltdl
+	dev-libs/libxml2:=
 	bzip2? ( app-arch/bzip2 )
 	fpx? ( media-libs/libfpx )
-	heif? ( media-libs/libheif:= )
+	heif? ( >=media-libs/libheif-1.20:= )
 	imagemagick? ( !media-gfx/imagemagick )
 	jbig? ( media-libs/jbigkit )
 	jpeg? ( media-libs/libjpeg-turbo:= )
@@ -43,7 +45,10 @@ RDEPEND="
 	jpegxl? ( media-libs/libjxl:= )
 	lcms? ( media-libs/lcms:2 )
 	lzma? ( app-arch/xz-utils )
-	perl? ( dev-lang/perl:= )
+	perl? (
+		${GENTOO_PERL_DEPSTRING}
+		dev-lang/perl:=
+	)
 	postscript? ( app-text/ghostscript-gpl:= )
 	png? ( media-libs/libpng:= )
 	tcmalloc? ( dev-util/google-perftools:= )
@@ -60,7 +65,7 @@ RDEPEND="
 		x11-libs/libXext
 	)
 	zip? ( dev-libs/libzip:= )
-	zlib? ( sys-libs/zlib )
+	zlib? ( virtual/zlib:= )
 	zstd? ( app-arch/zstd:= )
 "
 DEPEND="${RDEPEND}"
@@ -126,6 +131,7 @@ src_configure() {
 		--with-fontpath="${EPREFIX}"/usr/share/fonts
 		--with-gs-font-dir="${EPREFIX}"/usr/share/fonts/urw-fonts
 		--with-windows-font-dir="${EPREFIX}"/usr/share/fonts/corefonts
+		--with-xml
 		$(use_with zip libzip)
 		$(use_with zlib)
 		$(use_with zstd)

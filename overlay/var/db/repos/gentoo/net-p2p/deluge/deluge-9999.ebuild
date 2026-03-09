@@ -21,19 +21,15 @@ fi
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="console gui libnotify sound webinterface"
+IUSE="appindicator console gui libnotify sound webinterface"
 REQUIRED_USE="
+	appindicator? ( gui )
 	libnotify? ( gui )
 	sound? ( gui )
 "
 
 BDEPEND="
 	dev-util/intltool
-	test? (
-		$(python_gen_cond_dep '
-			>=dev-python/pytest-twisted-1.13.4-r1[${PYTHON_USEDEP}]
-		')
-	)
 "
 
 RDEPEND="
@@ -44,8 +40,6 @@ RDEPEND="
 		gui? (
 			sound? ( dev-python/pygame[${PYTHON_USEDEP}] )
 			dev-python/pygobject:3[${PYTHON_USEDEP}]
-			gnome-base/librsvg
-			libnotify? ( x11-libs/libnotify )
 		)
 		dev-python/chardet[${PYTHON_USEDEP}]
 		dev-python/distro[${PYTHON_USEDEP}]
@@ -58,8 +52,14 @@ RDEPEND="
 		>=dev-python/zope-interface-4.4.2[${PYTHON_USEDEP}]
 		dev-python/mako[${PYTHON_USEDEP}]
 	')
+	appindicator? ( dev-libs/libayatana-appindicator )
+	gui? (
+		gnome-base/librsvg
+		libnotify? ( x11-libs/libnotify )
+	)
 "
 
+EPYTEST_PLUGINS=( pytest-twisted )
 distutils_enable_tests pytest
 
 python_prepare_all() {
@@ -101,8 +101,7 @@ python_test() {
 		'deluge/tests/test_core.py::TestCore::test_pause_torrent'
 	)
 
-	# dev-python/pytest-twisted has disabled autoloading
-	epytest -m "not (todo or gtkui)" -p pytest_twisted -v
+	epytest -m "not (todo or gtkui)" -v
 }
 
 python_install_all() {
@@ -121,7 +120,7 @@ python_install_all() {
 		mkdir -p "${ED}/usr/share/applications/" || die
 		cp "${WORKDIR}/${P}/deluge/ui/data/share/applications/deluge.desktop" "${ED}/usr/share/applications/" || die
 		mkdir -p "${ED}/usr/share/metainfo" || die
-		cp "${WORKDIR}/${P}/deluge/ui/data/share/appdata/deluge.appdata.xml" "${ED}/usr/share/metainfo/" || die
+		cp "${WORKDIR}/${P}/deluge/ui/data/share/metainfo/deluge.metainfo.xml" "${ED}/usr/share/metainfo/" || die
 	fi
 
 	if use webinterface; then

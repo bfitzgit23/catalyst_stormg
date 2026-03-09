@@ -1,9 +1,9 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit bash-completion-r1 go-module
+inherit shell-completion go-module
 MY_PV=${PV/_/-}
 
 # update this on every bump
@@ -23,8 +23,8 @@ S="${WORKDIR}/cli-${PV}"
 
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc64 ~riscv ~x86"
-IUSE="hardened selinux"
+KEYWORDS="amd64 ~arm arm64 ~loong ppc64 ~riscv ~x86"
+IUSE="selinux"
 
 RDEPEND="selinux? ( sec-policy/selinux-docker )"
 
@@ -49,7 +49,6 @@ src_compile() {
 	CGO_CFLAGS+=" -I${ESYSROOT}/usr/include"
 	CGO_LDFLAGS+=" -L${ESYSROOT}/usr/$(get_libdir)"
 		emake \
-		LDFLAGS="$(usex hardened '-extldflags -fno-PIC' '')" \
 		VERSION="${PV}" \
 		GITCOMMIT="${GIT_COMMIT}" \
 		dynbinary
@@ -60,10 +59,8 @@ src_install() {
 	doman "${WORKDIR}"/man/man?/*
 	dobashcomp contrib/completion/bash/docker
 	bashcomp_alias docker dockerd
-	insinto /usr/share/fish/vendor_completions.d/
-	doins contrib/completion/fish/docker.fish
-	insinto /usr/share/zsh/site-functions
-	doins contrib/completion/zsh/_*
+	dofishcomp contrib/completion/fish/docker.fish
+	dozshcomp contrib/completion/zsh/_*
 }
 
 pkg_postinst() {

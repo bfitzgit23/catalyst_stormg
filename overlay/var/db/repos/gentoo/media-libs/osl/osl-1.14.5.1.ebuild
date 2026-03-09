@@ -20,7 +20,7 @@ if [[ ${PV} = *9999* ]] ; then
 else
 	# If a development release, please don't keyword!
 	SRC_URI="https://github.com/AcademySoftwareFoundation/OpenShadingLanguage/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64 ~arm ~arm64 ~ppc64"
+	KEYWORDS="amd64 ~arm ~arm64 ~ppc64"
 	S="${WORKDIR}/OpenShadingLanguage-${PV}"
 fi
 
@@ -71,7 +71,7 @@ RDEPEND="
 DEPEND="${RDEPEND}
 	dev-util/patchelf
 	>=media-libs/openexr-3
-	sys-libs/zlib
+	virtual/zlib:=
 	test? (
 		media-fonts/droid
 		optix? (
@@ -277,7 +277,7 @@ src_configure() {
 		mycmakeargs+=(
 			-DUSE_LLVM_BITCODE="$(usex clang-cuda)"
 			-DCUDA_OPT_FLAG_NVCC="$(get-flag O)"
-			-DCUDA_OPT_FLAG_NVCC="$(get-flag O)"
+			-DCUDA_OPT_FLAG_CLANG="$(get-flag O)"
 		)
 	fi
 

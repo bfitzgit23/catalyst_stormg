@@ -11,7 +11,7 @@ HOMEPAGE="https://gitlab.gnome.org/GNOME/eog"
 LICENSE="GPL-2+"
 SLOT="1"
 
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+KEYWORDS="~alpha amd64 ~arm arm64 ~loong ~ppc ~ppc64 ~riscv ~sparc x86"
 
 IUSE="+exif gtk-doc +introspection +jpeg lcms +svg xmp tiff"
 REQUIRED_USE="
@@ -28,13 +28,13 @@ RDEPEND="
 	>=x11-libs/gdk-pixbuf-2.36.5:2[jpeg?,tiff?]
 	>=x11-libs/gtk+-3.24.15:3[introspection,X]
 	>=gui-libs/libhandy-1.5.0:1
-	sys-libs/zlib
+	virtual/zlib:=
 
 	exif? ( >=media-libs/libexif-0.6.14 )
 	lcms? ( media-libs/lcms:2 )
 	xmp? ( media-libs/exempi:2= )
 	jpeg? ( media-libs/libjpeg-turbo:= )
-	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 	svg? ( >=gnome-base/librsvg-2.44.0:2 )
 
 	x11-libs/libX11

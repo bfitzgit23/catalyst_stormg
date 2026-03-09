@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -17,14 +17,13 @@ if [[ ${PV} == *9999 ]] ; then
 else
 	SRC_URI="https://github.com/OpenPrinting/cups/releases/download/v${MY_PV}/cups-${MY_PV}-source.tar.gz"
 	if [[ ${PV} != *_beta* && ${PV} != *_rc* ]] ; then
-		KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+		KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 	fi
 fi
 
-S="${WORKDIR}/${MY_P}"
-
 DESCRIPTION="The Common Unix Printing System"
 HOMEPAGE="https://www.cups.org/ https://github.com/OpenPrinting/cups"
+S="${WORKDIR}/${MY_P}"
 
 LICENSE="Apache-2.0"
 SLOT="0"
@@ -39,7 +38,7 @@ BDEPEND="
 "
 COMMON_DEPEND="
 	app-text/libpaper:=
-	sys-libs/zlib
+	virtual/zlib:=
 	acl? (
 		kernel_linux? (
 			sys-apps/acl
@@ -231,6 +230,11 @@ multilib_src_install() {
 		emake BUILDROOT="${D}" install
 	else
 		emake BUILDROOT="${D}" install-libs install-headers
+
+		# Manually install pkgconfig file to avoid tangling with duplicate file behavior
+		insinto /usr/$(get_libdir)/pkgconfig
+		doins cups.pc
+
 		dobin cups-config
 	fi
 }

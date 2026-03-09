@@ -10,7 +10,7 @@ HOMEPAGE="https://www.freedesktop.org/wiki/Software/cppunit"
 
 if [[ ${PV} == *9999 ]] ; then
 	inherit autotools git-r3
-	EGIT_REPO_URI="https://anongit.freedesktop.org/git/libreoffice/cppunit.git"
+	EGIT_REPO_URI="https://git.libreoffice.org/cppunit.git"
 else
 	SRC_URI="
 		https://dev-www.libreoffice.org/src/${P%%_p*}.tar.gz
@@ -18,7 +18,7 @@ else
 	"
 	S="${WORKDIR}"/${P%%_p*}
 
-	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos"
+	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~x64-macos"
 fi
 
 LICENSE="LGPL-2.1"

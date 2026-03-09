@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -7,7 +7,7 @@ if [[ ${PV} = *9999* ]]; then
 	GIT_ECLASS="git-r3"
 fi
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit ${GIT_ECLASS} meson python-any-r1
 
 DESCRIPTION="Intel GPU userland tools"
@@ -34,11 +34,11 @@ RDEPEND="
 	dev-libs/elfutils
 	dev-libs/glib:2
 	sys-apps/kmod
-	sys-libs/zlib:=
+	virtual/zlib:=
 	sys-process/procps:=
 	virtual/libudev:=
 	>=x11-libs/cairo-1.12.0[X?]
-	>=x11-libs/libdrm-2.4.82[video_cards_amdgpu?,video_cards_intel?,video_cards_nouveau?]
+	>=x11-libs/libdrm-2.4.125[video_cards_amdgpu?,video_cards_intel?,video_cards_nouveau?]
 	>=x11-libs/libpciaccess-0.10
 	x11-libs/pixman
 	chamelium? (

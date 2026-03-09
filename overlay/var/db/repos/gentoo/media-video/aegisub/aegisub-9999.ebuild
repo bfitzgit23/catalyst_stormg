@@ -1,7 +1,7 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 LUA_COMPAT=( luajit )
 LUA_REQ_USE="lua52compat"
@@ -26,20 +26,23 @@ fi
 LICENSE="BSD MIT"
 SLOT="0"
 IUSE="+alsa debug +fftw openal portaudio pulseaudio spell test +uchardet"
+REQUIRED_USE="
+	${LUA_REQUIRED_USE}
+	|| ( alsa openal portaudio pulseaudio )"
 RESTRICT="test"
 
 # aegisub bundles luabins (https://github.com/agladysh/luabins).
 # Unfortunately, luabins upstream is practically dead since 2010.
 # Thus unbundling luabins isn't worth the effort.
 RDEPEND="${LUA_DEPS}
-	x11-libs/wxGTK:${WX_GTK_VER}[X,opengl,debug?]
+	x11-libs/wxGTK:${WX_GTK_VER}=[X,opengl,debug?]
 	dev-libs/boost:=[icu,nls]
 	dev-libs/icu:=
 	media-libs/ffmpegsource:=
 	media-libs/fontconfig
 	media-libs/freetype
 	media-libs/libass:=[fontconfig]
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/libiconv
 	virtual/opengl
 	alsa? ( media-libs/alsa-lib )
@@ -54,7 +57,7 @@ DEPEND="${RDEPEND}"
 # luarocks is only used as a command-line tool so there is no need to enforce
 # LUA_SINGLE_USEDEP on it. On the other hand, this means we must use version
 # bounds in order to make sure we use a version migrated to Lua eclasses.
-BDEPEND="dev-util/intltool
+BDEPEND="
 	sys-devel/gettext
 	virtual/pkgconfig
 	test? (
@@ -67,15 +70,12 @@ BDEPEND="dev-util/intltool
 	)
 "
 
-REQUIRED_USE="${LUA_REQUIRED_USE}
-	|| ( alsa openal portaudio pulseaudio )"
+PATCHES=(
+	"${FILESDIR}"/3.4.0/Fix-build-without-pch.patch
+	"${FILESDIR}"/3.4.0/Use-generated-git-version.patch
+)
 
 BUILD_DIR="${WORKDIR}/${P}-build"
-
-PATCHES=(
-"${FILESDIR}/3.4.0/Fix-build-without-pch.patch"
-"${FILESDIR}/3.4.0/Use-generated-git-version.patch"
-)
 
 aegisub_check_compiler() {
 	if [[ ${MERGE_TYPE} != "binary" ]] && ! test-flag-CXX -std=c++20; then
@@ -110,6 +110,9 @@ src_prepare() {
 
 	mkdir "${BUILD_DIR}" || die
 	cp "${FILESDIR}/${PV}"/git_version.h "${BUILD_DIR}"/git_version.h || die
+
+	# Bug 970232
+	filter-lto
 }
 
 src_configure() {

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -44,7 +44,7 @@ SRC_URI="https://github.com/festvox/flite/archive/v${PV}.tar.gz -> ${P}.tar.gz
 
 LICENSE="BSD freetts public-domain regexp-UofT BSD-2"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 ~loong ~mips ppc ppc64 ~riscv sparc x86"
+KEYWORDS="~alpha amd64 arm arm64 ~loong ~mips ppc ppc64 ~riscv ~sparc x86"
 IUSE="alsa oss pulseaudio test voices"
 REQUIRED_USE="test? ( alsa )"
 RESTRICT="!test? ( test )"
@@ -59,6 +59,7 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-1.4-audio-interface.patch
 	"${FILESDIR}"/${PN}-2.2-backport-pr30.patch
 	"${FILESDIR}"/${PN}-2.2-make-4.4.patch
+	"${FILESDIR}"/${PN}-2.2-no-native-ar.patch
 )
 
 get_audio() {

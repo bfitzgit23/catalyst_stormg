@@ -18,10 +18,10 @@ S="${WORKDIR}"
 LICENSE="Apache-2.0"
 SLOT="0"
 
-KEYWORDS="~amd64"
+KEYWORDS="amd64"
 
 RDEPEND="
-	sys-libs/zlib
+	virtual/zlib:=
 	>=virtual/jre-8
 "
 

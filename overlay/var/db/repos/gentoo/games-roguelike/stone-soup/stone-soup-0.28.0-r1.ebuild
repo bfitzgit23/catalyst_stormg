@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # There are many slots for this package because people in the community
@@ -16,7 +16,7 @@ EAPI=8
 
 LUA_COMPAT=( lua5-1 )
 LUA_REQ_USE="deprecated"
-PYTHON_COMPAT=( python3_{10,11,12,13} )
+PYTHON_COMPAT=( python3_{12..14} )
 VIRTUALX_REQUIRED="manual"
 inherit desktop python-any-r1 lua-single xdg-utils toolchain-funcs
 
@@ -60,7 +60,7 @@ REQUIRED_USE="${LUA_REQUIRED_USE}"
 RDEPEND="
 	${LUA_DEPS}
 	dev-db/sqlite:3
-	sys-libs/zlib
+	virtual/zlib:=
 	!ncurses? ( !tiles? ( sys-libs/ncurses:0 ) )
 	ncurses? ( sys-libs/ncurses:0 )
 	tiles? (

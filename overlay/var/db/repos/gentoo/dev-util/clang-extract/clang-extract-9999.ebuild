@@ -3,8 +3,8 @@
 
 EAPI=8
 
-LLVM_COMPAT=( {16..19} )
-PYTHON_COMPAT=( python3_{10..13} )
+LLVM_COMPAT=( {18..21} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit flag-o-matic llvm-r1 meson python-any-r1
 
 DESCRIPTION="Tool to extract code content from source files"
@@ -14,7 +14,7 @@ if [[ ${PV} == 9999 ]] ; then
 	EGIT_REPO_URI="https://github.com/SUSE/clang-extract.git"
 	inherit git-r3
 else
-	CLANG_EXTRACT_COMMIT="8344124f604e2ef9202177f5b9ed61962a37c4dc"
+	CLANG_EXTRACT_COMMIT="0f2b19fbf19530b4f710d31bb1978d7a86040f15"
 	SRC_URI="
 		https://github.com/SUSE/clang-extract/archive/${CLANG_EXTRACT_COMMIT}.tar.gz -> ${P}.gh.tar.gz
 	"
@@ -30,7 +30,7 @@ RESTRICT="!test? ( test )"
 
 DEPEND="
 	app-arch/zstd:=
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/libelf
 	$(llvm_gen_dep '
 		llvm-core/clang:${LLVM_SLOT}

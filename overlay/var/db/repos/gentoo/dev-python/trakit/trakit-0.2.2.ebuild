@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=poetry
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit distutils-r1 pypi
 
@@ -18,7 +18,7 @@ SRC_URI="https://github.com/ratoaq2/trakit/archive/refs/tags/${PV}.tar.gz -> ${P
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="amd64 ~arm ~arm64 ~x86"
 
 RDEPEND="
 	dev-python/babelfish[${PYTHON_USEDEP}]

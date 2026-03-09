@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -10,7 +10,7 @@ HOMEPAGE="https://gitlab.gnome.org/GNOME/libnotify"
 
 LICENSE="LGPL-2.1+"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos"
+KEYWORDS="~alpha amd64 arm arm64 ~loong ~mips ppc ppc64 ~riscv ~sparc x86"
 IUSE="gtk-doc +introspection test"
 # https://gitlab.gnome.org/GNOME/libnotify/-/issues/30
 # https://gitlab.gnome.org/GNOME/libnotify/-/issues/59
@@ -20,11 +20,10 @@ REQUIRED_USE="gtk-doc? ( introspection )"
 RDEPEND="
 	>=dev-libs/glib-2.62:2[${MULTILIB_USEDEP}]
 	x11-libs/gdk-pixbuf:2[introspection?,${MULTILIB_USEDEP}]
-	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 "
 DEPEND="${RDEPEND}"
 BDEPEND="
-	>=dev-libs/gobject-introspection-common-1.32
 	dev-util/glib-utils
 	virtual/pkgconfig
 	app-text/docbook-xsl-ns-stylesheets

@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # Marek Szuba <marecki@gentoo.org> (2023-11-12)
@@ -22,9 +22,6 @@ dev-python/pyside webchannel
 # Required by sys-apps/flatpak, a dependency of kde-plasma/discover
 dev-util/ostree curl
 
-# Required by app-editors/okteta:5
-dev-qt/qtscript:5 scripttools
-
 # Required by kde-apps/akonadi:6
 dev-qt/qtbase:6 mysql
 
@@ -36,6 +33,7 @@ media-libs/gd fontconfig
 
 # Required by kde-apps/kdenlive
 media-libs/mlt ffmpeg frei0r rubberband
+media-libs/opencv features2d
 
 # Required by media-gfx/digikam
 media-libs/opencv contrib contribdnn
@@ -46,13 +44,8 @@ net-firewall/nftables json python xtables
 
 # Required by dev-qt/qtwebengine
 sys-libs/zlib minizip
-
-# Keep existing defaults after dropping IUSE=phonon from make.defaults
-kde-apps/kio-extras phonon
-kde-apps/marble phonon
+virtual/zlib minizip
 
 # Required by kde-plasma/plasma-meta
 kde-plasma/kwin lock
-
-# plasma profile never enabled pulseaudio. We're skipping to pipewire.
-media-video/pipewire sound-server
+kde-plasma/kwin-x11 lock

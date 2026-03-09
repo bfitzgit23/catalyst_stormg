@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -10,9 +10,10 @@ EAPI=8
 # app-emulation/libvirt
 # Please bump them together!
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/libvirt.org.asc
-inherit meson linux-info python-any-r1 readme.gentoo-r1 tmpfiles verify-sig
+inherit meson flag-o-matic linux-info python-any-r1 readme.gentoo-r1
+inherit tmpfiles verify-sig
 
 if [[ ${PV} = *9999* ]]; then
 	inherit git-r3
@@ -31,16 +32,15 @@ SLOT="0/${PV}"
 IUSE="
 	apparmor audit bash-completion +caps dtrace firewalld fuse glusterfs
 	iscsi iscsi-direct +libvirtd lvm libssh libssh2 lxc nbd nfs nls numa
-	openvz parted pcap policykit +qemu rbd sasl selinux test +udev
+	parted pcap policykit +qemu rbd sasl selinux test +udev
 	virtiofsd virtualbox +virt-network wireshark-plugins xen zfs
 "
 RESTRICT="!test? ( test )"
 
 REQUIRED_USE="
 	firewalld? ( virt-network )
-	libvirtd? ( || ( lxc openvz qemu virtualbox xen ) )
+	libvirtd? ( || ( lxc qemu virtualbox xen ) )
 	lxc? ( caps libvirtd )
-	openvz? ( libvirtd )
 	qemu? ( libvirtd )
 	virt-network? ( libvirtd )
 	virtualbox? ( libvirtd )
@@ -157,8 +157,8 @@ PDEPEND="
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-11.0.0-Fix-paths-in-libvirt-guests.sh.in.patch
-	"${FILESDIR}"/${PN}-11.3.0-do-not-use-sysconfig.patch
 	"${FILESDIR}"/${PN}-11.3.0-fix-paths-for-apparmor.patch
+	"${FILESDIR}"/${PN}-12.1.0-do-not-use-sysconfig.patch
 )
 
 python_check_deps() {
@@ -259,6 +259,9 @@ src_prepare() {
 }
 
 src_configure() {
+	# Breaks with always_inline
+	filter-flags -fno-semantic-interposition
+
 	local emesonargs=(
 		$(meson_feature apparmor)
 		$(meson_feature apparmor apparmor_profiles)
@@ -281,7 +284,6 @@ src_configure() {
 		$(meson_feature nls)
 		$(meson_feature numa numactl)
 		$(meson_feature numa numad)
-		$(meson_feature openvz driver_openvz)
 		$(meson_feature parted storage_disk)
 		$(meson_feature pcap libpcap)
 		$(meson_feature policykit polkit)
@@ -298,6 +300,7 @@ src_configure() {
 		$(meson_feature xen driver_libxl)
 		$(meson_feature zfs storage_zfs)
 
+		-Ddriver_openvz=disabled
 		-Dnetcf=disabled
 		-Dsanlock=disabled
 		-Dopenwsman=disabled

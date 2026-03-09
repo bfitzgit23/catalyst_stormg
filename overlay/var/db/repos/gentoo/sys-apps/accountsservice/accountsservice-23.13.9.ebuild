@@ -1,9 +1,9 @@
-# Copyright 2011-2025 Gentoo Authors
+# Copyright 2011-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 PYTHON_COMPAT=( python3_{10..13} )
-inherit meson python-any-r1 systemd
+inherit meson python-any-r1 systemd vala
 
 DESCRIPTION="D-Bus interfaces for querying and manipulating user account information"
 HOMEPAGE="https://www.freedesktop.org/wiki/Software/AccountsService/"
@@ -13,7 +13,7 @@ LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS="~alpha amd64 arm arm64 ~loong ppc ppc64 ~riscv ~sparc x86"
 
-IUSE="doc elogind gtk-doc +introspection selinux systemd test"
+IUSE="doc elogind gtk-doc +introspection selinux systemd test vala"
 RESTRICT="!test? ( test )"
 REQUIRED_USE="^^ ( elogind systemd )"
 
@@ -22,7 +22,7 @@ CDEPEND="
 	sys-auth/polkit
 	virtual/libcrypt:=
 	elogind? ( >=sys-auth/elogind-229.4 )
-	introspection? ( >=dev-libs/gobject-introspection-0.9.12:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 	systemd? ( >=sys-apps/systemd-186:0= )
 "
 DEPEND="${CDEPEND}
@@ -30,7 +30,7 @@ DEPEND="${CDEPEND}
 "
 BDEPEND="
 	dev-libs/libxslt
-	dev-util/gdbus-codegen
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/glib-utils
 	sys-devel/gettext
 	virtual/pkgconfig
@@ -42,6 +42,7 @@ BDEPEND="
 		dev-util/gtk-doc
 		app-text/docbook-xml-dtd:4.3
 	)
+	vala? ( $(vala_depend) )
 	test? (
 		$(python_gen_any_dep '
 			dev-python/python-dbusmock[${PYTHON_USEDEP}]
@@ -68,6 +69,12 @@ python_check_deps() {
 	fi
 }
 
+src_prepare() {
+	default
+
+	use vala && vala_setup
+}
+
 src_configure() {
 	# No option to disable tests
 	if ! use test; then
@@ -82,7 +89,7 @@ src_configure() {
 		$(meson_use introspection)
 		$(meson_use doc docbook)
 		$(meson_use gtk-doc gtk_doc)
-		-Dvapi=false
+		$(meson_use vala vapi)
 	)
 	meson_src_configure
 }

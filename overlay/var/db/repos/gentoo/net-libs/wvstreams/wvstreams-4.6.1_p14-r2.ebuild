@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -13,7 +13,7 @@ SRC_URI="
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~alpha amd64 ~hppa ppc sparc x86"
+KEYWORDS="~alpha amd64 ~hppa ppc ~sparc x86"
 IUSE="boost +dbus debug doc pam"
 
 #Tests fail if openssl is not compiled with -DPURIFY. Gentoo's isn't. FAIL!
@@ -26,7 +26,7 @@ RESTRICT="test"
 RDEPEND="
 	>=dev-libs/openssl-1.1:0=
 	sys-libs/readline:0=
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/libcrypt:=
 	dbus? ( >=sys-apps/dbus-1.4.20 )
 	pam? ( sys-libs/pam )
@@ -58,7 +58,7 @@ src_prepare() {
 
 src_configure() {
 	append-flags -fno-strict-aliasing
-	append-flags -fno-tree-dce -fno-optimize-sibling-calls #421375
+	append-flags -fno-tree-dce -fno-optimize-sibling-calls #419971
 
 	tc-export AR CXX
 

@@ -8,7 +8,7 @@ inherit go-module
 DESCRIPTION="Let's Encrypt/ACME client (like certbot or acme.sh) and library written in Go"
 HOMEPAGE="https://github.com/go-acme/lego/"
 
-DOCUMENTATION_COMMIT=0f8ee7d1b69fa11ab48ee7ccdadfad292fe4c1c6
+DOCUMENTATION_COMMIT=093311eaa03c9f9f4cfdd9ef6bbc24547abfea4f
 
 if [[ ${PV} == 9999* ]]; then
 	inherit git-r3
@@ -16,8 +16,8 @@ if [[ ${PV} == 9999* ]]; then
 else
 	SRC_URI="
 	https://github.com/go-acme/lego/archive/v${PV}.tar.gz -> ${P}.tar.gz
-	https://github.com/rahilarious/gentoo-distfiles/releases/download/${P}/deps.tar.xz -> ${P}-deps.tar.xz
 	https://github.com/go-acme/lego/archive/${DOCUMENTATION_COMMIT}.tar.gz -> ${P}-docs.tar.gz
+	https://github.com/rahilarious/gentoo-distfiles/releases/download/${P}/deps.tar.xz -> ${P}-deps.tar.xz
 "
 	KEYWORDS="~amd64 ~arm64"
 fi
@@ -59,7 +59,6 @@ src_compile() {
 		VERSION="$(git rev-parse HEAD)" || die
 	else
 		VERSION="${PV}"
-		ln -sv ../vendor ./ || die
 	fi
 
 	ego build -trimpath -ldflags "-X main.version=${VERSION}" -o dist/"${PN}" ./cmd/lego/

@@ -1,7 +1,7 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit cmake
 
@@ -18,15 +18,15 @@ fi
 
 LICENSE="GPL-3+"
 SLOT="0"
-IUSE=""
 
 RDEPEND="
-	dev-qt/qtcore:5
-	dev-qt/qtgui:5
-	dev-qt/qtwidgets:5
+	dev-qt/qtbase:6[concurrent,gui,widgets]
 	net-libs/liquid-dsp
 	sci-libs/fftw:3.0="
-DEPEND="${RDEPEND}
-	dev-qt/qtconcurrent:5
-"
+DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
+
+src_prepare() {
+	sed -i -e "s/3.5/3.10/" CMakeLists.txt || die
+	cmake_src_prepare
+}

@@ -1,7 +1,7 @@
-# Copyright 2019-2021 Gentoo Authors
+# Copyright 2019-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit cmake
 
@@ -15,7 +15,7 @@ fi
 
 DESCRIPTION="fun 2D retro platformer inspired by old-school Sonic games"
 HOMEPAGE="https://opensurge2d.org/"
-LICENSE="GPL-3"
+LICENSE="Allegro Apache-2.0 CC-BY-3.0 CC-BY-4.0 CC-BY-SA-3.0 CC-BY-SA-4.0 CC0-1.0 GPL-3+ MIT OFL-1.1 WTFPL-2"
 SLOT="0"
 
 # Allegro:5 libs to USE
@@ -26,8 +26,17 @@ SLOT="0"
 # - dialog: gtk
 # allegro[vorbis] isn't in CMakeList.txt but is required for the .ogg assets
 DEPEND="
-	>=media-libs/allegro-5.2.5:=
-	media-libs/allegro[jpeg,png,opengl,truetype(-),gtk(-),vorbis]
-	>=dev-games/surgescript-0.5.4.3:=
+	>=media-libs/allegro-5.2.7:5[jpeg,png,opengl,truetype(-),gtk(-),vorbis,physfs]
+	>=dev-games/surgescript-0.6.1:=
+	>=dev-games/physfs-3.2.0
 "
 RDEPEND="${DEPEND}"
+
+src_configure() {
+	local mycmakeargs=(
+		-DGAME_BINDIR="/usr/bin"
+		-DGAME_DATADIR="/usr/share/${PN}"
+	)
+
+	cmake_src_configure
+}

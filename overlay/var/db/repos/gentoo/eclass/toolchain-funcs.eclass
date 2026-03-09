@@ -1,10 +1,10 @@
-# Copyright 2002-2025 Gentoo Authors
+# Copyright 2002-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: toolchain-funcs.eclass
 # @MAINTAINER:
 # Toolchain Ninjas <toolchain@gentoo.org>
-# @SUPPORTED_EAPIS: 7 8
+# @SUPPORTED_EAPIS: 7 8 9
 # @BLURB: functions to query common info about the toolchain
 # @DESCRIPTION:
 # The toolchain-funcs aims to provide a complete suite of functions
@@ -17,7 +17,7 @@ if [[ -z ${_TOOLCHAIN_FUNCS_ECLASS} ]]; then
 _TOOLCHAIN_FUNCS_ECLASS=1
 
 case ${EAPI} in
-	7|8) ;;
+	7|8|9) ;;
 	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
 esac
 
@@ -73,6 +73,10 @@ tc-getCPP() { tc-getPROG CPP "${CC:-gcc} -E" "$@"; }
 # @USAGE: [toolchain prefix]
 # @RETURN: name of the C++ compiler
 tc-getCXX() { tc-getPROG CXX g++ "$@"; }
+# @FUNCTION: tc-getHIPCXX
+# @USAGE: [toolchain prefix]
+# @RETURN: name of the HIP compiler
+tc-getHIPCXX() { tc-getPROG HIPCXX "$(hipconfig --hipclangpath)/clang++" "$@"; }
 # @FUNCTION: tc-getLD
 # @USAGE: [toolchain prefix]
 # @RETURN: name of the linker
@@ -288,7 +292,7 @@ tc-tuple-is-softfloat() {
 			echo "yes" ;;
 		*-softfp-*)
 			echo "softfp" ;;
-		arm*-hardfloat-*|arm*eabihf)
+		arm*-hardfloat-*|arm*eabihf*)
 			echo "no" ;;
 		# bare-metal targets have their defaults. bug #666896
 		*-newlib|*-elf|*-eabi)
@@ -470,7 +474,7 @@ tc-ld-is-bfd() {
 	EOF
 	out=$($(tc-getCC "$@") ${CFLAGS} ${CPPFLAGS} ${LDFLAGS} -Wl,--version "${base}.c" -o "${base}" 2>&1)
 	rm -f "${base}"*
-	if [[ ! ${out} =~ .*^"GNU ld".* ]] ; then
+	if [[ ! ${out} =~ (^|$'\n')"GNU ld".* ]] ; then
 		return 1
 	fi
 
@@ -655,11 +659,11 @@ _tc-has-openmp() {
 # build-time, e.g.
 # @CODE
 # pkg_pretend() {
-#	[[ ${MERGE_TYPE} != binary ]] && tc-check-min_ver gcc 13.2.0
+#	[[ ${MERGE_TYPE} != binary ]] && tc-check-min_ver gcc 13.2
 # }
 #
 # pkg_setup() {
-#	[[ ${MERGE_TYPE} != binary ]] && tc-check-min_ver gcc 13.2.0
+#	[[ ${MERGE_TYPE} != binary ]] && tc-check-min_ver gcc 13.2
 # }
 # @CODE
 tc-check-min_ver() {
@@ -1244,7 +1248,7 @@ tc-is-lto() {
 			;;
 		gcc)
 			$(tc-getCC) ${CFLAGS} -c -o "${f}" -x c - <<<"" || die
-			[[ $($(tc-getREADELF) -S "${f}") == *.gnu.lto* ]] && ret=0
+			[[ $($(tc-getOBJDUMP) -s "${f}") == *.gnu.lto* ]] && ret=0
 			;;
 	esac
 	rm -f "${f}" || die

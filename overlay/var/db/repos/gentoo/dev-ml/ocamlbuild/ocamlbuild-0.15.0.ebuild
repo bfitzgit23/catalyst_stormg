@@ -9,10 +9,10 @@ SRC_URI="https://github.com/ocaml/ocamlbuild/archive/${PV}.tar.gz -> ${P}.tar.gz
 
 LICENSE="LGPL-2.1-with-linking-exception"
 SLOT="0/${PV}"
-KEYWORDS="amd64 arm arm64 ~hppa ~ppc ppc64 ~riscv x86 ~amd64-linux ~x86-linux"
+KEYWORDS="amd64 arm arm64 ~hppa ~ppc ppc64 ~riscv x86"
 IUSE="+ocamlopt"
 
-RDEPEND=">=dev-lang/ocaml-4.02.3-r1:=[ocamlopt?]"
+RDEPEND="dev-lang/ocaml:=[ocamlopt?]"
 DEPEND="${RDEPEND}
 	dev-ml/findlib"
 

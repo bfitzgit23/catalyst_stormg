@@ -1,9 +1,9 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit edo flag-o-matic multiprocessing python-any-r1 toolchain-funcs xdg
 
@@ -11,11 +11,19 @@ DESCRIPTION="Open-source, GPL-licensed, multiplatform, multithreaded video trans
 HOMEPAGE="https://handbrake.fr/ https://github.com/HandBrake/HandBrake"
 
 if [[ ${PV} == *9999* ]]; then
-	EGIT_REPO_URI="https://github.com/HandBrake/HandBrake.git"
 	inherit git-r3
+	EGIT_REPO_URI="https://github.com/HandBrake/HandBrake.git"
 else
+	inherit verify-sig
 	MY_P="HandBrake-${PV}"
-	SRC_URI="https://github.com/HandBrake/HandBrake/releases/download/${PV}/${MY_P}-source.tar.bz2 -> ${P}.tar.bz2"
+	SRC_URI="
+		https://github.com/HandBrake/HandBrake/releases/download/${PV}/${MY_P}-source.tar.bz2
+			-> ${P}.tar.bz2
+		verify-sig? (
+			https://github.com/HandBrake/HandBrake/releases/download/${PV}/${MY_P}-source.tar.bz2.sig
+				-> ${P}.tar.bz2.sig
+		)
+	"
 	S="${WORKDIR}/${MY_P}"
 	KEYWORDS="~amd64 ~arm64 ~x86"
 fi
@@ -25,12 +33,12 @@ declare -A BUNDLED=(
 	# Heavily patched in an incompatible way.
 	# Issues related to using system ffmpeg historically.
 	# See bug #829595 and #922828
-	[ffmpeg]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/ffmpeg-7.1.1.tar.bz2;"
+	[ffmpeg]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/ffmpeg-8.0.1.tar.bz2;"
 	# Patched in an incompatible way
-	[x265]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/x265-snapshot-20250224-13212.tar.gz;x265"
-	[x265_8bit]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/x265-snapshot-20250224-13212.tar.gz;x265"
-	[x265_10bit]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/x265-snapshot-20250224-13212.tar.gz;x265"
-	[x265_12bit]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/x265-snapshot-20250224-13212.tar.gz;x265"
+	[x265]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/x265-snapshot-20250729-13276.tar.gz;x265"
+	[x265_8bit]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/x265-snapshot-20250729-13276.tar.gz;x265"
+	[x265_10bit]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/x265-snapshot-20250729-13276.tar.gz;x265"
+	[x265_12bit]="https://github.com/HandBrake/HandBrake-contribs/releases/download/contribs2/x265-snapshot-20250729-13276.tar.gz;x265"
 )
 
 bundle_src_uri() {
@@ -53,6 +61,7 @@ IUSE="amf +fdk gui libdovi numa nvenc qsv x265"
 
 REQUIRED_USE="numa? ( x265 )"
 
+# >=media-libs/libvpl-1.13.0: bug #957811 (check libhb/qsvcommon.h for new platform codenames)
 COMMON_DEPEND="
 	app-arch/bzip2
 	>=app-arch/xz-utils-5.2.6
@@ -63,20 +72,20 @@ COMMON_DEPEND="
 	>=media-libs/libbluray-1.3.4:=
 	media-libs/libdvdnav
 	>=media-libs/libdvdread-6.1.3:=
-	media-libs/libtheora
+	media-libs/libtheora:=
 	media-libs/libvorbis
 	>=media-libs/libvpx-1.12.0:=
 	media-libs/opus
 	>=media-libs/speex-1.2.1
-	>=media-libs/svt-av1-3.0.0:=
+	>=media-libs/svt-av1-4.0.0:=
 	>=media-libs/x264-0.0.20220222:=
 	>=media-libs/zimg-3.0.4
 	media-sound/lame
-	sys-libs/zlib
+	virtual/zlib:=
 	fdk? ( media-libs/fdk-aac:= )
 	libdovi? ( media-libs/libdovi:= )
 	gui? (
-		>=gui-libs/gtk-4.4:4[gstreamer]
+		>=gui-libs/gtk-4.6:4[gstreamer]
 		dev-libs/glib:2
 		>=dev-libs/libxml2-2.10.3:=
 		x11-libs/gdk-pixbuf:2
@@ -86,7 +95,7 @@ COMMON_DEPEND="
 	nvenc? ( media-libs/nv-codec-headers )
 	qsv? (
 		media-libs/libva:=
-		media-libs/libvpl:=
+		>=media-libs/libvpl-1.13.0:=
 	)
 "
 RDEPEND="
@@ -95,7 +104,7 @@ RDEPEND="
 "
 DEPEND="
 	${COMMON_DEPEND}
-	amf? ( media-libs/amf-headers )
+	amf? ( >=media-libs/amf-headers-1.4.36-r1 )
 "
 # cmake needed for custom script: bug #852701
 BDEPEND="
@@ -107,6 +116,10 @@ BDEPEND="
 		sys-devel/gettext
 	)
 "
+if [[ ${PV} != 9999 ]]; then
+	BDEPEND+="sec-keys/openpgp-keys-handbrake"
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/handbrake.asc
+fi
 
 PATCHES=(
 	"${FILESDIR}"/handbrake-1.9.0-link-libdovi-properly.patch
@@ -119,6 +132,7 @@ src_unpack() {
 	if [[ ${PV} == 9999 ]]; then
 		git-r3_src_unpack
 	else
+		use verify-sig && verify-sig_verify_detached "${DISTDIR}"/${P}.tar.bz2{,.sig}
 		unpack ${P}.tar.bz2
 	fi
 }

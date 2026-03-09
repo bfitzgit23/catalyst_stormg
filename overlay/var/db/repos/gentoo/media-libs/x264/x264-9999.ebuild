@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -16,13 +16,13 @@ if [[ ${PV} == 9999 ]]; then
 else
 	X264_COMMIT="4613ac3c15fd75cebc4b9f65b7fb95e70a3acce1"
 	SRC_URI="https://code.videolan.org/videolan/x264/-/archive/${X264_COMMIT}/x264-${X264_COMMIT}.tar.bz2 -> ${P}.tar.bz2"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86"
 	S="${WORKDIR}/${PN}-${X264_COMMIT}"
 fi
 
 LICENSE="GPL-2"
 SLOT="0/164" # SONAME
-IUSE="cpu_flags_ppc_altivec +interlaced opencl static-libs +threads"
+IUSE="cpu_flags_ppc_altivec +interlaced opencl static-libs"
 
 ASM_DEP=">=dev-lang/nasm-2.13"
 DEPEND="
@@ -73,6 +73,5 @@ multilib_src_configure() {
 		$(usex interlaced "" "--disable-interlaced") \
 		$(usex opencl "" "--disable-opencl") \
 		$(usex static-libs "--enable-static" "") \
-		$(usex threads "" "--disable-thread") \
 		${asm_conf} || die
 }

@@ -1,4 +1,4 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: linux-mod-r1.eclass
@@ -211,13 +211,11 @@ fi
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 # Used with USE=modules-sign.  Can be set to hash algorithm to use
-# during signature generation.
+# during signature generation (e.g. sha512).
 #
 # Rather than set this, it is recommended to select using the kernel's
 # configuration to ensure proper support (e.g. CONFIG_MODULE_SIG_SHA256),
 # and then it will be auto-detected here.
-#
-# Valid values: sha512,sha384,sha256,sha224,sha1
 #
 # Default if unset: kernel CONFIG_MODULE_SIG_HASH's value
 
@@ -350,6 +348,8 @@ linux-mod-r1_pkg_setup() {
 	_modules_prepare_toolchain
 
 	_modules_set_makeargs
+
+	_modules_prepare_cross
 
 	_modules_sanity_gccplugins
 }
@@ -666,6 +666,36 @@ _modules_check_migration() {
 	# - BUILD_FIXES: seen in some ebuilds but was undocumented and linux-info
 	#   still sets it preventing from blocking it entirely
 	# - ECONF_PARAMS: documented but was a no-op in linux-mod too
+}
+
+# @FUNCTION: _modules_prepare_cross
+# @INTERNAL
+# @DESCRIPTION:
+# Checks whether modpost works locally as it might have been built for a
+# different architecture.  If it doesn't work, it is built in a new
+# environment and KV_OUT_DIR is repointed there.
+_modules_prepare_cross() {
+	# modpost should do nothing successfully when called without args.
+	if ! "${KV_OUT_DIR}"/scripts/mod/modpost &>/dev/null; then
+		# Try to run make modules_prepare in a new separate output directory.
+		# This cannot be done if the source directory is not clean. In that
+		# case, copy the whole source directory.
+		if [[ -e ${KV_DIR}/.config ]]; then
+			cp -rLT --reflink=auto -- "${KV_DIR}" "${WORKDIR}"/extmod-build || die
+			emake -C "${WORKDIR}"/extmod-build "${MODULES_MAKEARGS[@]}" modules_prepare \
+				KBUILD_OUTPUT=
+		else
+			mkdir -- "${WORKDIR}"/extmod-build || die
+			cp -- "${KV_OUT_DIR}"/{.config,Module.symvers} "${WORKDIR}"/extmod-build || die
+			# KV_OUT_DIR may have been prepared with install-extmod-build, which
+			# doesn't include all the files needed to call make modules_prepare,
+			# so use the Makefile from the full kernel sources.
+			emake -C "${WORKDIR}"/extmod-build "${MODULES_MAKEARGS[@]}" modules_prepare \
+				KBUILD_OUTPUT="${WORKDIR}"/extmod-build -f "${KERNEL_MAKEFILE}"
+		fi
+		KV_OUT_DIR=${WORKDIR}/extmod-build
+		KBUILD_OUTPUT=${KBUILD_OUTPUT+${KV_OUT_DIR}}
+	fi
 }
 
 # @FUNCTION: _modules_prepare_kernel
@@ -1192,8 +1222,11 @@ _modules_sanity_kernelversion() {
 		fi
 	fi
 
+	# wrt *, KV_EXTRA can have e.g. -p1 used by dist-kernel's version as
+	# _p1, ideally would check it too but this string can contain about
+	# anything so ignore it rather than try to figure out what it is
 	if use dist-kernel &&
-		! has_version "~virtual/dist-kernel-${KV_MAJOR}.${KV_MINOR}.${KV_PATCH}"
+		! has_version "=virtual/dist-kernel-${KV_MAJOR}.${KV_MINOR}.${KV_PATCH}*"
 	then
 		ewarn
 		ewarn "The kernel modules in ${CATEGORY}/${PN} are being built for"
@@ -1259,6 +1292,7 @@ _modules_set_makeargs() {
 		# unrealistic when building modules that often have slow releases,
 		# but note that the kernel will still pass some -Werror=bad-thing
 		CONFIG_WERROR=
+		CONFIG_OBJTOOL_WERROR=
 
 		# these are only needed if using these arguments for installing, lets
 		# eclass handle strip, sign, compress, and depmod (CONFIG_ should

@@ -1,7 +1,7 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
 inherit flag-o-matic qmake-utils xdg-utils
 
@@ -12,8 +12,7 @@ SRC_URI="https://www.cgsecurity.org/${P}.tar.bz2"
 LICENSE="GPL-2+"
 SLOT="0"
 KEYWORDS="amd64 ~arm ~arm64 ~hppa ~ppc ~ppc64 ~riscv x86"
-IUSE="ewf jpeg ntfs gui reiserfs static +sudo zlib"
-
+IUSE="jpeg ntfs gui reiserfs static +sudo zlib"
 REQUIRED_USE="static? ( !gui )"
 
 QA_CONFIG_IMPL_DECL_SKIP=(
@@ -32,8 +31,7 @@ DEPEND="
 		jpeg? ( media-libs/libjpeg-turbo:=[static-libs] )
 		ntfs? ( sys-fs/ntfs3g[static-libs] )
 		reiserfs? ( >=sys-fs/progsreiserfs-0.3.1_rc8[static-libs] )
-		zlib? ( sys-libs/zlib[static-libs] )
-		!arm? ( ewf? ( app-forensics/libewf[static-libs] ) )
+		zlib? ( virtual/zlib:=[static-libs] )
 	)
 	!static? (
 		sys-apps/util-linux
@@ -47,8 +45,7 @@ DEPEND="
 			dev-qt/qtwidgets:5
 		)
 		reiserfs? ( >=sys-fs/progsreiserfs-0.3.1_rc8 )
-		zlib? ( sys-libs/zlib )
-		!arm? ( ewf? ( app-forensics/libewf:= ) )
+		zlib? ( virtual/zlib:= )
 	)
 "
 RDEPEND="
@@ -70,7 +67,7 @@ src_configure() {
 
 	local myconf=(
 		--without-ntfs # old NTFS implementation, use ntfs-3g instead.
-		$(use_with ewf)
+		--without-ewf # app-forensics/libewf removed from ::gentoo
 		$(use_with jpeg)
 		$(use_with ntfs ntfs3g)
 		$(use_enable gui qt)

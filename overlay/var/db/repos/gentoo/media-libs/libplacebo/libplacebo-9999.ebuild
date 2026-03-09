@@ -1,17 +1,17 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit meson-multilib python-any-r1
 
 if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://code.videolan.org/videolan/libplacebo.git"
 	inherit git-r3
 else
-	GLAD_PV=2.0.4
-	FASTFLOAT_PV=5.2.0
+	GLAD_PV=2.0.8
+	FASTFLOAT_PV=8.2.2
 	SRC_URI="
 		https://code.videolan.org/videolan/libplacebo/-/archive/v${PV}/libplacebo-v${PV}.tar.bz2
 		https://github.com/fastfloat/fast_float/archive/refs/tags/v${FASTFLOAT_PV}.tar.gz
@@ -22,7 +22,7 @@ else
 		)
 	"
 	S="${WORKDIR}/${PN}-v${PV}"
-	KEYWORDS="~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~x86"
+	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
 fi
 
 DESCRIPTION="Reusable library for GPU-accelerated image processing primitives"
@@ -59,7 +59,7 @@ RDEPEND="
 # vulkan-headers is required even with USE=-vulkan for the stub (bug #882065)
 DEPEND="
 	${RDEPEND}
-	dev-util/vulkan-headers
+	>=dev-util/vulkan-headers-1.4
 	xxhash? ( dev-libs/xxhash[${MULTILIB_USEDEP}] )
 "
 BDEPEND="

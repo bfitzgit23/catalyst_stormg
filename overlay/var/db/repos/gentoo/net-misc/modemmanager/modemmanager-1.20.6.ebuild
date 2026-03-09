@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -24,7 +24,7 @@ RESTRICT="!test? ( test )"
 DEPEND="
 	>=dev-libs/glib-2.56.0:2
 	udev? ( >=dev-libs/libgudev-232:= )
-	introspection? ( >=dev-libs/gobject-introspection-1.38:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 	mbim? ( >=net-libs/libmbim-1.28.0 )
 	policykit? ( >=sys-auth/polkit-0.106[introspection?] )
 	qmi? ( >=net-libs/libqmi-1.32.0:=[qrtr?] )
@@ -36,7 +36,7 @@ RDEPEND="${DEPEND}
 	selinux? ( sec-policy/selinux-modemmanager )
 "
 BDEPEND="
-	dev-util/gdbus-codegen
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/glib-utils
 	>=sys-devel/gettext-0.19.8
 	virtual/pkgconfig

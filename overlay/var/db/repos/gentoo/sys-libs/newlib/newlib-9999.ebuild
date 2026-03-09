@@ -1,9 +1,9 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI="8"
 
-inherit flag-o-matic toolchain-funcs
+inherit dot-a flag-o-matic toolchain-funcs
 
 if [[ ${PV} == "9999" ]] ; then
 	EGIT_REPO_URI="https://sourceware.org/git/newlib-cygwin.git"
@@ -60,6 +60,7 @@ pkg_setup() {
 }
 
 src_configure() {
+	lto-guarantee-fat
 	# TODO: we should fix this
 	unset LDFLAGS
 	CHOST=${CTARGET} strip-unsupported-flags
@@ -171,6 +172,8 @@ src_install() {
 		mv "${NEWLIBNANOTMPINSTALL}/${EPREFIX}/usr/${CTARGET}/include/newlib.h" \
 			"${ED}/usr/${CTARGET}/include/newlib-nano/newlib.h" || die
 	fi
+
+	CHOST=${CTARGET} strip-lto-bytecode
 
 	# minor hack to keep things clean
 	rm -rf "${D}"/usr/share/info || die

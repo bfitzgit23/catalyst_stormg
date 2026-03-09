@@ -4,7 +4,7 @@
 # @ECLASS: autotools.eclass
 # @MAINTAINER:
 # base-system@gentoo.org
-# @SUPPORTED_EAPIS: 7 8
+# @SUPPORTED_EAPIS: 7 8 9
 # @BLURB: Regenerates auto* build scripts
 # @DESCRIPTION:
 # This eclass is for safely handling autotooled software packages that need to
@@ -27,7 +27,7 @@ if [[ -z ${_AUTOTOOLS_ECLASS} ]] ; then
 _AUTOTOOLS_ECLASS=1
 
 case ${EAPI} in
-	7|8) ;;
+	7|8|9) ;;
 	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
 esac
 
@@ -93,7 +93,7 @@ _LATEST_AUTOCONF=( 2.72-r1:2.72 )
 # Do NOT change this variable in your ebuilds!
 # If you want to force a newer minor version, you can specify the correct
 # WANT value by using a colon:  <PV>:<WANT_AUTOMAKE>
-_LATEST_AUTOMAKE=( 1.17-r1:1.17 1.16.5:1.16 )
+_LATEST_AUTOMAKE=( 1.18:1.18 1.17-r1:1.17 )
 
 _automake_atom="dev-build/automake"
 _autoconf_atom="dev-build/autoconf"
@@ -378,7 +378,14 @@ eaclocal() {
 	# See bug #677002
 	if [[ ! -f "${T}"/aclocal/dirlist ]] ; then
 		mkdir "${T}"/aclocal || die
-		cat <<- EOF > "${T}"/aclocal/dirlist || die
+		if [[ "${LIBTOOLIZE:-}" == 'slibtoolize' ]]; then
+			cat <<- EOF > "${T}"/aclocal/dirlist || die
+				${BROOT}/usr/share/slibtool
+				${ESYSROOT}/usr/share/slibtool
+			EOF
+		fi
+
+		cat <<- EOF >> "${T}"/aclocal/dirlist || die
 			${BROOT}/usr/share/aclocal
 			${ESYSROOT}/usr/share/aclocal
 		EOF

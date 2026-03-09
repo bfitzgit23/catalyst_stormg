@@ -6,7 +6,7 @@ EAPI=8
 DISTUTILS_USE_PEP517=setuptools
 PYTHON_COMPAT=( python3_{10..13} )
 
-inherit distutils-r1
+inherit distutils-r1 toolchain-funcs
 
 if [[ "${PV}" == *9999 ]]; then
 	inherit git-r3
@@ -19,10 +19,10 @@ else
 		https://github.com/certbot/certbot/archive/v${PV}.tar.gz
 			-> ${P}.gh.tar.gz
 	"
-	KEYWORDS="amd64 ~arm arm64 ~ppc64 ~riscv ~x86"
+	KEYWORDS="amd64 arm arm64 ~ppc64 ~riscv x86"
 fi
 
-DESCRIPTION="Let’s Encrypt client to automate deployment of X.509 certificates"
+DESCRIPTION="Let's Encrypt client to automate deployment of X.509 certificates"
 HOMEPAGE="
 	https://github.com/certbot/certbot
 	https://pypi.org/project/certbot/
@@ -69,14 +69,6 @@ BDEPEND="
 # Also discard the previous related packages
 # except their transition step
 RDEPEND="
-	!<app-crypt/acme-3.2.0-r100
-	!<app-crypt/certbot-apache-3.2.0-r100
-	!<app-crypt/certbot-dns-desec-3.2.0-r100
-	!<app-crypt/certbot-dns-dnsimple-3.2.0-r100
-	!<app-crypt/certbot-dns-nsone-3.2.0-r100
-	!<app-crypt/certbot-dns-rfc2136-3.2.0-r100
-	!<app-crypt/certbot-nginx-3.2.0-r100
-
 	dev-python/chardet[${PYTHON_USEDEP}]
 	>=dev-python/configargparse-1.5.3[${PYTHON_USEDEP}]
 	>=dev-python/configobj-5.0.6[${PYTHON_USEDEP}]
@@ -220,6 +212,11 @@ python_compile_all() {
 
 python_test() {
 	local -x PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+
+	tc-has-64bit-time_t || EPYTEST_DESELECT+=(
+		'certbot/_internal/tests/storage_test.py::RenewableCertTests::test_time_interval_judgments'
+	)
+
 	# Change for pytest rootdir is required.
 	cd "${BUILD_DIR}/install$(python_get_sitedir)" || die
 	epytest

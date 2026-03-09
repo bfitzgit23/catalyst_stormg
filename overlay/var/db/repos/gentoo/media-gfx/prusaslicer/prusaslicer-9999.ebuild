@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -30,6 +30,7 @@ RESTRICT="!test? ( test )"
 RDEPEND="
 	dev-cpp/eigen:3
 	dev-cpp/tbb:=
+	dev-cpp/nlohmann_json:=
 	dev-libs/boost:=[nls]
 	dev-libs/cereal
 	dev-libs/expat
@@ -50,10 +51,10 @@ RDEPEND="
 	sci-mathematics/cgal:=
 	sci-mathematics/z3:=
 	sys-apps/dbus
-	sys-libs/zlib:=
+	virtual/zlib:=
 	virtual/opengl
 	x11-libs/gtk+:3
-	>=x11-libs/wxGTK-3.2.2.1-r3:${WX_GTK_VER}[X,opengl,webkit]
+	x11-libs/wxGTK:${WX_GTK_VER}=[X,opengl,webkit]
 	media-libs/nanosvg:=
 "
 DEPEND="${RDEPEND}
@@ -67,6 +68,8 @@ PATCHES=(
 	"${FILESDIR}/${PN}-2.8.1-fstream.patch"
 	"${FILESDIR}/${PN}-2.8.1-fix-libsoup-double-linking.patch"
 	"${FILESDIR}/${PN}-2.8.1-boost-1.87.patch"
+	"${FILESDIR}/${PN}-2.9.2-boost-1.88.patch"
+	"${FILESDIR}/${PN}-2.9.4-boost-1.89.patch"
 )
 
 src_prepare() {

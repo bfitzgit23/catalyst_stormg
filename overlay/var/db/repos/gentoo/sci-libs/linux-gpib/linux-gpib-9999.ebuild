@@ -8,10 +8,8 @@ PYTHON_COMPAT=( python3_{10..13} )
 DISTUTILS_EXT=1
 DISTUTILS_OPTIONAL=1
 DISTUTILS_USE_PEP517=setuptools
-MODULES_OPTIONAL_IUSE=+modules
 
-inherit autotools distutils-r1 guile-single linux-mod-r1
-inherit perl-functions readme.gentoo-r1 udev
+inherit linux-info readme.gentoo-r1 autotools guile-single perl-functions python-single-r1 udev
 
 # Check for latest firmware version on bump
 FW_PV="2008-08-10"
@@ -31,10 +29,13 @@ HOMEPAGE="https://linux-gpib.sourceforge.io/"
 SRC_URI+="
 	firmware? ( https://linux-gpib.sourceforge.io/firmware/gpib_firmware-${FW_PV}.tar.gz )
 "
+S="${WORKDIR}/${PN}-user-${PV}"
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="guile pcmcia perl php python static tcl doc firmware"
+
+IUSE="pcmcia static guile perl php python tcl doc firmware +modules"
+
 REQUIRED_USE="
 	guile? ( ${GUILE_REQUIRED_USE} )
 	python? ( ${PYTHON_REQUIRED_USE} )
@@ -46,12 +47,12 @@ COMMONDEPEND="
 	guile? ( ${GUILE_DEPS} )
 	perl? ( dev-lang/perl:= )
 	php? ( dev-lang/php:= )
+	python? ( ${PYTHON_DEPS} )
 	firmware? ( sys-apps/fxload )
 "
 RDEPEND="${COMMONDEPEND}
 	acct-group/gpib
-	python? ( ${PYTHON_DEPS} )
-	!sci-libs/linux-gpib-modules
+	modules? ( ~sci-libs/linux-gpib-modules-${PV} )
 "
 DEPEND="${COMMONDEPEND}"
 BDEPEND="
@@ -66,7 +67,7 @@ PATCHES=(
 
 pkg_setup() {
 	if use modules; then
-		linux-mod-r1_pkg_setup
+		linux-info_pkg_setup
 		if kernel_is -ge 6 13 0; then
 			eerror "The GPIB drivers have been merged upstream into kernel"
 			eerror "version 6.13.0 and up. Please enable CONFIG_GPIB for"
@@ -89,10 +90,6 @@ src_unpack() {
 	else
 		default
 		unpack "${WORKDIR}/${P}/${PN}-user-${PV}.tar.gz"
-		if use modules; then
-			unpack "${WORKDIR}/${P}/${PN}-kernel-${PV}.tar.gz"
-			mv "${WORKDIR}/${PN}-kernel-${PV}" "${WORKDIR}/${PN}-kernel" || die
-		fi
 	fi
 }
 
@@ -135,11 +132,6 @@ src_configure() {
 		distutils-r1_src_configure
 		popd >/dev/null || die
 	fi
-
-	if use modules; then
-		MODULES_MAKEARGS+=( LINUX_SRCDIR="${KV_OUT_DIR}" )
-		use debug && MODULES_MAKEARGS+=( 'GPIB-DEBUG=1' )
-	fi
 }
 
 src_compile() {
@@ -148,27 +140,6 @@ src_compile() {
 		pushd language/python >/dev/null || die
 		distutils-r1_src_compile
 		popd >/dev/null || die
-	fi
-
-	if use modules; then
-		local modlist=(
-			"agilent_82350b=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/agilent_82350b"
-			"agilent_82357a=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/agilent_82357a"
-			"cb7210=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/cb7210"
-			"cec_gpib=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/cec"
-			"fmh_gpib=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/fmh_gpib"
-			"gpib_bitbang=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/gpio"
-			"hp82335=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/hp_82335"
-			"hp_82341=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/hp_82341"
-			"ines_gpib=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/ines"
-			"lpvo_usb_gpib=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/lpvo_usb_gpib"
-			"nec7210=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/nec7210"
-			"ni_usb_gpib=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/ni_usb"
-			"gpib_common=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/sys"
-			"tms9914=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/tms9914"
-			"tnt4882=gpib:${S}/../${PN}-kernel:${S}/../${PN}-kernel/drivers/gpib/tnt4882"
-		)
-		linux-mod-r1_src_compile
 	fi
 }
 
@@ -184,8 +155,6 @@ src_install() {
 		USB_FIRMWARE_DIR=${FIRM_DIR} \
 		PYTHONDONTWRITEBYTECODE=0 \
 		docdir="/usr/share/doc/${PF}/html" install
-
-	use modules && linux-mod-r1_src_install
 
 	use guile && guile_unstrip_ccache
 
@@ -280,7 +249,6 @@ gpib_config --minor 0 --init-data /usr/share/linux-gpib/hp_82341/hp_82341c_fw.bi
 }
 
 pkg_postinst() {
-	use modules && linux-mod-r1_pkg_postinst
 	readme.gentoo_print_elog
 	udev_reload
 }

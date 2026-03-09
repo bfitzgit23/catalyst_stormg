@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -13,7 +13,7 @@ SRC_URI="https://luarocks.org/manifests/gvvaughan/${P}-1.src.rock -> ${P}.zip"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="amd64 arm arm64 ~hppa ~mips ppc ppc64 ~riscv sparc x86 ~x64-macos"
+KEYWORDS="amd64 arm arm64 ~hppa ~mips ppc ppc64 ~riscv ~sparc x86 ~x64-macos"
 IUSE="test debug doc"
 REQUIRED_USE="${LUA_REQUIRED_USE}"
 RESTRICT="!test? ( test )"
@@ -77,10 +77,10 @@ lua_src_install() {
 	cd "${S}.${ELUA}/" || die
 	local instdir
 	instdir="$(lua_get_cmod_dir)"
-	exeinto "${instdir#${EPREFIX}}"
+	exeinto "${instdir#"${EPREFIX}"}"
 	doexe lpeg.so
 	instdir="$(lua_get_lmod_dir)"
-	insinto "${instdir#${EPREFIX}}"
+	insinto "${instdir#"${EPREFIX}"}"
 	doins re.lua
 
 	if [[ ${CHOST} == *-darwin* ]] ; then

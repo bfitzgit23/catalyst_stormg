@@ -28,14 +28,13 @@ RDEPEND="app-arch/bzip2
 	dev-libs/libgcrypt
 	dev-libs/libgpg-error
 	dev-libs/lzo
-	sys-libs/zlib"
+	virtual/zlib:="
 DEPEND="${RDEPEND}"
 BDEPEND="amd64? ( dev-lang/nasm )"
 
 src_prepare() {
 	default
 
-	eapply "${FILESDIR}/${PN}-0.13.1-fix-lzma_asm_makefile-echo.patch"
 	eapply "${FILESDIR}/${PN}-0.13.1-use-acx_pthread-configure_ac.patch"
 
 	# configure.ac uses a small helper script, ./util/gitdesc.sh, to

@@ -1,4 +1,4 @@
-# Copyright 2022-2025 Gentoo Authors
+# Copyright 2022-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,7 +6,7 @@ EAPI=8
 inherit optfeature wine
 
 WINE_GECKO=2.47.4
-WINE_MONO=10.0.0
+WINE_MONO=11.0.0
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
@@ -35,7 +35,7 @@ IUSE="
 	+fontconfig +gecko gphoto2 +gstreamer kerberos +mono netapi
 	nls odbc opencl +opengl pcap perl pulseaudio samba scanner
 	+sdl selinux smartcard +ssl +truetype udev +unwind usb v4l
-	+vulkan wayland +xcomposite xinerama
+	+vulkan wayland xinerama
 "
 REQUIRED_USE="
 	X? ( truetype )
@@ -50,13 +50,13 @@ RESTRICT="test"
 # `grep WINE_CHECK_SONAME configure.ac` + if not directly linked
 WINE_DLOPEN_DEPEND="
 	X? (
+		x11-libs/libXcomposite[${WINE_USEDEP}]
 		x11-libs/libXcursor[${WINE_USEDEP}]
 		x11-libs/libXfixes[${WINE_USEDEP}]
 		x11-libs/libXi[${WINE_USEDEP}]
 		x11-libs/libXrandr[${WINE_USEDEP}]
 		x11-libs/libXrender[${WINE_USEDEP}]
 		x11-libs/libXxf86vm[${WINE_USEDEP}]
-		xcomposite? ( x11-libs/libXcomposite[${WINE_USEDEP}] )
 		xinerama? ( x11-libs/libXinerama[${WINE_USEDEP}] )
 	)
 	cups? ( net-print/cups[${WINE_USEDEP}] )
@@ -127,9 +127,10 @@ RDEPEND="
 "
 DEPEND="
 	${WINE_COMMON_DEPEND}
-	sys-kernel/linux-headers
+	>=sys-kernel/linux-headers-6.14
 	X? ( x11-base/xorg-proto )
 	bluetooth? ( net-wireless/bluez )
+	opencl? ( dev-util/opencl-headers )
 "
 BDEPEND="
 	sys-devel/bison
@@ -144,6 +145,8 @@ QA_CONFIG_IMPL_DECL_SKIP=(
 	res_getservers # false positive
 )
 QA_TEXTRELS="usr/lib/*/wine/i386-unix/*.so" # uses -fno-PIC -Wl,-z,notext
+# intentionally ignored: https://gitlab.winehq.org/wine/wine/-/commit/433c2f8c06
+QA_FLAGS_IGNORED="usr/lib/.*/wine/.*-unix/wine-preloader"
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-7.0-noexecstack.patch
@@ -166,13 +169,13 @@ src_configure() {
 		$(use_with fontconfig)
 		$(use_with gphoto2 gphoto)
 		$(use_with gstreamer)
+		--without-hwloc # currently only used on FreeBSD
 		$(use_with kerberos gssapi)
 		$(use_with kerberos krb5)
 		$(use_with netapi)
 		$(use_with nls gettext)
 		$(use_with opencl)
 		$(use_with opengl)
-		--without-osmesa # media-libs/mesa no longer supports this
 		--without-oss # media-sound/oss is not packaged (OSSv4)
 		$(use_with pcap)
 		$(use_with pulseaudio pulse)
@@ -187,7 +190,6 @@ src_configure() {
 		$(use_with v4l v4l2)
 		$(use_with vulkan)
 		$(use_with wayland)
-		$(use_with xcomposite)
 		$(use_with xinerama)
 
 		$(usev !bluetooth '

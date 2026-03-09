@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: cargo.eclass
@@ -43,7 +43,7 @@ case ${EAPI} in
 			# than the oldest in-tree in future.
 			if [[ -z ${CARGO_BOOTSTRAP} ]]; then
 				if ver_test "${RUST_MIN_VER}" -lt "${_CARGO_ECLASS_RUST_MIN_VER}"; then
-					die "RUST_MIN_VERSION must be at least ${_CARGO_ECLASS_RUST_MIN_VER}"
+					die "RUST_MIN_VER must be at least ${_CARGO_ECLASS_RUST_MIN_VER}"
 				fi
 			fi
 		else
@@ -257,6 +257,7 @@ _cargo_check_initialized() {
 
 # @FUNCTION: _cargo_set_crate_uris
 # @USAGE: <crates>
+# @INTERNAL
 # @DESCRIPTION:
 # Generates the URIs to put in SRC_URI to help fetch dependencies.
 # Constructs a list of crates from its arguments.
@@ -453,13 +454,22 @@ _cargo_gen_git_config() {
 	fi
 }
 
+# @FUNCTION: _cargo_needs_target
+# @INTERNAL
+# @DESCRIPTION:
+# Cargo does not apply flags to the build host when --target is given, even if
+# it is the native target, so only pass it when actually needed.
+_cargo_needs_target() {
+	tc-is-cross-compiler || { has multilib-build ${INHERITED} && ! multilib_is_native_abi; }
+}
+
 # @FUNCTION: cargo_target_dir
 # @DESCRIPTION:
 # Return the directory within target that contains the build, e.g.
 # target/aarch64-unknown-linux-gnu/release.
 cargo_target_dir() {
 	local abi
-	tc-is-cross-compiler && abi=/$(rust_abi)
+	_cargo_needs_target && abi=/$(rust_abi)
 	echo "${CARGO_TARGET_DIR:-target}${abi}/$(usex debug debug release)"
 }
 
@@ -776,7 +786,7 @@ cargo_env() {
 
 		# Only tell Cargo to cross-compile when actually needed to avoid the
 		# aforementioned build host vs target flag separation issue.
-		tc-is-cross-compiler || unset CARGO_BUILD_TARGET
+		_cargo_needs_target || unset CARGO_BUILD_TARGET
 
 		"${@}"
 	)

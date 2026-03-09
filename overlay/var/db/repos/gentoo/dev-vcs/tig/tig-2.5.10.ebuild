@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -10,7 +10,7 @@ if [[ ${PV} == "9999" ]] ; then
 	inherit git-r3 autotools
 else
 	SRC_URI="https://github.com/jonas/tig/releases/download/${P}/${P}.tar.gz"
-	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~mips ~ppc ppc64 ~riscv ~s390 ~sparc x86 ~amd64-linux ~x86-linux ~ppc-macos"
+	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~mips ~ppc ppc64 ~riscv ~s390 ~sparc x86"
 fi
 
 DESCRIPTION="text mode interface for git"
@@ -53,7 +53,7 @@ src_compile() {
 
 src_test() {
 	# workaround parallel test failures
-	LC_ALL=en_US.utf8 emake -j1 test
+	LC_ALL=en_US.UTF-8 emake -j1 test
 }
 
 src_install() {

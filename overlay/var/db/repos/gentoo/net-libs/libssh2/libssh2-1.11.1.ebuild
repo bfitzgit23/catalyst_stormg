@@ -1,17 +1,23 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit cmake-multilib
+VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/danielstenberg.asc
+inherit cmake-multilib verify-sig
 
 DESCRIPTION="Library implementing the SSH2 protocol"
 HOMEPAGE="https://libssh2.org"
-SRC_URI="https://libssh2.org/download/${P}.tar.xz"
+SRC_URI="
+	https://libssh2.org/download/${P}.tar.xz
+	verify-sig? (
+		https://libssh2.org/download/${P}.tar.xz.asc
+	)
+"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 hppa ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~x64-macos"
 IUSE="gcrypt mbedtls test zlib"
 REQUIRED_USE="?? ( gcrypt mbedtls )"
 RESTRICT="!test? ( test )"
@@ -24,10 +30,13 @@ RDEPEND="
 			>=dev-libs/openssl-1.0.1h-r2:0=[${MULTILIB_USEDEP}]
 		)
 	)
-	zlib? ( >=sys-libs/zlib-1.2.8-r1[${MULTILIB_USEDEP}] )
+	zlib? ( >=virtual/zlib-1.2.8-r1:=[${MULTILIB_USEDEP}] )
 "
 DEPEND="
 	${RDEPEND}
+"
+BDEPEND="
+	verify-sig? ( sec-keys/openpgp-keys-danielstenberg )
 "
 
 PATCHES=(

@@ -1,9 +1,9 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-inherit libtool flag-o-matic gnuconfig strip-linguas toolchain-funcs
+inherit dot-a libtool flag-o-matic gnuconfig strip-linguas toolchain-funcs
 
 DESCRIPTION="Tools necessary to build programs"
 HOMEPAGE="https://sourceware.org/binutils/"
@@ -19,7 +19,7 @@ IUSE="cet debuginfod doc gprofng hardened multitarget +nls pgo +plugins static-l
 # PATCH_DEV          - Use download URI https://dev.gentoo.org/~{PATCH_DEV}/distfiles/...
 #                      for the patchsets
 
-PATCH_VER=1
+PATCH_VER=4
 PATCH_DEV=dilfridge
 
 if [[ ${PV} == 9999 ]]; then
@@ -134,6 +134,12 @@ src_prepare() {
 
 	if [[ -n ${PATCH_VER} ]] || [[ ${PV} == *9999 ]] ; then
 		if ! use vanilla; then
+			# We backported a patch in 2.44 but it needed a few
+			# followups. Better to just handle it in 2.45 instead.
+			rm "${WORKDIR}/patch/0007-strip-Add-GCC-LTO-IR-support.patch" \
+				"${WORKDIR}/patch/0008-ld-testsuite-Use-plug_opt-for-plugin-option.patch" \
+				"${WORKDIR}/patch/0009-binutils-Don-t-complain-plugin-with-all-LTO-sections.patch" || die
+
 			einfo "Applying binutils patchset ${patchsetname}"
 			eapply "${WORKDIR}/patch"
 			einfo "Done."
@@ -192,8 +198,11 @@ src_configure() {
 
 	# Keep things sane
 	strip-flags
+	# Adds a property which confuses tests (PR33267)
+	filter-flags '-mno-direct-extern-access'
 	use cet && filter-flags -mindirect-branch -mindirect-branch=*
 	use elibc_musl && append-ldflags -Wl,-z,stack-size=2097152
+	lto-guarantee-fat
 
 	local x
 	echo
@@ -357,6 +366,9 @@ src_configure() {
 			# with the testsuite.
 			filter-lto
 
+			# bug #637066
+			filter-flags -Wall -Wreturn-type
+
 			export BUILD_CFLAGS="${CFLAGS}"
 		fi
 	fi
@@ -433,6 +445,8 @@ src_install() {
 	emake DESTDIR="${D}" tooldir="${EPREFIX}${LIBPATH}" install
 	rm -rf "${ED}"/${LIBPATH}/bin || die
 	use static-libs || find "${ED}" -name '*.la' -delete
+	# Explicit "${ED}" as we need it to do things even w/ USE=-static-libs
+	strip-lto-bytecode "${ED}"
 
 	# Newer versions of binutils get fancy with ${LIBPATH}, bug #171905
 	cd "${ED}"/${LIBPATH} || die

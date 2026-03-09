@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -11,7 +11,7 @@ SRC_URI="https://oss.oetiker.ch/mrtg/pub/${P}.tar.gz https://github.com/oetiker/
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~alpha amd64 ~arm ~hppa ppc ppc64 sparc x86"
+KEYWORDS="~alpha amd64 ~arm ~hppa ppc ppc64 ~sparc x86"
 IUSE="selinux"
 
 DEPEND="dev-lang/perl
@@ -24,6 +24,7 @@ RDEPEND="${DEPEND}
 PATCHES=(
 	"${FILESDIR}"/${PN}-2.17.4-socket6.patch
 	"${FILESDIR}"/${PN}-2.17.10-implicit.patch
+	"${FILESDIR}"/${PN}-2.17.10-c23.patch
 )
 
 src_prepare() {

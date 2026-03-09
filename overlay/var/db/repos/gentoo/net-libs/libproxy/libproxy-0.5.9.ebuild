@@ -11,7 +11,7 @@ SRC_URI="https://github.com/libproxy/libproxy/archive/refs/tags/${PV}.tar.gz -> 
 
 LICENSE="LGPL-2.1+"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 hppa ~loong ~mips ppc ppc64 ~riscv sparc x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~sparc x86"
 IUSE="duktape gnome gtk-doc +introspection test vala"
 REQUIRED_USE="
 	gtk-doc? ( introspection )
@@ -26,7 +26,7 @@ DEPEND="
 		dev-lang/duktape:=
 		net-misc/curl
 	)
-	introspection? ( dev-libs/gobject-introspection )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2 )
 "
 RDEPEND="${DEPEND}"
 BDEPEND="

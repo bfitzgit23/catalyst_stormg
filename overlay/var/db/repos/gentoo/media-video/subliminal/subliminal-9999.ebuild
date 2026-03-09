@@ -4,7 +4,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=hatchling
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{12..14} )
 PYTHON_REQ_USE='xml(+)'
 
 inherit distutils-r1 optfeature
@@ -18,7 +18,7 @@ if [[ ${PV} == 9999 ]] ; then
 	EGIT_BRANCH="develop"
 else
 	SRC_URI="https://github.com/Diaoul/${PN}/archive/${PV}.tar.gz -> ${P}.gh.tar.gz"
-	KEYWORDS="~amd64"
+	KEYWORDS="~amd64 ~arm ~arm64 ~x86"
 fi
 
 SRC_URI+=" test? ( https://downloads.sourceforge.net/matroska/test_files/matroska_test_w1_1.zip )"
@@ -30,6 +30,7 @@ BDEPEND="
 	dev-python/hatch-vcs[${PYTHON_USEDEP}]
 	test? (
 		app-arch/unzip
+		dev-python/rarfile[${PYTHON_USEDEP}]
 		dev-python/sympy[${PYTHON_USEDEP}]
 		>=dev-python/vcrpy-1.6.1[${PYTHON_USEDEP}]
 	)
@@ -66,16 +67,16 @@ EPYTEST_DESELECT=(
 	tests/test_archives.py::test_scan_password_protected_archive
 	tests/test_archives.py::test_scan_archive_error
 	tests/test_archives.py::test_scan_videos_error
-	'tests/test_cli.py::test_cli_download_use_absolute_path[never]'
-	'tests/test_cli.py::test_cli_download_use_absolute_path[always]'
-	'tests/test_cli.py::test_cli_download_use_absolute_path[fallback]'
 
 	# TODO
 	tests/test_core.py::test_refine_video_metadata
 )
 
-PATCHES=(
-	"${FILESDIR}"/${P}-win32-tests.patch
+EPYTEST_IGNORE=(
+	# Needs pypandoc and irrelevant for us
+	scripts/generate-gh-release-notes.py
+	# Needs network
+	tests/cli/test_download.py
 )
 
 export SETUPTOOLS_SCM_PRETEND_VERSION=${PV}

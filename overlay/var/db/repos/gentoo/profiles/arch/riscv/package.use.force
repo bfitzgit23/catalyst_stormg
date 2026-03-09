@@ -1,6 +1,10 @@
 # Copyright 2021-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
+# Andrey Grozin <grozin@gentoo.org> (2025-05-15)
+# binary sbcl for bootstrap is not available
+dev-lisp/sbcl system-bootstrap
+
 # Ionen Wolkens <ionen@gentoo.org> (2023-07-26)
 # MPV currently[1] has no plans to support >=lua5-3 making luajit
 # the only choice for maintained lua. Apply mask/force to override
@@ -19,8 +23,3 @@ app-editors/neovim lua_single_target_lua5-1
 # It gains LLVM codegen in 9.2, but we maintain a backport of this,
 # so force LLVM codegen in all versions.
 <dev-lang/ghc-9.12.1 llvm
-
-# we, kinda, need this on riscv ...
-llvm-core/llvm llvm_targets_RISCV
-llvm-core/clang llvm_targets_RISCV
-dev-lang/rust llvm_targets_RISCV

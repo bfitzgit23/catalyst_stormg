@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: qt5-build.eclass
@@ -106,14 +106,21 @@ inherit estack flag-o-matic toolchain-funcs virtualx
 
 if [[ ${PN} != qtwebengine ]]; then
 	case ${PV} in
-		*9999 )
+		*9999)
 			inherit kde.org # kde/5.15 branch
 			;;
-		5.15.[5-9]* | 5.15.??* )
+		5.15.??*)
 			# official stable release
 			_QT5_P=${QT5_MODULE}-everywhere-opensource-src-${PV}
 			HOMEPAGE="https://www.qt.io/"
-			SRC_URI="https://download.qt.io/official_releases/qt/${PV%.*}/${PV}/submodules/${_QT5_P}.tar.xz"
+			case ${PV} in
+				5.15.17)
+					SRC_URI="https://download.qt.io/official_releases/qt/${PV%.*}/${PV}/submodules/${_QT5_P}.tar.xz"
+					;;
+				*)
+					SRC_URI="https://download.qt.io/archive/qt/${PV%.*}/${PV}/submodules/${_QT5_P}.tar.xz"
+					;;
+			esac
 			# KDE Qt5PatchCollection on top of tag v${PV}-lts-lgpl
 			if [[ -n ${QT5_KDEPATCHSET_REV} ]]; then
 				HOMEPAGE+=" https://invent.kde.org/qt/qt/${QT5_MODULE} https://community.kde.org/Qt5PatchCollection"
@@ -125,14 +132,7 @@ if [[ ${PN} != qtwebengine ]]; then
 fi
 
 if [[ ${QT5_MODULE} == qtbase ]]; then
-	case ${PV} in
-		5.15.13)
-			_QT5_GENTOOPATCHSET_REV=5
-			;;
-		*)
-			_QT5_GENTOOPATCHSET_REV=6
-			;;
-	esac
+	_QT5_GENTOOPATCHSET_REV=6
 	SRC_URI+=" https://dev.gentoo.org/~asturm/distfiles/qtbase-5.15-gentoo-patchset-${_QT5_GENTOOPATCHSET_REV}.tar.xz"
 fi
 
@@ -300,7 +300,7 @@ qt5-build_src_install() {
 		# so that it's placed under package manager control
 		> "${T}"/gentoo-qconfig.h
 		(
-			insinto "${QT5_HEADERDIR#${EPREFIX}}"/Gentoo
+			insinto "${QT5_HEADERDIR#"${EPREFIX}"}"/Gentoo
 			doins "${T}"/gentoo-qconfig.h
 		)
 
@@ -876,7 +876,7 @@ qt5_install_module_config() {
 
 	# install ${PN}-qconfig.h
 	[[ -s ${T}/${PN}-qconfig.h ]] && (
-		insinto "${QT5_HEADERDIR#${EPREFIX}}"/Gentoo
+		insinto "${QT5_HEADERDIR#"${EPREFIX}"}"/Gentoo
 		doins "${T}"/${PN}-qconfig.h
 	)
 
@@ -884,7 +884,7 @@ qt5_install_module_config() {
 	[[ -n ${qconfig_add} ]] && echo "QCONFIG_ADD=${qconfig_add}" >> "${T}"/${PN}-qconfig.pri
 	[[ -n ${qconfig_remove} ]] && echo "QCONFIG_REMOVE=${qconfig_remove}" >> "${T}"/${PN}-qconfig.pri
 	[[ -s ${T}/${PN}-qconfig.pri ]] && (
-		insinto "${QT5_ARCHDATADIR#${EPREFIX}}"/mkspecs/gentoo
+		insinto "${QT5_ARCHDATADIR#"${EPREFIX}"}"/mkspecs/gentoo
 		doins "${T}"/${PN}-qconfig.pri
 	)
 
@@ -906,13 +906,13 @@ qt5_install_module_config() {
 	[[ -n ${qprivateconfig_add} ]] && echo "QT.global_private.enabled_features = ${qprivateconfig_add}" >> "${T}"/${PN}-qmodule.pri
 	[[ -n ${qprivateconfig_remove} ]] && echo "QT.global_private.disabled_features = ${qprivateconfig_remove}" >> "${T}"/${PN}-qmodule.pri
 	[[ -s ${T}/${PN}-qmodule.pri ]] && (
-		insinto "${QT5_ARCHDATADIR#${EPREFIX}}"/mkspecs/gentoo
+		insinto "${QT5_ARCHDATADIR#"${EPREFIX}"}"/mkspecs/gentoo
 		doins "${T}"/${PN}-qmodule.pri
 	)
 
 	# install the original {qconfig,qmodule}.pri from qtcore
 	[[ ${PN} == qtcore ]] && (
-		insinto "${QT5_ARCHDATADIR#${EPREFIX}}"/mkspecs/gentoo
+		insinto "${QT5_ARCHDATADIR#"${EPREFIX}"}"/mkspecs/gentoo
 		newins "${D}${QT5_ARCHDATADIR}"/mkspecs/qconfig.pri qconfig-qtcore.pri
 		newins "${D}${QT5_ARCHDATADIR}"/mkspecs/qmodule.pri qmodule-qtcore.pri
 	)

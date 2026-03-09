@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -44,6 +44,7 @@ RDEPEND="${LUA_DEPS}
 	dev-cpp/yaml-cpp:=
 	dev-db/sqlite:3
 	dev-games/recastnavigation:=
+	dev-libs/collada-dom:=
 	>=dev-games/mygui-3.4.3:=
 	dev-libs/boost:=[zlib]
 	dev-libs/icu:=
@@ -52,19 +53,15 @@ RDEPEND="${LUA_DEPS}
 	media-libs/openal
 	media-video/ffmpeg:=
 	>=sci-physics/bullet-2.86:=[double-precision]
-	sys-libs/zlib
+	virtual/zlib:=
 	virtual/opengl
 	osg-fork? ( >=dev-games/openscenegraph-openmw-3.6:=[collada(-),jpeg,png,sdl,svg,truetype,zlib] )
 	!osg-fork? ( >=dev-games/openscenegraph-3.6.5:=[collada(-),jpeg,png,sdl,svg,truetype,zlib] )
 	gui? (
-		app-arch/unshield
+		app-arch/unshield:=
 		dev-qt/qtbase:6[gui,network,opengl,widgets]
 		dev-qt/qtsvg:6
 	)
-"
-
-DEPEND="${RDEPEND}
-	dev-cpp/sol2
 "
 
 BDEPEND="
@@ -86,9 +83,6 @@ src_prepare() {
 
 	# Use the system tinyxml headers
 	rm -v extern/oics/tiny{str,xml}* || die
-
-	# Use the system sol2 (v3) headers
-	rm -r extern/sol3 || die
 }
 
 src_configure() {

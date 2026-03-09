@@ -1,20 +1,23 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{11..13} )
 PYTHON_REQ_USE="xml(+)"
-
-inherit meson-multilib python-any-r1 vala
+VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/hughsie.asc
+inherit meson-multilib python-any-r1 vala verify-sig
 
 DESCRIPTION="GObject wrapper for libusb"
 HOMEPAGE="https://github.com/hughsie/libgusb"
-SRC_URI="https://github.com/hughsie/libgusb/releases/download/${PV}/${P}.tar.xz"
+SRC_URI="
+	https://github.com/hughsie/libgusb/releases/download/${PV}/${P}.tar.xz
+	verify-sig? ( https://github.com/hughsie/libgusb/releases/download/${PV}/${P}.tar.xz.asc )
+"
 
 LICENSE="LGPL-2.1+"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv sparc x86"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~sparc x86"
 
 IUSE="gtk-doc +introspection test +vala"
 REQUIRED_USE="
@@ -27,7 +30,7 @@ RDEPEND="
 	>=dev-libs/glib-2.44.0:2[${MULTILIB_USEDEP}]
 	virtual/libusb:1[udev,${MULTILIB_USEDEP}]
 	>=dev-libs/json-glib-1.1.1[${MULTILIB_USEDEP},introspection?]
-	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 	sys-apps/hwdata
 "
 DEPEND="${RDEPEND}
@@ -36,6 +39,7 @@ BDEPEND="
 	$(python_gen_any_dep 'dev-python/setuptools[${PYTHON_USEDEP}]')
 	gtk-doc? ( dev-util/gi-docgen )
 	vala? ( $(vala_depend) )
+	verify-sig? ( sec-keys/openpgp-keys-hughsie )
 	virtual/pkgconfig
 "
 

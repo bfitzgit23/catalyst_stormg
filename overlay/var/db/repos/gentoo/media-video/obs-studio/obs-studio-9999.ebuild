@@ -3,18 +3,18 @@
 
 EAPI=8
 
-CMAKE_REMOVE_MODULES_LIST=( FindFreetype )
+CMAKE_REMOVE_MODULES_LIST=( FindMbedTLS )
 LUA_COMPAT=( luajit )
 # For the time being upstream supports up to Python 3.12 only.
-# Any issues found with 3.13 should be reported as a Gentoo bug.
-PYTHON_COMPAT=( python3_{10..13} )
+# Any issues found with 3.13+ should be reported as a Gentoo bug.
+PYTHON_COMPAT=( python3_{11..14} )
 
 inherit cmake flag-o-matic lua-single optfeature python-single-r1 xdg
 
-CEF_VERSION="cef_binary_6533_linux"
-CEF_REVISION="_v3"
-OBS_BROWSER_COMMIT="b56fd78936761891475458447c1cc9058bb9c2d4"
-OBS_WEBSOCKET_COMMIT="c542622d7b6d41ce5875f54efdab1d4ac2967ef4"
+CEF_AMD64="cef_binary_6533_linux_x86_64_v6"
+CEF_ARM64="cef_binary_6533_linux_aarch64_v6"
+OBS_BROWSER_COMMIT="a776dd6a1a0ded4a8a723f2f572f3f8a9707f5a8"
+OBS_WEBSOCKET_COMMIT="1c9306b1e200704ebe192e06c893dfc06b097c43"
 
 DESCRIPTION="Software for Recording and Streaming Live Video Content"
 HOMEPAGE="https://obsproject.com"
@@ -40,8 +40,8 @@ fi
 
 SRC_URI+="
 	browser? (
-		amd64? ( https://cdn-fastly.obsproject.com/downloads/${CEF_VERSION}_x86_64${CEF_REVISION}.tar.xz )
-		arm64? ( https://cdn-fastly.obsproject.com/downloads/${CEF_VERSION}_aarch64${CEF_REVISION}.tar.xz )
+		amd64? ( https://cdn-fastly.obsproject.com/downloads/${CEF_AMD64}.tar.xz )
+		arm64? ( https://cdn-fastly.obsproject.com/downloads/${CEF_ARM64}.tar.xz )
 	)
 "
 
@@ -58,6 +58,7 @@ REQUIRED_USE="
 "
 
 BDEPEND="
+	kde-frameworks/extra-cmake-modules:0
 	lua? ( dev-lang/swig )
 	python? ( dev-lang/swig )
 "
@@ -68,8 +69,9 @@ DEPEND="
 	dev-cpp/nlohmann_json
 	dev-libs/glib:2
 	dev-libs/jansson:=
+	dev-libs/simde
 	dev-libs/uthash
-	dev-qt/qtbase:6[network,widgets,xml(+)]
+	dev-qt/qtbase:6[network,widgets,X,xml(+)]
 	dev-qt/qtsvg:6
 	media-libs/libglvnd[X]
 	media-libs/libva
@@ -77,11 +79,11 @@ DEPEND="
 	media-libs/x264:=
 	>=media-video/ffmpeg-6.1:=[nvenc?,opus,x264]
 	net-misc/curl
-	net-libs/mbedtls:0=
+	net-libs/mbedtls:3=
 	sys-apps/dbus
 	sys-apps/pciutils
 	sys-apps/util-linux
-	sys-libs/zlib:=
+	virtual/zlib:=
 	x11-libs/libdrm
 	x11-libs/libX11
 	x11-libs/libxcb:=
@@ -90,10 +92,7 @@ DEPEND="
 	x11-libs/libxkbcommon
 	alsa? ( media-libs/alsa-lib )
 	browser? (
-		|| (
-			>=app-accessibility/at-spi2-core-2.46.0:2
-			( app-accessibility/at-spi2-atk dev-libs/atk )
-		)
+		>=app-accessibility/at-spi2-core-2.46.0:2
 		dev-libs/expat
 		dev-libs/glib
 		dev-libs/nspr
@@ -183,6 +182,8 @@ src_unpack() {
 src_prepare() {
 	default
 
+	sed -i 's/-Werror //' libobs/cmake/linux/libobs.pc.in || die
+
 	# -Werror=lto-type-mismatch
 	# https://bugs.gentoo.org/867250
 	# https://github.com/obsproject/obs-studio/issues/8988
@@ -194,10 +195,10 @@ src_prepare() {
 src_configure() {
 	local libdir=$(get_libdir)
 	local mycmakeargs=(
+		-DCCACHE_PROGRAM=OFF
 		-DENABLE_ALSA=$(usex alsa)
 		-DENABLE_AJA=OFF
 		-DENABLE_BROWSER=$(usex browser)
-		-DENABLE_CCACHE=OFF
 		-DENABLE_DECKLINK=$(usex decklink)
 		-DENABLE_FFMPEG_NVENC=$(usex nvenc)
 		-DENABLE_FREETYPE=$(usex truetype)
@@ -237,8 +238,8 @@ src_configure() {
 	fi
 
 	if use browser; then
-		use amd64 && mycmakeargs+=( -DCEF_ROOT_DIR=../${CEF_VERSION}_x86_64 )
-		use arm64 && mycmakeargs+=( -DCEF_ROOT_DIR=../${CEF_VERSION}_aarch64 )
+		use amd64 && mycmakeargs+=( -DCEF_ROOT_DIR=../cef_binary_6533_linux_x86_64 )
+		use arm64 && mycmakeargs+=( -DCEF_ROOT_DIR=../cef_binary_6533_linux_aarch64 )
 		mycmakeargs+=( -DENABLE_WHATSNEW=ON )
 	else
 		mycmakeargs+=( -DENABLE_WHATSNEW=OFF )

@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -14,14 +14,14 @@ SRC_URI="https://github.com/pavouk/lgi/archive/${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="amd64 arm ~loong ppc ppc64 ~riscv x86"
+KEYWORDS="amd64 arm ~arm64 ~loong ppc ppc64 ~riscv x86"
 IUSE="examples test"
 RESTRICT="!test? ( test )"
 REQUIRED_USE="${LUA_REQUIRED_USE}"
 
 BDEPEND="${LUA_DEPS}"
 RDEPEND="${LUA_DEPS}
-		dev-libs/gobject-introspection
+		>=dev-libs/gobject-introspection-1.82.0-r2
 		dev-libs/glib
 		dev-libs/libffi:0="
 DEPEND="${RDEPEND}

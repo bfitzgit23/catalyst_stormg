@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -34,7 +34,7 @@ DEPEND="
 	>=gui-libs/libhandy-1.1.90:1
 	media-libs/libjpeg-turbo:0=
 	>=media-libs/libpng-1.6:0=
-	app-misc/tracker:3
+	app-misc/tinysparql:3
 	sys-apps/dbus
 "
 # >=dev-libs/libgdata-0.17.13:0=[gnome-online-accounts] # Upstream left this commented in meson.build. Probably comes back with the next version
@@ -42,14 +42,14 @@ DEPEND="
 # tracker-miners gschema used at runtime.
 RDEPEND="${DEPEND}
 	upnp-av? ( net-libs/dleyna:1.0= )
-	app-misc/tracker-miners:3
+	app-misc/localsearch:3
 "
 BDEPEND="
 	dev-libs/appstream-glib
 	dev-libs/libxslt
 	app-text/docbook-xsl-stylesheets
 	dev-util/desktop-file-utils
-	dev-util/gdbus-codegen
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/glib-utils
 	dev-util/itstool
 	>=sys-devel/gettext-0.19.8

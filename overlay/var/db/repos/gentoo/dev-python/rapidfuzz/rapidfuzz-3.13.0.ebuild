@@ -6,7 +6,7 @@ EAPI=8
 DISTUTILS_EXT=1
 DISTUTILS_USE_PEP517=scikit-build-core
 PYPI_PN=RapidFuzz
-PYTHON_COMPAT=( pypy3 pypy3_11 python3_{10..13} )
+PYTHON_COMPAT=( pypy3_11 python3_{11..14} )
 
 inherit distutils-r1 pypi
 
@@ -18,7 +18,7 @@ HOMEPAGE="
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 ~sparc x86"
 
 # all these are header-only libraries
 DEPEND="
@@ -28,11 +28,9 @@ DEPEND="
 "
 BDEPEND="
 	>=dev-python/cython-3[${PYTHON_USEDEP}]
-	test? (
-		dev-python/hypothesis[${PYTHON_USEDEP}]
-	)
 "
 
+EPYTEST_PLUGINS=( hypothesis )
 EPYTEST_XDIST=1
 distutils_enable_tests pytest
 
@@ -45,15 +43,8 @@ src_prepare() {
 	find src -name '*.cxx' -delete || die
 	# do not require exact taskflow version
 	sed -i -e '/Taskflow/s:3\.9\.0::' CMakeLists.txt || die
-	# https://github.com/scikit-build/scikit-build-core/issues/912
-	sed -i -e '/scikit-build-core/s:0\.11:0.8:' pyproject.toml || die
 
 	distutils-r1_src_prepare
 
 	export RAPIDFUZZ_BUILD_EXTENSION=1
-}
-
-python_test() {
-	local -x PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
-	epytest
 }
