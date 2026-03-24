@@ -75,7 +75,7 @@ chown -R gentoo /home/gentoo/*
 cp /xfce-configs/.face /home/gentoo/.face
 
 # Desktop icon setups
-DESKTOP_APPS=( firefox chromium stormg_installer.desktop )
+DESKTOP_APPS=( firefox chromium calamares.desktop )
 for i in "${APPS[@]}"; do
 	ln -sv /usr/share/applications/${i}.desktop Desktop/
 done
@@ -102,7 +102,7 @@ LC_ALL=C xdg-user-dirs-update --force
 
 chown -R gentoo:users /home/gentoo
 
-plymouth-set-default-theme natural-gentoo-remastered
+plymouth-set-default-theme gentoo-logo-new
 
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 

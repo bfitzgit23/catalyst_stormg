@@ -22,7 +22,7 @@ livecd/use:
 	opus
 	postproc
 	portaudio
-	pulseaudio
+	pipewire
 	python
 	theora
 	vpx
@@ -44,7 +44,7 @@ livecd/use:
 	sysprof
 	-gnome
 	-kde
-	-harfbuzz
+	harfbuzz
 
 livecd/packages:
 	app-admin/hddtemp

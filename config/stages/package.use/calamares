@@ -1,14 +1,10 @@
 app-admin/calamares qt6
 sys-auth/polkit-qt qt6
-media-sound/mpg123-base abi_x86_32
 app-crypt/qca qt6
 kde-frameworks/kwindowsystem wayland
 dev-qt/qtbase wayland
 dev-qt/qt5compat qml
 x11-libs/gtk+ wayland
-x11-libs/xcb-util-keysyms abi_x86_32
 dev-python/pillow webp
 media-libs/gd fontconfig
 sys-kernel/installkernel dracut
-sys-libs/ncurses -gpm
-media-libs/libwebp -opengl

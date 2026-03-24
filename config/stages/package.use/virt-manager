@@ -18,8 +18,3 @@ app-emulation/spice-vdagent gtk
 # required by net-libs/gtk-vnc-1.3.1::gentoo
 # required by app-emulation/virt-manager-4.1.0::gentoo[-test,gui]
 # required by virt-manager (argument)
->=app-crypt/p11-kit-0.24.1-r1 abi_x86_32
-# required by games-util/steam-client-meta-0-r20230821::steam-overlay
-# required by games-util/steam-meta-0-r20220320::steam-overlay
-# required by steam-meta (argument)
->=sys-libs/libudev-compat-186-r1 abi_x86_32
