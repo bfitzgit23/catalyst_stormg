@@ -22,6 +22,7 @@ livecd/motd: "Welcome to StormG"
 livecd/users: gentoo
 livecd/root_overlay: /home/bennji/catalyst_stormg/root_overlay
 livecd/overlay: /home/bennji/catalyst_stormg/overlay
+livecd/gk_mainargs: --plymouth --plymouth-theme=spinfinity
 
 livecd/fsscript: /home/bennji//catalyst_stormg/stage2.sh
 livecd/rcadd: udev|sysinit udev-mount|sysinit acpid|default dbus|default gpm|default NetworkManager|default bluetooth|default elogind|boot alsasound|boot ntpd|default display-manager|default cupsd|default sshd|default ntpd|default syslog-ng|default cronie|default bluetooth|default samba|default
@@ -31,6 +32,6 @@ livecd/empty:
 
 boot/kernel: gentoo
 
-boot/kernel/gentoo/distkernel: yes
-boot/kernel/gentoo/dracut_args: --xz --no-hostonly -a dmsquash-live -a dmsquash-live-ntfs -a mdraid -o btrfs -o crypt -o i18n -o usrmount -o lunmask -o qemu -o qemu-net -o nvdimm -o multipath -o plymouth -i /lib/keymaps /lib/keymaps -I busybox
+boot/kernel/gentoo/sources: gentoo-sources
+boot/kernel/gentoo/config: /home/bennji/Desktop/catalyst_stormg/kconfig/livegui-amd64-5.15.23.config
 #boot/kernel/gentoo/packages: net-wireless/broadcom-sta
