@@ -1,9 +1,9 @@
 subarch: amd64
-version_stamp: stormg-03-09-2026
+version_stamp: stormg-03-28-2026
 target: livecd-stage1
 rel_type: 23.0-default
 profile: default/linux/amd64/23.0/desktop
-snapshot_treeish: b11812afa107052d72ed03fae60484d90444b091
+snapshot_treeish: 75da80c06ade6e52a1a52080080aae05372ff711
 source_subpath: 23.0-default/stage3-amd64-openrc-latest.tar.xz
 compression_mode: pixz
 portage_confdir: /home/bennji/catalyst_stormg/config/stages
@@ -271,5 +271,6 @@ livecd/packages:
     acct-user/polkitd
     acct-group/netdev
     app-admin/calamares
-    app-misc/calamares-gentoo-livecd
     sys-boot/grub-themes-gentoo
+    sys-apps/ckbcomp
+    net-wireless/broadcom-sta

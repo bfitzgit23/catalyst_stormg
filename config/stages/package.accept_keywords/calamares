@@ -2,3 +2,4 @@ app-admin/calamares
 dev-libs/boost
 app-misc/calamares-gentoo-livecd
 dev-qt/*
+sys-apps/ckbcomp
