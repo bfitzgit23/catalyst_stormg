@@ -131,8 +131,8 @@ chown -R root:root /etc/sudoers.d
 chmod  755 /etc/sudoers.d 
 chmod  440 /etc/sudoers.d/*
 
-mkdir -p /usr/share/backgrounds/xfce
-cp -r /usr/share/backgrounds/.* /usr/share/backgrounds/xfce
+mkdir -p /usr/share/backgrounds/stormg
+cp -r /usr/share/backgrounds/.* /usr/share/backgrounds/stormg
 
 
 # Fix desktop file permissions to prevent "Untrusted application launcher" warnings
