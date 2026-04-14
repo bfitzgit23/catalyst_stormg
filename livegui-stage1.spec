@@ -241,27 +241,17 @@ livecd/packages:
 	sys-process/procps
 	sys-process/psmisc
 	www-client/firefox-bin
-	x11-misc/lightdm-gtk-greeter
-	x11-misc/lightdm
-	gnome-extra/nm-applet
 	net-print/epson-inkjet-printer-escpr
-    xfce-base/xfce4-meta
-    xfce-extra/xfce4-docklike-plugin
-    xfce-extra/xfce4-weather-plugin
-    xfce-extra/xfce4-panel-profiles
-    xfce-extra/xfce4-whiskermenu-plugin
-    xfce-extra/xfce4-pulseaudio-plugin
-    xfce-base/xfce4-power-manager
-    app-arch/engrampa
-    x11-themes/adw-gtk3
-    x11-themes/papirus-icon-theme
-    x11-themes/tela-icon-theme
-    x11-misc/qt5ct
+	dev-vcs/kdesvn
+	dev-vcs/subversion
+	kde-apps/k3b
+	kde-apps/kde-apps-meta
+	kde-apps/kdenlive
+	kde-apps/kompare
+	kde-misc/kdiff3
+	kde-plasma/plasma-meta
     gui-apps/qt6ct
     x11-themes/kvantum
-    app-editors/mousepad
-    gnome-extra/gnome-software
-    xfce-extra/thunar-archive-plugin
     sys-boot/plymouth
     app-misc/fastfetch
     media-fonts/jetbrains-mono
@@ -274,3 +264,7 @@ livecd/packages:
     sys-boot/grub-themes-gentoo
     sys-apps/ckbcomp
     net-wireless/broadcom-sta
+    sys-firmware/b43-firmware
+	sys-firmware/ipw2100-firmware
+	sys-firmware/ipw2200-firmware
+	sys-firmware/sof-firmware
