@@ -1,8 +1,8 @@
 subarch: amd64
-version_stamp: stormg-03-09-2026
+version_stamp: stormg-04-14-2026
 target: livecd-stage2
 rel_type: 23.0-default
-profile: default/linux/amd64/23.0/desktop
+profile: default/linux/amd64/23.0/desktop/plasma
 snapshot_treeish: b11812afa107052d72ed03fae60484d90444b091
 source_subpath: 23.0-default/livecd-stage1-amd64-stormg-03-09-2026
 portage_confdir: /home/bennji/Desktop/catalyst_stormg/config/stages
