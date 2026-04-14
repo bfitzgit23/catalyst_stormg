@@ -43,7 +43,7 @@ livecd/use:
 	dkms
 	sysprof
 	-gnome
-	-kde
+	kde
 	harfbuzz
 
 livecd/packages:
