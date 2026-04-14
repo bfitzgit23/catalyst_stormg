@@ -268,3 +268,4 @@ livecd/packages:
 	sys-firmware/ipw2100-firmware
 	sys-firmware/ipw2200-firmware
 	sys-firmware/sof-firmware
+	x11-misc/sddm
