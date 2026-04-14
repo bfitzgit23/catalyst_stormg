@@ -2,7 +2,7 @@ subarch: amd64
 version_stamp: stormg-03-28-2026
 target: livecd-stage1
 rel_type: 23.0-default
-profile: default/linux/amd64/23.0/desktop
+profile: default/linux/amd64/23.0/desktop/plasma
 snapshot_treeish: 75da80c06ade6e52a1a52080080aae05372ff711
 source_subpath: 23.0-default/stage3-amd64-openrc-latest.tar.xz
 compression_mode: pixz
