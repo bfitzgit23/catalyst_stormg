@@ -7,7 +7,7 @@ env-update
 source /tmp/envscript
 
 # No we don't want to run xdm...
-sed -e '/^DISPLAYMANAGER=/s/.*/DISPLAYMANAGER="lightdm"/' -i /etc/conf.d/display-manager
+sed -e '/^DISPLAYMANAGER=/s/.*/DISPLAYMANAGER="sddm"/' -i /etc/conf.d/display-manager
 
 locale-gen
 
