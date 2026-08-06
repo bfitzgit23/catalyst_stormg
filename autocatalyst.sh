@@ -188,18 +188,12 @@ _ensure_stage3(){
 # --------------------------------------------------------------------------
 _write_catalyst_conf(){
   _info "Writing catalyst config $CATALYST_CONF"
-  # catalyst validates several config values to be existing directories; create
-  # them up front so no "invalid value" fires (esp. portdir/port_logdir when a
-  # --only stage2 resume rewrites the conf before any clone happened).
-  mkdir -p \
-    "$WORKDIR" \
-    "$WORKDIR/distfiles" \
-    "$WORKDIR/snapshot" \
-    "$WORKDIR/logs" \
-    "$WORKDIR/repos/gentoo" \
-    "$WORKDIR/repos/guru" \
-    "$WORKDIR/repos/steam-overlay" \
-    /var/tmp/catalyst/build /var/tmp/catalyst/tmp /var/tmp/catalyst/snapshot
+  # Catalina enforces a whitelist of valid config-file keys; any unknown key
+  # (portdir, snapshot_cache, snapshot_repo, snapshot_treeish, buildroot, ...)
+  # is rejected with "invalid value". Those go in the SPEC instead. Here we only
+  # set the keys catalyst actually accepts: the distdir, and repos_storedir
+  # (where the git snapshot repos live for the git-based snapshot).
+  mkdir -p "$WORKDIR" "$WORKDIR/distfiles" "$WORKDIR/repos"
   local sysconf="/etc/catalyst/catalyst.conf"
   if [ -f "$sysconf" ]; then
     _run cp "$sysconf" "$CATALYST_CONF"
@@ -209,27 +203,10 @@ _write_catalyst_conf(){
   fi
   _run sed -i \
     -e "s#^distdir[[:space:]=:].*#distdir = $WORKDIR/distfiles#" \
-    -e "s#^portdir[[:space:]=:].*#portdir = $WORKDIR/repos/gentoo#" \
-    -e "s#^snapshot_cache[[:space:]=:].*#snapshot_cache = $WORKDIR/snapshot#" \
-    -e "s#^snapshot_repo[[:space:]=:].*#snapshot_repo = $WORKDIR/repos/gentoo#" \
-    -e "s#^snapshot_treeish[[:space:]=:].*#snapshot_treeish = ${SNAP_REF:-HEAD}#" \
-    -e "s#^port_logdir[[:space:]=:].*#port_logdir = $WORKDIR/logs#" \
+    -e "s#^repos_storedir[[:space:]=:].*#repos_storedir = $WORKDIR/repos#" \
     "$CATALYST_CONF"
-  # catalyst's config parser only accepts '=' as the delimiter (a bare '[0-9]
-  # or ':' line throws "Missing '=', expected"). Ensure every key we manage is
-  # present AND written with '=', even when the source file lacks a given key.
-  local key k
-  for key in \
-      "distdir=$WORKDIR/distfiles" \
-      "portdir=$WORKDIR/repos/gentoo" \
-      "snapshot_cache=$WORKDIR/snapshot" \
-      "snapshot_repo=$WORKDIR/repos/gentoo" \
-      "snapshot_treeish=${SNAP_REF:-HEAD}" \
-      "port_logdir=$WORKDIR/logs" \
-      "buildroot=/var/tmp/catalyst"; do
-    k="${key%%=*}"
-    grep -q "^${k} *=" "$CATALYST_CONF" || printf '%s\n' "$key" >> "$CATALYST_CONF"
-  done
+  grep -q "^distdir *="       "$CATALYST_CONF" || printf 'distdir = %s\n'       "$WORKDIR/distfiles" >> "$CATALYST_CONF"
+  grep -q "^repos_storedir *=" "$CATALYST_CONF" || printf 'repos_storedir = %s\n' "$WORKDIR/repos"      >> "$CATALYST_CONF"
   _ok "catalyst.conf written"
 }
 
