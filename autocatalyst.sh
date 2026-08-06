@@ -234,14 +234,14 @@ _install_prereqs(){
 _run_stage1(){
   _info "== livecd-stage1 =="
   if [ -n "${SNAP_REF:-}" ] && [ "$SNAP_REF" != HEAD ]; then
-    _run catalyst -C "$CATALYST_CONF" -s "$SNAP_REF" ${CATALYST_OPTS:-}
+    _run catalyst -c "$CATALYST_CONF" -s "$SNAP_REF" ${CATALYST_OPTS:-}
   fi
-  _run catalyst -C "$CATALYST_CONF" -f "$CONF_STAGE1" ${CATALYST_OPTS:-}
+  _run catalyst -c "$CATALYST_CONF" -f "$CONF_STAGE1" ${CATALYST_OPTS:-}
 }
 
 _run_stage2(){
   _info "== livecd-stage2 =="
-  _run catalyst -C "$CATALYST_CONF" -f "$CONF_STAGE2" ${CATALYST_OPTS:-}
+  _run catalyst -c "$CATALYST_CONF" -f "$CONF_STAGE2" ${CATALYST_OPTS:-}
 }
 
 _report(){
