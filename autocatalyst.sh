@@ -172,7 +172,7 @@ _ensure_stage3(){
     _info "Auto-detecting latest desktop-openrc stage3 (amd64)"
     meta="$(wget -qO- --tries=3 "$mirror/releases/amd64/autobuilds/latest-stage3-amd64-desktop-openrc.txt" \
         || _die "Could not fetch stage3 metadata (offline?). Use --stage3 <url>.")"
-    rel="$(printf '%s\n' "$meta" | awk '/\.tar\.(xz|zst)$/{print $1; exit}')"
+    rel="$(printf '%s\n' "$meta" | awk '/\.tar\.(xz|zst)([[:space:]]|$)/{print $1; exit}')"
     [ -n "$rel" ] || _die "No stage3 filename in metadata"
     url="$mirror/releases/amd64/autobuilds/$rel"
   fi
