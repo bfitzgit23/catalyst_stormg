@@ -191,6 +191,34 @@ if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
 }
 
 # --------------------------------------------------------------------------
+# 2b. seed git snapshot repos into the host catalyst repos store
+# --------------------------------------------------------------------------
+_seed_snapshot_repos(){
+  _info "Seeding catalyst git-snapshot repos (bare mirrors for the host)"
+  local hconf="/etc/catalyst/catalyst.conf" repodir sd name src dest
+  # catalyst snapshot reads bare repos from repos_storedir (default <storedir>/repos)
+  repodir="$(awk -F'[ =:]+' '/^repos_storedir/{print $2; exit}' "$hconf" 2>/dev/null)"
+  if [ -z "$repodir" ]; then
+    sd="$(awk -F'[ =:]+' '/^storedir/{print $2; exit}' "$hconf" 2>/dev/null)"
+    repodir="${sd:-/var/tmp/catalyst}/repos"
+  fi
+  mkdir -p "$repodir"
+  for name in gentoo guru steam-overlay; do
+    src="$WORKDIR/repos/$name"
+    [ -d "$src/.git" ] || { _warn "no clone at $src to seed"; continue; }
+    dest="$repodir/$name.git"
+    if [ -d "$dest" ]; then
+      _info "updating bare snapshot repo $dest"
+      _run git -C "$dest" remote update --prune
+    else
+      _info "seeding bare snapshot repo $dest"
+      _run git clone --bare --quiet "$src" "$dest"
+    fi
+  done
+  _ok "snapshot repos ready under $repodir"
+}
+
+# --------------------------------------------------------------------------
 # 3. stage3 tarball
 # --------------------------------------------------------------------------
 _ensure_stage3(){
@@ -348,6 +376,7 @@ main(){
   if [ "$ONLY" != stage2 ]; then
     _install_prereqs
     _fresh_sync
+    _seed_snapshot_repos
   fi
   _write_specs
 
