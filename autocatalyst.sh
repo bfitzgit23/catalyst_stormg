@@ -233,6 +233,25 @@ _ensure_stage3_builds(){
 # --------------------------------------------------------------------------
 # 5. host prerequisites
 # --------------------------------------------------------------------------
+# When running on a Gentoo (live) GUI ISO, default tmpfs is only ~50% of RAM
+# and can fill up fast during a build. Remount the key tmpfs mounts unlimited.
+# Detect any live session: official Gentoo live uses /etc/init.d/livecd;
+# Gentoo-based derivatives (CalamaroOS etc.) boot a live root on
+# overlay/squashfs. Either signals a tmpfs-backed live GUI session.
+_live_session(){
+  [ -e /etc/init.d/livecd ] && return 0
+  grep -Eq ' (overlay|squashfs|livecd)' /proc/mounts && return 0
+  return 1
+}
+_max_tmpfs(){
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] enlarge tmpfs to unlimited (size=0)"; return; fi
+  _live_session || { _info "no live session detected; leaving tmpfs as-is"; return; }
+  _info "Live session detected: enlarging tmpfs to unlimited (size=0)"
+  mount -o remount,size=0 /tmp      2>/dev/null && _ok "enlarged /tmp"   || _warn "could not remount /tmp"
+  mount -o remount,size=0 /var/tmp  2>/dev/null && _ok "enlarged /var/tmp" || _warn "could not remount /var/tmp"
+  mount -o remount,size=0 /run      2>/dev/null && _ok "enlarged /run"   || _warn "could not remount /run"
+}
+
 _install_prereqs(){
   if _have catalyst && [ -f /etc/catalyst/catalyst.conf ]; then
     _ok "catalyst already installed"
@@ -287,6 +306,7 @@ main(){
   _info "REPO_DIR=$REPO_DIR"
   _info "WORKDIR=$WORKDIR"
   _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY"
+  _max_tmpfs
 
   if [ "$ONLY" != stage2 ]; then
     _install_prereqs

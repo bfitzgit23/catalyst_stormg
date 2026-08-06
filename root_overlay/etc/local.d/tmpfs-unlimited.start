@@ -1,0 +1,10 @@
+#!/bin/bash
+# Make key tmpfs mounts unlimited (size=0) so a live/install session that is
+# already booted into a Gentoo (live) ISO never runs out of virtual space.
+# Runs on boot via the local OpenRC service; harmless if the path is not tmpfs.
+
+for mnt in /tmp /var/tmp /run; do
+    mount -o remount,size=0 "$mnt" 2>/dev/null && logger -t tmpfs-unlimited "enlarged $mnt to unlimited (size=0)"
+done
+
+exit 0

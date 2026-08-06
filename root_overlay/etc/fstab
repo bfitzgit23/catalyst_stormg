@@ -1,1 +1,6 @@
 LABEL=EFI		/boot/efi	vfat		noauto,noatime		0 2
+
+# tmpfs at unlimited size (size=0) so live/install sessions never run out of
+# virtual/working space while building or installing.
+tmpfs		/tmp		tmpfs		rw,nosuid,nodev,size=0		0 0
+tmpfs		/var/tmp	tmpfs		rw,nosuid,nodev,size=0		0 0
