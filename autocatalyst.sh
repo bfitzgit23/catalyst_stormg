@@ -201,7 +201,16 @@ _write_catalyst_conf(){
     _warn "No system catalyst.conf yet; writing minimal one."
     : > "$CATALYST_CONF"
   fi
+  # Delete any lines whose keys catalyst rejects (incl. ones leftover from
+  # earlier runs of this script / stale build/catalyst.conf), then set the two
+  # valid keys we control.
   _run sed -i \
+    -e "/^portdir[[:space:]=:]/d" \
+    -e "/^port_logdir[[:space:]=:]/d" \
+    -e "/^buildroot[[:space:]=:]/d" \
+    -e "/^snapshot_cache[[:space:]=:]/d" \
+    -e "/^snapshot_repo[[:space:]=:]/d" \
+    -e "/^snapshot_treeish[[:space:]=:]/d" \
     -e "s#^distdir[[:space:]=:].*#distdir = $WORKDIR/distfiles#" \
     -e "s#^repos_storedir[[:space:]=:].*#repos_storedir = $WORKDIR/repos#" \
     "$CATALYST_CONF"
