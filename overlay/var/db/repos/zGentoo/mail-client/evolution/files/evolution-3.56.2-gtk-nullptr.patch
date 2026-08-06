@@ -1,0 +1,45 @@
+diff --git a/src/composer/e-msg-composer.c b/src/composer/e-msg-composer.c
+index 5296ac7..49bfca4 100644
+--- a/src/composer/e-msg-composer.c
++++ b/src/composer/e-msg-composer.c
+@@ -2941,12 +2941,16 @@ msg_composer_constructed (GObject *object)
+ 	target_list = e_attachment_view_get_target_list (attachment_view);
+ 	targets = gtk_target_table_new_from_list (target_list, &n_targets);
+ 
+-	target_list = gtk_drag_dest_get_target_list (GTK_WIDGET (cnt_editor));
++	if (targets) {
++		target_list = gtk_drag_dest_get_target_list (GTK_WIDGET (cnt_editor));
+ 
+-	gtk_target_list_add_table (target_list, drag_dest_targets, G_N_ELEMENTS (drag_dest_targets));
+-	gtk_target_list_add_table (target_list, targets, n_targets);
++		if (target_list) {
++			gtk_target_list_add_table (target_list, drag_dest_targets, G_N_ELEMENTS (drag_dest_targets));
++			gtk_target_list_add_table (target_list, targets, n_targets);
++		}
+ 
+-	gtk_target_table_free (targets, n_targets);
++		gtk_target_table_free (targets, n_targets);
++	}
+ 
+ 	e_plugin_ui_register_manager (ui_manager, "org.gnome.evolution.composer", composer);
+ 
+diff --git a/src/e-util/e-attachment-handler.c b/src/e-util/e-attachment-handler.c
+index 6216b1e..2f4d091 100644
+--- a/src/e-util/e-attachment-handler.c
++++ b/src/e-util/e-attachment-handler.c
+@@ -44,8 +44,13 @@ attachment_handler_constructed (GObject *object)
+ 
+ 	view = e_attachment_handler_get_view (handler);
+ 
+-	target_list = e_attachment_view_get_target_list (view);
+-	gtk_target_list_add_table (target_list, targets, n_targets);
++	if (view) {
++		target_list = e_attachment_view_get_target_list (view);
++
++		if (target_list) {
++			gtk_target_list_add_table (target_list, targets, n_targets);
++		}
++	}
+ 
+ 	e_attachment_view_add_drag_actions (view, drag_actions);
+ 

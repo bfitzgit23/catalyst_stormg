@@ -1,15 +1,15 @@
 subarch: amd64
-version_stamp: stormg-03-28-2026
+version_stamp: stormg-08-06-2026
 target: livecd-stage1
 rel_type: 23.0-default
-profile: default/linux/amd64/23.0/desktop/plasma
-snapshot_treeish: 75da80c06ade6e52a1a52080080aae05372ff711
+profile: default/linux/amd64/23.0/desktop
+snapshot_treeish: f0cc80d850136b68015cc9ebefd28431da1c3dc4
 source_subpath: 23.0-default/stage3-amd64-openrc-latest.tar.xz
 compression_mode: pixz
-portage_confdir: /home/bennji/catalyst_stormg/config/stages
-repos: /home/bennji/catalyst_stormg/overlay/var/db/repos/guru
-/home/bennji/catalyst_stormg/overlay/var/db/repos/steam-overlay
-/home/bennji/catalyst_stormg/overlay/var/db/repos/gentoo
+portage_confdir: /home/bennji/Desktop/catalyst_stormg/config/stages
+repos: /home/bennji/Desktop/catalyst_stormg/overlay/var/db/repos/guru
+/home/bennji/Desktop/catalyst_stormg/overlay/var/db/repos/steam-overlay
+/home/bennji/Desktop/catalyst_stormg/overlay/var/db/repos/gentoo
 
 livecd/use:
 	-aac
@@ -43,7 +43,7 @@ livecd/use:
 	dkms
 	sysprof
 	-gnome
-	kde
+	upower
 	harfbuzz
 
 livecd/packages:
@@ -104,6 +104,7 @@ livecd/packages:
 	dev-debug/strace
 	dev-lang/perl
 	dev-lang/python
+	dev-python/PyQt6
 #	Gone until it supports python3_10
 	dev-vcs/git
 	dev-vcs/subversion
@@ -242,30 +243,26 @@ livecd/packages:
 	sys-process/psmisc
 	www-client/firefox-bin
 	net-print/epson-inkjet-printer-escpr
-	dev-vcs/kdesvn
 	dev-vcs/subversion
-	kde-apps/k3b
-	kde-apps/kde-apps-meta
-	kde-apps/kdenlive
-	kde-apps/kompare
-	kde-misc/kdiff3
-	kde-plasma/plasma-meta
-    gui-apps/qt6ct
-    x11-themes/kvantum
-    sys-boot/plymouth
-    app-misc/fastfetch
-    media-fonts/jetbrains-mono
-    sys-power/upower
-    dev-python/pyqt5
-    acct-group/polkitd
-    acct-user/polkitd
-    acct-group/netdev
-    app-admin/calamares
-    sys-boot/grub-themes-gentoo
-    sys-apps/ckbcomp
-    net-wireless/broadcom-sta
-    sys-firmware/b43-firmware
+	xfce-base/xfce4-meta
+	x11-misc/lightdm
+	x11-misc/lightdm-gtk-greeter
+	gui-libs/display-manager-init
+	app-cdr/xfburn
+	media-gfx/ristretto
+	dev-util/meld
+	sys-boot/plymouth
+	app-misc/fastfetch
+	media-fonts/jetbrains-mono
+	sys-power/upower
+	acct-group/polkitd
+	acct-user/polkitd
+	acct-group/netdev
+	app-admin/calamares
+	sys-boot/grub-themes-gentoo
+	sys-apps/ckbcomp
+	net-wireless/broadcom-sta
+	sys-firmware/b43-firmware
 	sys-firmware/ipw2100-firmware
 	sys-firmware/ipw2200-firmware
 	sys-firmware/sof-firmware
-	x11-misc/sddm

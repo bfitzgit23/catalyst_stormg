@@ -7,7 +7,7 @@ env-update
 source /tmp/envscript
 
 # No we don't want to run xdm...
-sed -e '/^DISPLAYMANAGER=/s/.*/DISPLAYMANAGER="sddm"/' -i /etc/conf.d/display-manager
+sed -e '/^DISPLAYMANAGER=/s/.*/DISPLAYMANAGER="lightdm"/' -i /etc/conf.d/display-manager
 
 locale-gen
 
@@ -75,8 +75,8 @@ chown -R gentoo /home/gentoo/*
 cp /xfce-configs/.face /home/gentoo/.face
 
 # Desktop icon setups
-DESKTOP_APPS=( firefox chromium calamares.desktop )
-for i in "${APPS[@]}"; do
+DESKTOP_APPS=( firefox-bin stormg-welcome gparted gentoo-handbook )
+for i in "${DESKTOP_APPS[@]}"; do
 	ln -sv /usr/share/applications/${i}.desktop Desktop/
 done
 
@@ -141,3 +141,4 @@ chown -R "gentoo:gentoo" "/home/gentoo/Desktop"
 
 sudo chmod +x /usr/local/bin/trust.sh
 sudo chmod +x /usr/bin/gentoo-pkg-manager.sh
+sudo chmod +x /usr/local/bin/stormg-welcome

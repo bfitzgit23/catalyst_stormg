@@ -1,0 +1,12 @@
+--- a/submodules/pltis_uicomponents/src/standard/tis.ui.parts.buttons.pas	2026-01-23 18:51:43.000000000 +0100
++++ b/submodules/pltis_uicomponents/src/standard/tis.ui.parts.buttons.pas	2026-01-28 12:35:33.464497701 +0100
+@@ -119,7 +119,9 @@
+ 
+ implementation
+ 
++{$IFDEF WINDOWS}
+ {$R icons.rc}
++{$ENDIF}
+ 
+ { TButtonItem }
+ 

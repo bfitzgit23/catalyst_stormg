@@ -1,0 +1,13 @@
+[Unit]
+Description=Prometheus snmp exporter
+
+[Service]
+Type=simple
+User=snmp_exporter
+Group=snmp_exporter
+ExecStart=/usr/bin/snmp_exporter --config.file=${SNMPE_CONF} ${SNMPE_OPTS}
+PIDFile=/run/snmp_exporter.pid
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

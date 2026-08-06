@@ -1,0 +1,8 @@
+# Go 1.19 moving GC workaround
+ASSUME_NO_MOVING_GC_UNSAFE_RISK_IT_WITH=go1.19
+
+# The loki config file
+LOKI_CONF="/etc/loki/loki-local-config.yaml"
+
+# Add any extra options to pass to loki to this setting.
+#LOKI_OPTS=""

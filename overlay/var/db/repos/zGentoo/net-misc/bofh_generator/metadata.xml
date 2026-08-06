@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+    <maintainer type="person" proxied="yes">
+        <name>Armas Spann</name>
+        <email>zappel@simple-co.de</email>
+    </maintainer>
+    <maintainer type="project" proxied="proxy">
+        <email>proxy-maint@gentoo.org</email>
+        <name>Proxy Maintainers</name>
+    </maintainer>
+    <upstream>
+        <remote-id type="git">https://lab.simple-co.de/zappel/bofh_generator.git</remote-id>
+    </upstream>
+    <use>
+        <flag name="server">Enables systemd service to spawn a webserver. This will also install <pkg>acct-user/bofh_generator</pkg> and <pkg>acct-group/bofh_generator</pkg></flag>
+    </use>
+</pkgmetadata>

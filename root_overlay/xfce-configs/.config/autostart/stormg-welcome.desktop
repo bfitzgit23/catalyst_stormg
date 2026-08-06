@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=StormG Welcome
+Comment=StormG welcome screen (first boot helper)
+Exec=stormg-welcome
+Icon=stormg-welcome
+Terminal=false
+Categories=System;
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Application

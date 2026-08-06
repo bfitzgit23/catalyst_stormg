@@ -1,0 +1,15 @@
+[Unit]
+Description=MOP server daemon on interface: %i
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+EnvironmentFile=/etc/mopd/mopd.conf
+ExecStartPre=-/usr/bin/ifconfig %i promisc
+ExecStartPre=-/usr/bin/ip link set %i promisc on
+ExecStart=/usr/bin/mopd -f ${MOP_FLAG} -s ${MOP_DIR} -d %i
+
+[Install]
+WantedBy=multi-user.target

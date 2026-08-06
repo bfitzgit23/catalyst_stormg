@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+    <upstream>
+        <remote-id type="git">https://github.com/codenotary/immudb.git</remote-id>
+    </upstream>
+    <use>
+        <flag name="webconsole">Enables the internal webserver, defaults to: http://localhost:8080</flag>
+    </use>
+</pkgmetadata>

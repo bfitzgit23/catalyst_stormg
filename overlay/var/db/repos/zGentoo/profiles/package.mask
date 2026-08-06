@@ -1,0 +1,79 @@
+# upstream underneath gui-libs not net-libs
+net-libs/libwpe
+net-libs/libwpe-backend
+
+# please use gentoo-asus as a replacement for gentoo-g14-next
+sys-kernel/gentoo-g14-next
+
+# deprecated, please use sys-power/asusctl as a replacement
+sys-power/rog-core
+
+# please use sys-power/asusctl as it was renamed on 04-11-2021
+sys-power/asus-nb-ctrl
+
+# please use "sys-kernel/gentoo-sources-rog" as a replacement
+sys-kernel/gentoo-sources-g14
+
+# currently under review (not installable in the current version)
+# app-editors/imhex
+
+# masked due slot-change (please uninstall before update!)
+<=sys-power/asusctl-3.7.2-r1
+<=gnome-extra/gnome-shell-extension-asusctl-gex-3.7.2
+
+# masked rainloop because of a critical security flaw (use snappymail as a replacement),
+# see: https://blog.sonarsource.com/rainloop-emails-at-risk-due-to-code-flaw/
+www-apps/rainloop
+www-apps/rainloop-community
+
+# masked as you should know what you're installing - use at own risk
+dev-util/ghidra-bin
+
+# masked as prepared for removal (no longer supported versions)
+<=sys-power/asusctl-4.7.0
+
+# mask because of corruption (e2ee patch not working correctly)
+=net-im/matrix-webhook-3.8.0
+
+# mask because of upstream availibility as app-misc/liquidctl
+sys-power/liquidctl
+
+# masked because only provided for ceph compatibility
+=dev-python/cryptography-40.0.2
+
+# masked because it has moved to another category (use: media-video/freetube instead)
+media-audio/freetube
+
+# masked due removal, use app-emulation/vmware-horizon-client-bin as a replacement
+app-emulation/vmware-horizon-client
+
+# masked due to critical vulnerabilities (https://anydesk.com/en/public-statement)
+net-misc/anydesk
+
+# please use "sys-kernel/gentoo-sources" from upstream as a replacement
+sys-kernel/gentoo-sources-rog
+
+# masked because of deprecation (unmaintained for 4 years)
+net-im/youp
+
+# masked during stabilization
+<www-apps/grafana-11.2.0
+
+# mask during stabilization (currently also uses git-r3)
+>=net-voip/linphone-desktop-6.0.0_alpha
+
+# legacy mask - keep in mind, this is NOT safe! (update your app ASAP!)
+<dev-lang/php-8
+<dev-php/xdebug-3.2.0
+
+# prepare for removal (unmaintained since over a year - I don't expect this is coming back to life)
+>=net-im/matrix-webhook-3.8.0
+
+# upsteam available (yay!)
+dev-vcs/git-cliff
+
+# experimental - not yet finished
+dev-util/dpdk
+
+# masked during stabilization (testing)
+>=gnome-extra/gnome-shell-extension-supergfxctl-gex-5.2.7

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>nobody@gentoo.org</email>
+		<name>Nobody</name>
+	</maintainer>
+	<upstream>
+		<changelog>https://github.com/WerWolv/ImHex/releases</changelog>
+		<bugs-to>https://github.com/WerWolv/ImHex/issues</bugs-to>
+	</upstream>
+	<longdescription lang="en">
+		A Hex Editor for Reverse Engineers, Programmers and people that value their eye sight when working at 3 AM.
+	</longdescription>
+</pkgmetadata>

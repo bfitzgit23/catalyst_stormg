@@ -1,0 +1,16 @@
+[Unit]
+Description=Ollama Service
+After=network.target
+
+[Service]
+Environment="OLLAMA_HOST=127.0.0.1:11434"
+Environment="OLLAMA_MODELS=/var/lib/ollama/models"
+Environment="OLLAMA_ORIGINS=http://localhost,https://localhost,http://127.0.0.1,https://127.0.0.1"
+User=ollama
+Group=ollama
+ExecStart=/usr/bin/ollama serve
+WorkingDirectory=/var/lib/ollama
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

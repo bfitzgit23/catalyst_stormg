@@ -1,0 +1,18 @@
+[Unit]
+Description=Fluent-Bit
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=fluent-bit
+Group=logger
+Type=simple
+Restart=on-failure
+EnvironmentFile=/etc/conf.d/fluent-bit
+Environment=LOGFILE=/var/log/fluent-bit/fluent-bit.log
+Environment=FLUENT_CONF=/etc/fluent-bit/fluent-bit.conf
+ExecStart=/usr/bin/fluent-bit --config=${FLUENT_CONF} --log_file=${LOGFILE} ${FLUENT_BIT_OPTS}
+PIDFile=/run/fluent-bit.pid
+
+[Install]
+WantedBy=multi-user.target

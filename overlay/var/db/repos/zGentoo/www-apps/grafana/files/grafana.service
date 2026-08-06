@@ -1,0 +1,25 @@
+[Unit]
+Description=Grafana - The open-source platform for monitoring and observability
+Documentation=http://docs.grafana.org
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=grafana
+Group=grafana
+Type=simple
+Restart=on-failure
+RuntimeDirectory=~PN_S~
+WorkingDirectory=/usr/share/~PN_S~
+ExecStart=/usr/libexec/~PN_S~/grafana-server          \
+    --config=/etc/~PN_S~/grafana.ini                  \
+    --pidfile=/run/~PN_S~/grafana.pid                 \
+    cfg:default.paths.logs=/var/log/~PN_S~            \
+    cfg:default.paths.data=/var/lib/~PN_S~            \
+    cfg:default.paths.plugins=/var/lib/~PN_S~/plugins
+LimitNOFILE=10000
+TimeoutStopSec=20
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

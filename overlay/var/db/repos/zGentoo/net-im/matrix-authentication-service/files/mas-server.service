@@ -1,0 +1,15 @@
+[Unit]
+Description=Matrix Authentication Service - Server
+Wants=network-online.target 
+After=mas-worker.service
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/mas-cli -c /etc/mas/config.yaml server --no-worker
+
+User=matrix-auth-svc
+Group=matrix-auth-svc
+
+[Install]
+WantedBy=multi-user.target

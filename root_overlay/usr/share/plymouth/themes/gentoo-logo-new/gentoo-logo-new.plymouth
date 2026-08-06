@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Gentoo Logo New
+Description=A theme that features a blank background with a logo (Gentoo Version).
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/gentoo-logo-new
+ScriptFile=/usr/share/plymouth/themes/gentoo-logo-new/gentoo-logo-new.script

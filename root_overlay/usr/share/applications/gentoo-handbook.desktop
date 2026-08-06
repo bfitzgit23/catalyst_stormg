@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Link
+Version=1.0
+Name=Gentoo Handbook
+GenericName=Documentation
+Comment=Gentoo Handbook for amd64
+URL=https://wiki.gentoo.org/wiki/Handbook:AMD64
+Icon=/usr/share/pixmaps/gentoo/misc/10389-gentoo-g-transparent.png
+Terminal=false
+Categories=System;

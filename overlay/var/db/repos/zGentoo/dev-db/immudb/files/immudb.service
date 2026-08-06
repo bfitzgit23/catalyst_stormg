@@ -1,0 +1,16 @@
+[Unit]
+Description=immudb-server service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=immudb
+Group=immudb
+ExecStart=/usr/bin/immudb --config /etc/immudb/immudb.toml
+WorkingDirectory=/usr/share/immudb
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

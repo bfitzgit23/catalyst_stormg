@@ -1,0 +1,13 @@
+[Unit]
+Description=LAT terminal daemon for Linux and BSD
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=forking
+Restart=always
+ExecStart=/usr/bin/latcp -s
+ExexStop=/usr/bin/latcp -h
+
+[Install]
+WantedBy=multi-user.target

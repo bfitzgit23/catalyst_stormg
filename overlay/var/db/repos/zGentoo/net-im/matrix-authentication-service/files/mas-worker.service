@@ -1,0 +1,15 @@
+[Unit]
+Description=Matrix Authentication Service - Worker
+Wants=network-online.target
+After=network-online.target postgresql-16.service postgresql-17.service postgresql-18.service
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/mas-cli -c /etc/mas/config.yaml worker
+
+User=matrix-auth-svc
+Group=matrix-auth-svc
+
+[Install]
+WantedBy=multi-user.target

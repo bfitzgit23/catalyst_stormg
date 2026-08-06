@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=StormG Welcome
+GenericName=Welcome Center
+Comment=First-boot helper for StormG (Gentoo)
+Exec=stormg-welcome
+Icon=stormg-welcome
+Terminal=false
+StartupNotify=false
+Categories=System;
+X-AppStream-Ignore=true
