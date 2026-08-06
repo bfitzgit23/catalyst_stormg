@@ -230,11 +230,6 @@ _write_catalyst_conf(){
     k="${key%%=*}"
     grep -q "^${k} *=" "$CATALYST_CONF" || printf '%s\n' "$key" >> "$CATALYST_CONF"
   done
-  # Local strict-config sanity check (fails here instead of deep inside catalyst).
-  if [ "$DRY" -eq 0 ] && _have python3; then
-    python3 -c "import configparser,sys;c=configparser.ConfigParser(delimiters=('=',),strict=False);c.read('$CATALYST_CONF')" \
-      || _die "generated catalyst.conf failed Python configparser validation"
-  fi
   _ok "catalyst.conf written"
 }
 
