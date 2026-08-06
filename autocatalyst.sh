@@ -196,21 +196,35 @@ _write_catalyst_conf(){
     : > "$CATALYST_CONF"
   fi
   _run sed -i \
-    -e "s#^distdir:.*#distdir: $WORKDIR/distfiles#" \
-    -e "s#^portdir:.*#portdir: $WORKDIR/repos/gentoo#" \
-    -e "s#^snapshot_cache:.*#snapshot_cache: $WORKDIR/snapshot#" \
-    -e "s#^snapshot_repo:.*#snapshot_repo: $WORKDIR/repos/gentoo#" \
-    -e "s#^snapshot_treeish:.*#snapshot_treeish: ${SNAP_REF:-HEAD}#" \
-    -e "s#^port_logdir:.*#port_logdir: $WORKDIR/logs#" \
+    -e "s#^distdir[[:space:]=:].*#distdir = $WORKDIR/distfiles#" \
+    -e "s#^portdir[[:space:]=:].*#portdir = $WORKDIR/repos/gentoo#" \
+    -e "s#^snapshot_cache[[:space:]=:].*#snapshot_cache = $WORKDIR/snapshot#" \
+    -e "s#^snapshot_repo[[:space:]=:].*#snapshot_repo = $WORKDIR/repos/gentoo#" \
+    -e "s#^snapshot_treeish[[:space:]=:].*#snapshot_treeish = ${SNAP_REF:-HEAD}#" \
+    -e "s#^port_logdir[[:space:]=:].*#port_logdir = $WORKDIR/logs#" \
     "$CATALYST_CONF"
-  grep -q '^buildroot:' "$CATALYST_CONF" || printf 'buildroot: /var/tmp/catalyst\n' >> "$CATALYST_CONF"
+  # catalyst's config parser only accepts '=' as the delimiter (a bare '[0-9]
+  # or ':' line throws "Missing '=', expected"). Ensure every key we manage is
+  # present AND written with '=', even when the source file lacks a given key.
+  local key k
+  for key in \
+      "distdir=$WORKDIR/distfiles" \
+      "portdir=$WORKDIR/repos/gentoo" \
+      "snapshot_cache=$WORKDIR/snapshot" \
+      "snapshot_repo=$WORKDIR/repos/gentoo" \
+      "snapshot_treeish=${SNAP_REF:-HEAD}" \
+      "port_logdir=$WORKDIR/logs" \
+      "buildroot=/var/tmp/catalyst"; do
+    k="${key%%=*}"
+    grep -q "^${k} *=" "$CATALYST_CONF" || printf '%s\n' "$key" >> "$CATALYST_CONF"
+  done
   _ok "catalyst.conf written"
 }
 
 # catalyst needs the source stage3 in its builds dir: <buildroot>/builds/<rel_type>/...
 _ensure_stage3_builds(){
   local buildroot dest src
-  buildroot="$(awk -F' *: *' '/^buildroot:/{print $2; exit}' "$CATALYST_CONF")"
+  buildroot="$(awk -F'[ =:]+' '/^buildroot/{print $2; exit}' "$CATALYST_CONF")"
   [ -n "$buildroot" ] || buildroot="/var/tmp/catalyst"
   dest="$buildroot/builds/$STAGE3_RELDIR"
   src="$WORKDIR/distfiles/$STAGE3_RELDIR"
