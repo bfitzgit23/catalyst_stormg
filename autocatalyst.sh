@@ -45,6 +45,9 @@ CATALYST_CONF="$WORKDIR/catalyst.conf"
 STAGE3_RELDIR="23.0-default/stage3-amd64-desktop-openrc-latest.tar.xz"
 
 OLD_PREFIX='/home/bennji/Desktop/catalyst_stormg'
+# Where to save the finished ISO (a mounted Windows data partition). Override
+# with $WINDRIVE or --windrive.
+WINDRIVE="${WINDRIVE:-/run/media/calamaroos/B0327A2D3279FB8A4}"
 ONLY='all'
 DRY=0
 JOBS="${CATALYST_JOBS:-$(nproc)}"
@@ -73,6 +76,44 @@ _run(){
 
 usage(){ sed -n '1,40p' "$0" | grep -E '^#|Usage' | sed 's/^# \{0,1\}//'; }
 
+COPY_OK=0
+# Copy any finished ISO to the Windows drive so it survives the cleanup below.
+_copy_iso(){
+  local found
+  found="$(find "$WORKDIR" -maxdepth 3 -name '*.iso' -print -quit 2>/dev/null)"
+  if [ -z "$found" ]; then
+    _warn "No ISO built yet; nothing to save."
+    return 0
+  fi
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] cp $found $WINDRIVE/"; return 0; fi
+  if ! mkdir -p "$WINDRIVE" 2>/dev/null; then
+    _warn "Cannot access Windows drive '$WINDRIVE' (not mounted?)."
+    return 0
+  fi
+  if cp -f "$found" "$WINDRIVE/" 2>/dev/null; then
+    _ok "ISO saved to $WINDRIVE/$(basename "$found")"
+    COPY_OK=1
+  else
+    _warn "Failed to copy ISO to '$WINDRIVE'"
+  fi
+}
+# On success OR failure: save the ISO to the Windows drive, then remove the
+# build dir (unless --keep). Never delete a real ISO we couldn't save.
+_cleanup(){
+  local rc=$?
+  local iso
+  _copy_iso
+  iso="$(find "$WORKDIR" -maxdepth 3 -name '*.iso' -print -quit 2>/dev/null)"
+  if [ -n "${KEEP:-}" ] && [ -d "$WORKDIR" ]; then
+    _warn "--keep set; build dir retained: $WORKDIR"
+  elif [ -n "$iso" ] && [ "$COPY_OK" -eq 0 ] && [ "$DRY" -eq 0 ]; then
+    _warn "ISO present but could not be copied to '$WINDRIVE'; keeping build dir."
+  else
+    [ -d "$WORKDIR" ] && { _info "Removing build dir: $WORKDIR"; rm -rf "$WORKDIR"; }
+  fi
+  return "$rc"
+}
+
 # --------------------------------------------------------------------------
 # arg parsing
 # --------------------------------------------------------------------------
@@ -80,6 +121,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --only=*)            ONLY="${1#*=}" ;;
     --stage3=*)          STAGE3_URL="${1#*=}" ;;
+    --windrive=*)       WINDRIVE="${1#*=}" ;;
     --snapshot=*)        SNAP_REF="${1#*=}"; SNAP_REF_EXPLICIT=1 ;;
     --keep)              KEEP=1 ;;
     --dry-run)           DRY=1 ;;
@@ -318,6 +360,7 @@ main(){
   _info "REPO_DIR=$REPO_DIR"
   _info "WORKDIR=$WORKDIR"
   _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY"
+  trap _cleanup EXIT
   _max_tmpfs
 
   if [ "$ONLY" != stage2 ]; then
