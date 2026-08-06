@@ -1,1 +1,0 @@
-incoming.telemetry.mozilla.org	0	19603	1725246978840,1,0

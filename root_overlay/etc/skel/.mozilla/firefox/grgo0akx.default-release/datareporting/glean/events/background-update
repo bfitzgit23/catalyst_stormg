@@ -1,3 +1,0 @@
-{"timestamp":1488337,"category":"nimbus_events","name":"enroll_failed","extra":{"experiment":"release-experiment-for-additional-metrics-for-product-insights-rollout","reason":"feature-conflict"}}
-{"timestamp":1488354,"category":"nimbus_events","name":"validation_failed","extra":{"reason":"invalid-feature","feature":"accessibilityCache","experiment":"next-generation-accessibility-engine-powering-screen-readers"}}
-{"timestamp":1488354,"category":"nimbus_events","name":"validation_failed","extra":{"reason":"invalid-feature","experiment":"next-generation-accessibility-engine-powering-screen-readers-and-other-ats-copy","feature":"accessibilityCache"}}
