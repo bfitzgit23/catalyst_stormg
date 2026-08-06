@@ -203,7 +203,31 @@ _write_catalyst_conf(){
     -e "s#^snapshot_treeish:.*#snapshot_treeish: ${SNAP_REF:-HEAD}#" \
     -e "s#^port_logdir:.*#port_logdir: $WORKDIR/logs#" \
     "$CATALYST_CONF"
+  grep -q '^buildroot:' "$CATALYST_CONF" || printf 'buildroot: /var/tmp/catalyst\n' >> "$CATALYST_CONF"
   _ok "catalyst.conf written"
+}
+
+# catalyst needs the source stage3 in its builds dir: <buildroot>/builds/<rel_type>/...
+_ensure_stage3_builds(){
+  local buildroot dest src
+  buildroot="$(awk -F' *: *' '/^buildroot:/{print $2; exit}' "$CATALYST_CONF")"
+  [ -n "$buildroot" ] || buildroot="/var/tmp/catalyst"
+  dest="$buildroot/builds/$STAGE3_RELDIR"
+  src="$WORKDIR/distfiles/$STAGE3_RELDIR"
+  if [ -s "$dest" ]; then
+    _ok "stage3 already in catalyst builds dir: $dest"
+    return
+  fi
+  [ -s "$src" ] || _die "No stage3 tarball at $src - run _ensure_stage3 first"
+  mkdir -p "$(dirname "$dest")"
+  _info "Placing stage3 in catalyst builds dir: $dest"
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] link $src -> $dest"; return; fi
+  # hardlink when possible (fast, no extra space); fall back to a copy
+  if ! ln "$src" "$dest" 2>/dev/null; then
+    cp -f "$src" "$dest"
+  fi
+  [ -s "$dest" ] || _die "Failed to place stage3 into catalyst builds dir"
+  _ok "stage3 ready for catalyst: $dest"
 }
 
 # --------------------------------------------------------------------------
@@ -232,10 +256,10 @@ _install_prereqs(){
 # 6. run the build
 # --------------------------------------------------------------------------
 _run_stage1(){
+  _info "== building portage snapshot (git treeish ${SNAP_REF:-HEAD}) =="
+  mkdir -p "$WORKDIR/snapshot"
+  _run catalyst -c "$CATALYST_CONF" -s "${SNAP_REF:-HEAD}" ${CATALYST_OPTS:-}
   _info "== livecd-stage1 =="
-  if [ -n "${SNAP_REF:-}" ] && [ "$SNAP_REF" != HEAD ]; then
-    _run catalyst -c "$CATALYST_CONF" -s "$SNAP_REF" ${CATALYST_OPTS:-}
-  fi
   _run catalyst -c "$CATALYST_CONF" -f "$CONF_STAGE1" ${CATALYST_OPTS:-}
 }
 
@@ -273,6 +297,7 @@ main(){
   if [ "$ONLY" != stage2 ]; then
     _ensure_stage3
     _write_catalyst_conf
+    _ensure_stage3_builds
     _run_stage1
   fi
 
