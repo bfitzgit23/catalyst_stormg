@@ -4,7 +4,7 @@ target: livecd-stage1
 rel_type: 23.0-default
 profile: default/linux/amd64/23.0/desktop
 snapshot_treeish: f0cc80d850136b68015cc9ebefd28431da1c3dc4
-source_subpath: 23.0-default/stage3-amd64-openrc-latest.tar.xz
+source_subpath: 23.0-default/stage3-amd64-desktop-openrc-latest.tar.xz
 compression_mode: pixz
 portage_confdir: /home/bennji/Desktop/catalyst_stormg/config/stages
 repos: /home/bennji/Desktop/catalyst_stormg/overlay/var/db/repos/guru

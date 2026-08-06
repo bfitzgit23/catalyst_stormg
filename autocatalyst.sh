@@ -42,7 +42,7 @@ PORTAGE_CONFD="$REPO_DIR/config/stages"
 CONF_STAGE1="$WORKDIR/livegui-stage1.spec"
 CONF_STAGE2="$WORKDIR/livegui-stage2.spec"
 CATALYST_CONF="$WORKDIR/catalyst.conf"
-STAGE3_RELDIR="23.0-default/stage3-amd64-openrc-latest.tar.xz"
+STAGE3_RELDIR="23.0-default/stage3-amd64-desktop-openrc-latest.tar.xz"
 
 OLD_PREFIX='/home/bennji/Desktop/catalyst_stormg'
 ONLY='all'
@@ -52,7 +52,7 @@ SNAP_REF=""            # resolved below: SHA of the fresh gentoo tree (or --snap
 SNAP_REF_EXPLICIT=0
 GENTOO_REPO="https://github.com/gentoo/gentoo"
 GURU_REPO="https://github.com/gentoo-mirror/guru"
-STEAM_REPO="https://github.com/gentoo-mirror/steam-overlay"
+STEAM_REPO="https://github.com/anyc/steam-overlay"
 
 # --------------------------------------------------------------------------
 # helpers
@@ -155,23 +155,30 @@ _ensure_stage3(){
   if [ "$DRY" -eq 1 ]; then _info "skipping stage3 fetch (dry-run)"; return; fi
   local dist="$WORKDIR/distfiles"
   local out="$dist/$STAGE3_RELDIR"
+  local url
   mkdir -p "$(dirname "$out")"
-  if [ -s "$out" ]; then _ok "stage3 present: $out"; return; fi
+
+  if [ -s "$out" ]; then
+    _ok "stage3 already downloaded, reusing: $out"
+    return
+  fi
 
   if [ -n "${STAGE3_URL:-}" ]; then
-    _info "Downloading stage3 from \$STAGE3_URL"
-    _run curl -fL --retry 3 -o "$out" "$STAGE3_URL"
+    url="$STAGE3_URL"
+    _info "Using stage3 from \$STAGE3_URL"
   else
-    local mirror meta rel
+    local mirror rel meta
     mirror="https://distfiles.gentoo.org"
-    _info "Auto-detecting latest openrc stage3 (amd64)"
-    meta="$(curl -fsSL --retry 3 "$mirror/releases/amd64/autobuilds/latest-stage3-amd64-openrc.txt" \
+    _info "Auto-detecting latest desktop-openrc stage3 (amd64)"
+    meta="$(wget -qO- --tries=3 "$mirror/releases/amd64/autobuilds/latest-stage3-amd64-desktop-openrc.txt" \
         || _die "Could not fetch stage3 metadata (offline?). Use --stage3 <url>.")"
-    rel="$(awk '/\.tar\.(xz|zst)$/{print $1; exit}' <<<"$meta")"
+    rel="$(printf '%s\n' "$meta" | awk '/\.tar\.(xz|zst)$/{print $1; exit}')"
     [ -n "$rel" ] || _die "No stage3 filename in metadata"
-    _info "Fetching $mirror/releases/amd64/autobuilds/$rel"
-    _run curl -fL --retry 3 -o "$out" "$mirror/releases/amd64/autobuilds/$rel"
+    url="$mirror/releases/amd64/autobuilds/$rel"
   fi
+
+  _info "Downloading stage3: $url"
+  _run wget --continue --tries=3 --timeout=30 -O "$out" "$url"
   [ -s "$out" ] || _die "stage3 download failed"
   _ok "stage3 ready: $out"
 }
@@ -216,7 +223,8 @@ _install_prereqs(){
       "sys-boot/grub" \
       "app-cdr/cdrtools" \
       "dev-vcs/git" \
-      "app-arch/tar"
+      "app-arch/tar" \
+        "net-misc/wget"
   _ok "catalyst and dependencies installed"
 }
 

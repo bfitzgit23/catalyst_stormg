@@ -55,9 +55,12 @@ prefix for the real repo location, **fresh-syncs a current gentoo git tree** (pl
 livecd-stage2.
 
 ```sh
+chmod +x autocatalyst.sh
 sudo ./autocatalyst.sh                 # stage1 + stage2, all defaults
 sudo ./autocatalyst.sh --only stage2   # resume from an existing stage1
 sudo ./autocatalyst.sh --dry-run       # print the exact commands without running them
+sudo ./autocatalyst.sh --stage3 URL    # pin a specific stage3; else latest desktop-openrc is auto-detected
+./autocatalyst.sh                      # re-runs: reuses an already-downloaded stage3 tarball
 ```
 
 Options / env overrides:
