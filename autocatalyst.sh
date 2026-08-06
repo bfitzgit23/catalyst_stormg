@@ -188,6 +188,18 @@ _ensure_stage3(){
 # --------------------------------------------------------------------------
 _write_catalyst_conf(){
   _info "Writing catalyst config $CATALYST_CONF"
+  # catalyst validates several config values to be existing directories; create
+  # them up front so no "invalid value" fires (esp. portdir/port_logdir when a
+  # --only stage2 resume rewrites the conf before any clone happened).
+  mkdir -p \
+    "$WORKDIR" \
+    "$WORKDIR/distfiles" \
+    "$WORKDIR/snapshot" \
+    "$WORKDIR/logs" \
+    "$WORKDIR/repos/gentoo" \
+    "$WORKDIR/repos/guru" \
+    "$WORKDIR/repos/steam-overlay" \
+    /var/tmp/catalyst/build /var/tmp/catalyst/tmp /var/tmp/catalyst/snapshot
   local sysconf="/etc/catalyst/catalyst.conf"
   if [ -f "$sysconf" ]; then
     _run cp "$sysconf" "$CATALYST_CONF"
@@ -218,6 +230,11 @@ _write_catalyst_conf(){
     k="${key%%=*}"
     grep -q "^${k} *=" "$CATALYST_CONF" || printf '%s\n' "$key" >> "$CATALYST_CONF"
   done
+  # Local strict-config sanity check (fails here instead of deep inside catalyst).
+  if [ "$DRY" -eq 0 ] && _have python3; then
+    python3 -c "import configparser,sys;c=configparser.ConfigParser(delimiters=('=',),strict=False);c.read('$CATALYST_CONF')" \
+      || _die "generated catalyst.conf failed Python configparser validation"
+  fi
   _ok "catalyst.conf written"
 }
 
