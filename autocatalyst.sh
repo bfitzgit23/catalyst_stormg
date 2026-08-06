@@ -230,43 +230,25 @@ _ensure_stage3(){
 # --------------------------------------------------------------------------
 _write_catalyst_conf(){
   _info "Writing catalyst config $CATALYST_CONF"
-  # Catalina enforces a whitelist of valid config-file keys; any unknown key
-  # (portdir, snapshot_cache, snapshot_repo, snapshot_treeish, buildroot, ...)
-  # is rejected with "invalid value". Those go in the SPEC instead. Here we only
-  # set the keys catalyst actually accepts: the distdir, and repos_storedir
-  # (where the git snapshot repos live for the git-based snapshot).
-  mkdir -p "$WORKDIR" "$WORKDIR/distfiles" "$WORKDIR/repos"
+  # Just copy the host's catalyst.conf verbatim - no rewriting of values, no
+  # injecting "snapshot_*"/"portdir" etc. (those are not valid conf keys and
+  # cause "invalid value"). The host conf already parses on this machine.
   local sysconf="/etc/catalyst/catalyst.conf"
   if [ -f "$sysconf" ]; then
-    _run cp "$sysconf" "$CATALYST_CONF"
+    _run cp -f "$sysconf" "$CATALYST_CONF"
+    _ok "catalyst.conf copied from $sysconf"
   else
-    _warn "No system catalyst.conf yet; writing minimal one."
+    _warn "No $sysconf found on this host; writing empty one."
     : > "$CATALYST_CONF"
   fi
-  # Delete any lines whose keys catalyst rejects (incl. ones leftover from
-  # earlier runs of this script / stale build/catalyst.conf), then set the two
-  # valid keys we control.
-  _run sed -i \
-    -e "/^portdir[[:space:]=:]/d" \
-    -e "/^port_logdir[[:space:]=:]/d" \
-    -e "/^buildroot[[:space:]=:]/d" \
-    -e "/^snapshot_cache[[:space:]=:]/d" \
-    -e "/^snapshot_repo[[:space:]=:]/d" \
-    -e "/^snapshot_treeish[[:space:]=:]/d" \
-    -e "s#^distdir[[:space:]=:].*#distdir = $WORKDIR/distfiles#" \
-    -e "s#^repos_storedir[[:space:]=:].*#repos_storedir = $WORKDIR/repos#" \
-    "$CATALYST_CONF"
-  grep -q "^distdir *="       "$CATALYST_CONF" || printf 'distdir = %s\n'       "$WORKDIR/distfiles" >> "$CATALYST_CONF"
-  grep -q "^repos_storedir *=" "$CATALYST_CONF" || printf 'repos_storedir = %s\n' "$WORKDIR/repos"      >> "$CATALYST_CONF"
-  _ok "catalyst.conf written"
 }
 
-# catalyst needs the source stage3 in its builds dir: <buildroot>/builds/<rel_type>/...
+# catalyst needs the source stage3 in its builds dir: <storedir>/builds/<rel_type>/...
 _ensure_stage3_builds(){
-  local buildroot dest src
-  buildroot="$(awk -F'[ =:]+' '/^buildroot/{print $2; exit}' "$CATALYST_CONF")"
-  [ -n "$buildroot" ] || buildroot="/var/tmp/catalyst"
-  dest="$buildroot/builds/$STAGE3_RELDIR"
+  local storedir dest src
+  storedir="$(awk -F'[ =:]+' '/^storedir/{print $2; exit}' "$CATALYST_CONF")"
+  [ -n "$storedir" ] || storedir="/var/tmp/catalyst"
+  dest="$storedir/builds/$STAGE3_RELDIR"
   src="$WORKDIR/distfiles/$STAGE3_RELDIR"
   if [ -s "$dest" ]; then
     _ok "stage3 already in catalyst builds dir: $dest"
