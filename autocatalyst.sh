@@ -19,11 +19,12 @@
 #
 # Usage:
 #   sudo ./autocatalyst.sh [--only stage1|stage2] [--stage3 <url>] [--snapshot <ref>]
-#                          [--bump-glibc] [-j <jobs>] [--keep] [--dry-run]
+#                          [--no-bump-glibc] [-j <jobs>] [--keep] [--dry-run]
 #
-#   --bump-glibc  before catalyst stage1, upgrade the stage3 chroot's glibc to
-#                 the snapshot's newest. Fixes "Downgrading glibc" sanity-check
-#                 aborts when the downloaded stage3 is ahead of the snapshot.
+#   Before catalyst stage1, the stage3's glibc is upgraded to the newest the
+#   snapshot tree can install (>= GLIBC_MIN, default 2.43-r2) with testing
+#   KEYWORDS accepted, so catalyst never aborts with "Downgrading glibc is not
+#   supported". Disable with --no-bump-glibc.
 #
 # Env overrides:
 #   REPO_DIR       repo root   (default: directory containing this script)
@@ -32,6 +33,7 @@
 #   --snapshot REF uses a specific gentoo treeish (default: fresh HEAD)
 #   CATALYST_JOBS  make jobs (default: nproc)
 #   CATALYST_OPTS  extra args passed to catalyst
+#   GLIBC_MIN      minimum glibc the pre-stage1 bump targets (default 2.43-r2)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -54,7 +56,10 @@ OLD_PREFIX='/home/bennji/Desktop/catalyst_stormg'
 ISO_DIR="${ISO_DIR:-$HOME/Desktop}"
 SCRATCH_BASE=""
 SCRATCH_MNT=""
-BUMP_GLIBC="${BUMP_GLIBC:-0}"
+BUMP_GLIBC="${BUMP_GLIBC:-1}"
+GLIBC_MIN="${GLIBC_MIN:-2.43-r2}"
+HOST_MAKE_CONF="${HOST_MAKE_CONF:-/etc/portage/make.conf}"
+GLIBC_ACCEPT_ARCH="${GLIBC_ACCEPT_ARCH:-amd64}"
 ONLY='all'
 DRY=0
 JOBS="${CATALYST_JOBS:-$(nproc)}"
@@ -109,6 +114,7 @@ _copy_iso(){
 _cleanup(){
   local rc=$?
   local iso m
+  _drop_host_keywords
   _copy_iso
   iso="$(find "$WORKDIR" -maxdepth 3 -name '*.iso' -print -quit 2>/dev/null)"
   if [ -n "${KEEP:-}" ] && [ -d "$WORKDIR" ]; then
@@ -134,6 +140,7 @@ while [ $# -gt 0 ]; do
     --iso-dir=*)        ISO_DIR="${1#*=}" ;;
     --snapshot=*)        SNAP_REF="${1#*=}"; SNAP_REF_EXPLICIT=1 ;;
     --bump-glibc)        BUMP_GLIBC=1 ;;
+    --no-bump-glibc)     BUMP_GLIBC=0 ;;
     --keep)              KEEP=1 ;;
     --dry-run)           DRY=1 ;;
     -j)                  JOBS="$2"; shift ;;
@@ -307,6 +314,11 @@ _snapshot_glibc_newest(){
   ls "$dir"/glibc-*.ebuild 2>/dev/null | sed -E 's#.*/glibc-(.*)\.ebuild#\1#' | sort -V | tail -1
 }
 
+# True if the first dot-version is >= the second (via sort -V).
+_ver_ge(){
+  [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]
+}
+
 # glibc PV actually INSIDE the (tarball) stage3 we're about to build from.
 _stage3_glibc_installed(){
   local tar="$1" pv
@@ -321,19 +333,23 @@ _stage3_glibc_installed(){
 # upgrading the stage3 chroot's glibc to the snapshot's newest FIRST, so the
 # toolchain merge is at worst an upgrade. This replicates a mini stage1.
 _bump_glibc(){
-  if [ "${BUMP_GLIBC:-0}" != 1 ]; then
-    _info "glibc bump disabled; pass --bump-glibc to enable pre-stage1 glibc upgrade"
+  if [ "${BUMP_GLIBC:-1}" != 1 ]; then
+    _info "glibc bump disabled (BUMP_GLIBC=0 / --no-bump-glibc)"
     return 0
   fi
   if [ "$DRY" -eq 1 ]; then _info "[dry-run] skip glibc bump"; return 0; fi
-  local tar target cur rootcmd
+  local tar newest cur target root rootcmd rc mkconf cb arch
   tar="$WORKDIR/distfiles/$STAGE3_RELDIR"
   [ -s "$tar" ] || { _warn "no source stage3 tarball; skipping glibc bump"; return 0; }
-  target="$(_snapshot_glibc_newest)" || { _warn "cannot resolve snapshot glibc; skipping bump"; return 0; }
+  newest="$(_snapshot_glibc_newest)" || { _warn "cannot resolve snapshot glibc; skipping bump"; return 0; }
   cur="$(_stage3_glibc_installed "$tar")" || cur=""
-  _info "glibc: inside-stage3=$cur  snapshot-newest=$target"
+  target="$newest"
+  if ! _ver_ge "$target" "$GLIBC_MIN"; then
+    _warn "snapshot newest glibc ($target) below requested floor ($GLIBC_MIN); using $target"
+  fi
+  _info "glibc: inside-stage3=${cur:-?}  snapshot-newest=$newest  target=$target"
   if [ -n "$cur" ] && [ "$cur" = "$target" ]; then
-    _ok "stage3 glibc already matches snapshot; nothing to bump"
+    _ok "stage3 glibc already at target; nothing to bump"
     return 0
   fi
   _info "Upgrading stage3 glibc to $target before catalyst stage1"
@@ -353,20 +369,48 @@ _bump_glibc(){
   local mkconf="$root/etc/portage/make.conf"
   [ -f "$mkconf" ] || mkdir -p "$(dirname "$mkconf")"
   grep -Es '^ *(CHOST|CFLAGS|CPPFLAGS|LDFLAGS|MAKEOPTS|FEATURES)=' /etc/portage/make.conf 2>/dev/null >> "$mkconf" 2>/dev/null || :
-  rootcmd="emerge -q --oneshot --nodeps --newuse \">=sys-libs/glibc-$target\""
+  # accept the newest glibc (incl. testing) so catalyst's stable-only resolution
+  # can never fall below the stage3's glibc.
+  cb="$(grep -Es '^(CHOST|CBUILD)=' /etc/portage/make.conf 2>/dev/null | head -1)"
+  case "$cb" in *aarch64*|*arm64*) arch="arm64" ;; *x86_64*|*amd64*) arch="amd64" ;; *) arch="amd64" ;; esac
+  echo "ACCEPT_KEYWORDS=\"$arch ~$arch\"" >> "$mkconf"
+  rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$GLIBC_MIN\" \">=sys-libs/glibc-$target\""
   chroot "$root" /bin/bash -lc "$rootcmd"
-  local rc=$?
+  rc=$?
   if [ "$rc" -ne 0 ]; then
-    _warn "glibc bump in temporary chroot failed (rc=$rc); continuing with original stage3"
+    _warn "glibc bump to $target failed; retrying with newest $newest"
+    rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$newest\""
+    chroot "$root" /bin/bash -lc "$rootcmd"
+    rc=$?
+  fi
+  if [ "$rc" -ne 0 ]; then
+    _warn "glibc bump failed (rc=$rc); continuing with original stage3"
   else
     _info "Repacking bumped stage3"
     _run tar -cJf "$WORKDIR/distfiles/stage3.bumped.tar.xz" -C "$root" --xattrs --acls .
     [ -s "$WORKDIR/distfiles/stage3.bumped.tar.xz" ] && _run mv -f "$WORKDIR/distfiles/stage3.bumped.tar.xz" "$tar"
     _ok "stage3 glibc bumped to $target"
   fi
-  # tear down; root is removed by _cleanup with the rest of $WORKDIR
   for m in proc dev sys; do umount "$root/$m" 2>/dev/null || true; done
   return "$rc"
+}
+
+# Catalyst builds each stage's chroot make.conf off the HOST's
+# /etc/portage/make.conf. Without accepting testing KEYWORDS there, catalyst
+# resolves the newest STABLE glibc and can still try a downgrade against a
+# bumped stage3. Temporarily add an ACCEPT_KEYWORDS marker to the host conf,
+# then roll it back in _cleanup() (also see _drop_host_keywords).
+_accept_host_keywords(){
+  [ "$DRY" -eq 1 ] && { _info "[dry-run] would accept testing glibc in host make.conf"; return 0; }
+  local mk="$HOST_MAKE_CONF" arch="$GLIBC_ACCEPT_ARCH" offmatch
+  [ -f "$mk" ] || return 0
+  if grep -q '^#<stormg-bump-glibc>' "$mk"; then return 0; fi  # already injected
+  printf '\n#<stormg-drop-glibc>\nACCEPT_KEYWORDS="%s ~%s"\n#</stormg-drop-glibc>\n' "$arch" "$arch" >> "$mk"
+  _ok "accepted testing glibc in host make.conf ($arch ~$arch)"
+}
+_drop_host_keywords(){
+  local mk="$HOST_MAKE_CONF"
+  [ -f "$mk" ] && sed -i '/^#<stormg-drop-glibc>$/,/^#<\/stormg-drop-glibc>$/d' "$mk" 2>/dev/null || true
 }
 
 # --------------------------------------------------------------------------
@@ -378,8 +422,7 @@ _bump_glibc(){
 # Gentoo-based derivatives (CalamaroOS etc.) boot a live root on
 # overlay/squashfs. Either signals a tmpfs-backed live GUI session.
 _live_session(){
-  [ -e /etc/init.d/livecd ] && return 0
-  grep -Eq ' (overlay|squashfs|livecd)' /proc/mounts && return 0
+  [ -e /etc/init.d/livecd ] && return 0  grep -Eq ' (overlay|squashfs|livecd)' /proc/mounts && return 0
   return 1
 }
 _max_tmpfs(){
@@ -441,6 +484,7 @@ _install_prereqs(){
 # 6. run the build
 # --------------------------------------------------------------------------
 _run_stage1(){
+  _accept_host_keywords
   _info "== building portage snapshot (git treeish ${SNAP_REF:-HEAD}) =="
   mkdir -p "$WORKDIR/snapshot"
   _run catalyst -c "$CATALYST_CONF" -s "${SNAP_REF:-HEAD}" ${CATALYST_OPTS:-}
