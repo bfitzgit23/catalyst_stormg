@@ -56,7 +56,6 @@ livecd/packages:
 	app-arch/cpio
 	app-arch/gzip
 	app-arch/mt-st
-	app-arch/p7zip
 	app-arch/pbzip2
 	app-arch/tar
 	app-arch/zip
