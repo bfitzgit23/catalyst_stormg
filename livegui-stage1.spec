@@ -103,7 +103,7 @@ livecd/packages:
 	dev-debug/strace
 	dev-lang/perl
 	dev-lang/python
-	dev-python/PyQt6
+	dev-python/pyqt6
 #	Gone until it supports python3_10
 	dev-vcs/git
 	dev-vcs/subversion
