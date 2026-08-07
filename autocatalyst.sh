@@ -258,17 +258,26 @@ _ensure_stage3(){
 # --------------------------------------------------------------------------
 _write_catalyst_conf(){
   _info "Writing catalyst config $CATALYST_CONF"
-  # Just copy the host's catalyst.conf verbatim - no rewriting of values, no
-  # injecting "snapshot_*"/"portdir" etc. (those are not valid conf keys and
-  # cause "invalid value"). The host conf already parses on this machine.
+  # Start from the host's catalyst.conf verbatim (its other options are valid),
+  # but route distdir/storedir onto the (large) work disk: on a live ISO the
+  # host defaults often point at a tiny tmpfs and building fails with
+  # "insufficient space" (glibc-* tarballs etc.). distdir & storedir are valid
+  # keys, so this won't trip the whitelist check.
   local sysconf="/etc/catalyst/catalyst.conf"
+  mkdir -p "$WORKDIR/distfiles" "$WORKDIR/storedir"
   if [ -f "$sysconf" ]; then
     _run cp -f "$sysconf" "$CATALYST_CONF"
-    _ok "catalyst.conf copied from $sysconf"
   else
     _warn "No $sysconf found on this host; writing empty one."
     : > "$CATALYST_CONF"
   fi
+  _run sed -i \
+    -e "s#^distdir[[:space:]=:].*#distdir = $WORKDIR/distfiles#" \
+    -e "s#^storedir[[:space:]=:].*#storedir = $WORKDIR/storedir#" \
+    "$CATALYST_CONF"
+  grep -q "^distdir *="  "$CATALYST_CONF" || printf 'distdir = %s\n'  "$WORKDIR/distfiles" >> "$CATALYST_CONF"
+  grep -q "^storedir *=" "$CATALYST_CONF" || printf 'storedir = %s\n' "$WORKDIR/storedir"    >> "$CATALYST_CONF"
+  _ok "catalyst.conf written (distdir+storedir on $WORKDIR)"
 }
 
 # catalyst needs the source stage3 in its builds dir: <storedir>/builds/<rel_type>/...
