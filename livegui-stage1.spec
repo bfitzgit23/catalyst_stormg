@@ -130,7 +130,7 @@ livecd/packages:
 	net-misc/dhcpcd
 	net-misc/iputils
 	net-misc/ndisc6
-	net-misc/network-manager-applet
+	net-misc/networkmanager
 	net-misc/openssh
 	net-misc/rdate
 	net-misc/rdesktop
@@ -247,6 +247,7 @@ livecd/packages:
 	x11-misc/lightdm
 	x11-misc/lightdm-gtk-greeter
 	gui-libs/display-manager-init
+	gnome-extra/nm-applet
 	app-cdr/xfburn
 	media-gfx/ristretto
 	dev-util/meld
