@@ -48,6 +48,8 @@ OLD_PREFIX='/home/bennji/Desktop/catalyst_stormg'
 # Where to save the finished ISO (a mounted Windows data partition). Override
 # with $WINDRIVE or --windrive.
 WINDRIVE="${WINDRIVE:-/run/media/calamaroos/B0327A2D3279FB8A4}"
+SCRATCH_BASE=""
+SCRATCH_MNT=""
 ONLY='all'
 DRY=0
 JOBS="${CATALYST_JOBS:-$(nproc)}"
@@ -101,7 +103,7 @@ _copy_iso(){
 # build dir (unless --keep). Never delete a real ISO we couldn't save.
 _cleanup(){
   local rc=$?
-  local iso
+  local iso m
   _copy_iso
   iso="$(find "$WORKDIR" -maxdepth 3 -name '*.iso' -print -quit 2>/dev/null)"
   if [ -n "${KEEP:-}" ] && [ -d "$WORKDIR" ]; then
@@ -111,6 +113,9 @@ _cleanup(){
   else
     [ -d "$WORKDIR" ] && { _info "Removing build dir: $WORKDIR"; rm -rf "$WORKDIR"; }
   fi
+  for m in $SCRATCH_MNT; do
+    umount "$m" 2>/dev/null && _ok "unmounted scratch over $m"
+  done
   return "$rc"
 }
 
@@ -309,6 +314,39 @@ _max_tmpfs(){
   mount -o remount,size=0 /run      2>/dev/null && _ok "enlarged /run"   || _warn "could not remount /run"
 }
 
+# The host catalyst distdir/storedir (e.g. /var/cache/distfiles) often sit on a
+# small tmpfs on a live ISO. Without rewriting catalyst.conf we bind-mount big
+# scratch storage over those dirs so downloads/builds don't run out of space.
+_scratch_space(){
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] create scratch bind mounts"; return; fi
+  local hconf="/etc/catalyst/catalyst.conf" dist stored base d backing
+  base="${SCRATCH_BASE:-}"
+  if [ -z "$base" ]; then
+    # prefer the mounted Windows drive (has room); else fall back to $WORKDIR
+    if [ -n "$WINDRIVE" ] && [ -d "$WINDRIVE" ] && mkdir "${WINDRIVE}/.cswt" 2>/dev/null; then
+      rmdir "${WINDRIVE}/.cswt"
+      base="$WINDRIVE/catalyst-scratch"
+    else
+      base="$WORKDIR/scratch"
+    fi
+  fi
+  mkdir -p "$base"
+  dist="$(awk -F'[ =:]+' '/^distdir/{print $2; exit}' "$hconf" 2>/dev/null)"; [ -n "$dist" ]  || dist="/var/cache/distfiles"
+  stored="$(awk -F'[ =:]+' '/^storedir/{print $2; exit}' "$hconf" 2>/dev/null)"; [ -n "$stored" ] || stored="/var/tmp/catalyst"
+  for d in "$dist" "$stored"; do
+    case "$d" in /*) ;; *) continue ;; esac
+    mkdir -p "$d"
+    backing="$base$(printf '%s' "$d" | tr '/' '_')"
+    mkdir -p "$backing"
+    if mount --bind "$backing" "$d" 2>/dev/null; then
+      _ok "big scratch bind-mounted over $d"
+      SCRATCH_MNT="${SCRATCH_MNT} $d"
+    else
+      _warn "could not bind-mount scratch over $d"
+    fi
+  done
+}
+
 _install_prereqs(){
   if _have catalyst && [ -f /etc/catalyst/catalyst.conf ]; then
     _ok "catalyst already installed"
@@ -365,6 +403,7 @@ main(){
   _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY"
   trap _cleanup EXIT
   _max_tmpfs
+  _scratch_space
 
   if [ "$ONLY" != stage2 ]; then
     _install_prereqs
