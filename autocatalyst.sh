@@ -45,9 +45,9 @@ CATALYST_CONF="$WORKDIR/catalyst.conf"
 STAGE3_RELDIR="23.0-default/stage3-amd64-desktop-openrc-latest.tar.xz"
 
 OLD_PREFIX='/home/bennji/Desktop/catalyst_stormg'
-# Where to save the finished ISO (a mounted Windows data partition). Override
-# with $WINDRIVE or --windrive.
-WINDRIVE="${WINDRIVE:-/run/media/calamaroos/B0327A2D3279FB8A4}"
+# Where to save the finished ISO - the installed CalamaroOS SSD (user Desktop).
+# Override with $ISO_DIR or --iso-dir.
+ISO_DIR="${ISO_DIR:-$HOME/Desktop}"
 SCRATCH_BASE=""
 SCRATCH_MNT=""
 ONLY='all'
@@ -87,16 +87,16 @@ _copy_iso(){
     _warn "No ISO built yet; nothing to save."
     return 0
   fi
-  if [ "$DRY" -eq 1 ]; then _info "[dry-run] cp $found $WINDRIVE/"; return 0; fi
-  if ! mkdir -p "$WINDRIVE" 2>/dev/null; then
-    _warn "Cannot access Windows drive '$WINDRIVE' (not mounted?)."
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] cp $found $ISO_DIR/"; return 0; fi
+  if ! mkdir -p "$ISO_DIR" 2>/dev/null; then
+    _warn "Cannot access ISO dir '$ISO_DIR' (does it exist?)."
     return 0
   fi
-  if cp -f "$found" "$WINDRIVE/" 2>/dev/null; then
-    _ok "ISO saved to $WINDRIVE/$(basename "$found")"
+  if cp -f "$found" "$ISO_DIR/" 2>/dev/null; then
+    _ok "ISO saved to $ISO_DIR/$(basename "$found")"
     COPY_OK=1
   else
-    _warn "Failed to copy ISO to '$WINDRIVE'"
+    _warn "Failed to copy ISO to '$ISO_DIR'"
   fi
 }
 # On success OR failure: save the ISO to the Windows drive, then remove the
@@ -109,7 +109,7 @@ _cleanup(){
   if [ -n "${KEEP:-}" ] && [ -d "$WORKDIR" ]; then
     _warn "--keep set; build dir retained: $WORKDIR"
   elif [ -n "$iso" ] && [ "$COPY_OK" -eq 0 ] && [ "$DRY" -eq 0 ]; then
-    _warn "ISO present but could not be copied to '$WINDRIVE'; keeping build dir."
+    _warn "ISO present but could not be copied to '$ISO_DIR'; keeping build dir."
   else
     [ -d "$WORKDIR" ] && { _info "Removing build dir: $WORKDIR"; rm -rf "$WORKDIR"; }
   fi
@@ -126,7 +126,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --only=*)            ONLY="${1#*=}" ;;
     --stage3=*)          STAGE3_URL="${1#*=}" ;;
-    --windrive=*)       WINDRIVE="${1#*=}" ;;
+    --iso-dir=*)        ISO_DIR="${1#*=}" ;;
     --snapshot=*)        SNAP_REF="${1#*=}"; SNAP_REF_EXPLICIT=1 ;;
     --keep)              KEEP=1 ;;
     --dry-run)           DRY=1 ;;
@@ -322,13 +322,7 @@ _scratch_space(){
   local hconf="/etc/catalyst/catalyst.conf" dist stored base d backing
   base="${SCRATCH_BASE:-}"
   if [ -z "$base" ]; then
-    # prefer the mounted Windows drive (has room); else fall back to $WORKDIR
-    if [ -n "$WINDRIVE" ] && [ -d "$WINDRIVE" ] && mkdir "${WINDRIVE}/.cswt" 2>/dev/null; then
-      rmdir "${WINDRIVE}/.cswt"
-      base="$WINDRIVE/catalyst-scratch"
-    else
-      base="$WORKDIR/scratch"
-    fi
+    base="$WORKDIR/scratch"
   fi
   mkdir -p "$base"
   dist="$(awk -F'[ =:]+' '/^distdir/{print $2; exit}' "$hconf" 2>/dev/null)"; [ -n "$dist" ]  || dist="/var/cache/distfiles"
