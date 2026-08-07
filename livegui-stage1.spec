@@ -120,7 +120,6 @@ livecd/packages:
 	net-dialup/mingetty
 	net-dialup/pptpclient
 	net-dialup/rp-pppoe
-	net-dns/bind-tools
 	net-fs/cifs-utils
 	net-fs/nfs-utils
 	net-ftp/ftp
