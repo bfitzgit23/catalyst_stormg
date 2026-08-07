@@ -28,12 +28,34 @@ useradd -M -g messagebus messagebus
 groupadd avahi
 useradd -M -g avahi avahi
 gpasswd -a gentoo avahi
-groupadd power
-gpasswd -a gentoo power
-groupadd netdev
-gpasswd -a gentoo netdev
-groupadd plugdev
-gpasswd -a gentoo netdev
+
+# System groups for the live user. Create them if they don't already exist
+# (the desktop-openrc stage3 may ship some), then add 'gentoo' to each.
+#  - power : allow reboot/shutdown from the session menu (see polkit rule)
+#  - netdev: allow NetworkManager + nm-applet to manage wifi/DHCP
+#  - plugdev: allow non-root access to removable devices / network dongles
+#  - autologin / nopasswdlogin: allow password-less GUI autologin under lightdm
+for g in power netdev plugdev autologin nopasswdlogin; do
+	groupadd -f "$g"
+	usermod -a -G "$g" gentoo
+done
+
+# Make sure gentoo is the primary member of a sane default group too
+usermod -g users gentoo 2>/dev/null || true
+
+# CLI/console autologin: OpenRC drops you onto tty1 via agetty --autologin.
+# Replace the tty1/tty2 getty lines so a plain console logs in as 'gentoo'.
+if [ -f /etc/inittab ]; then
+	sed -i 's#^c1:.*tty1.*#c1:   -       respawn:/sbin/agetty --autologin gentoo --noclear 38400 tty1 linux#' /etc/inittab 2>/dev/null || true
+	sed -i 's#^c2:.*tty2.*#c2:   -       respawn:/sbin/agetty --autologin gentoo --noclear 38400 tty2 linux#' /etc/inittab 2>/dev/null || true
+	grep -q -- '--autologin gentoo' /etc/inittab || \
+		echo 'c1:12345:respawn:/sbin/agetty --autologin gentoo --noclear 38400 tty1 linux' >> /etc/inittab
+fi
+# For elogind VTs we must keep /etc/securetty-style approval for agetty autologin
+if [ -f /etc/securetty ]; then
+	grep -q '^tty1$' /etc/securetty || echo tty1 >> /etc/securetty
+	grep -q '^tty2$' /etc/securetty || echo tty2 >> /etc/securetty
+fi
 
 emerge --sync -q && eix-update
 
@@ -80,11 +102,9 @@ for i in "${DESKTOP_APPS[@]}"; do
 	ln -sv /usr/share/applications/${i}.desktop Desktop/
 done
 
-groupadd autologin
-gpasswd -a gentoo autologin
+groupadd lightdm
 
-groupadd nopasswdlogin
-gpasswd -a gentoo nopasswdlogin
+chage -E -1 lightdm
 
 cp -af /usr/share/applications/calamares.desktop /home/gentoo/Desktop/calamares.desktop
 chown -R gentoo:users /home/gentoo/Desktop/calamares.desktop

@@ -19,7 +19,11 @@
 #
 # Usage:
 #   sudo ./autocatalyst.sh [--only stage1|stage2] [--stage3 <url>] [--snapshot <ref>]
-#                          [-j <jobs>] [--keep] [--dry-run]
+#                          [--bump-glibc] [-j <jobs>] [--keep] [--dry-run]
+#
+#   --bump-glibc  before catalyst stage1, upgrade the stage3 chroot's glibc to
+#                 the snapshot's newest. Fixes "Downgrading glibc" sanity-check
+#                 aborts when the downloaded stage3 is ahead of the snapshot.
 #
 # Env overrides:
 #   REPO_DIR       repo root   (default: directory containing this script)
@@ -50,6 +54,7 @@ OLD_PREFIX='/home/bennji/Desktop/catalyst_stormg'
 ISO_DIR="${ISO_DIR:-$HOME/Desktop}"
 SCRATCH_BASE=""
 SCRATCH_MNT=""
+BUMP_GLIBC="${BUMP_GLIBC:-0}"
 ONLY='all'
 DRY=0
 JOBS="${CATALYST_JOBS:-$(nproc)}"
@@ -128,6 +133,7 @@ while [ $# -gt 0 ]; do
     --stage3=*)          STAGE3_URL="${1#*=}" ;;
     --iso-dir=*)        ISO_DIR="${1#*=}" ;;
     --snapshot=*)        SNAP_REF="${1#*=}"; SNAP_REF_EXPLICIT=1 ;;
+    --bump-glibc)        BUMP_GLIBC=1 ;;
     --keep)              KEEP=1 ;;
     --dry-run)           DRY=1 ;;
     -j)                  JOBS="$2"; shift ;;
@@ -276,12 +282,14 @@ _ensure_stage3_builds(){
   [ -n "$storedir" ] || storedir="/var/tmp/catalyst"
   dest="$storedir/builds/$STAGE3_RELDIR"
   src="$WORKDIR/distfiles/$STAGE3_RELDIR"
-  if [ -s "$dest" ]; then
+  if [ -s "$dest" ] && [ "$dest" -nt "$src" ]; then
     _ok "stage3 already in catalyst builds dir: $dest"
     return
   fi
   [ -s "$src" ] || _die "No stage3 tarball at $src - run _ensure_stage3 first"
   mkdir -p "$(dirname "$dest")"
+  # refresh a stale (e.g. glibc-bumped) copy before placing
+  [ -e "$dest" ] && rm -f "$dest"
   _info "Placing stage3 in catalyst builds dir: $dest"
   if [ "$DRY" -eq 1 ]; then _info "[dry-run] link $src -> $dest"; return; fi
   # hardlink when possible (fast, no extra space); fall back to a copy
@@ -290,6 +298,75 @@ _ensure_stage3_builds(){
   fi
   [ -s "$dest" ] || _die "Failed to place stage3 into catalyst builds dir"
   _ok "stage3 ready for catalyst: $dest"
+}
+
+# Newest glibc PV available in the freshly-synced snapshot gentoo tree.
+_snapshot_glibc_newest(){
+  local dir="$WORKDIR/repos/gentoo/sys-libs/glibc"
+  [ -d "$dir" ] || return 1
+  ls "$dir"/glibc-*.ebuild 2>/dev/null | sed -E 's#.*/glibc-(.*)\.ebuild#\1#' | sort -V | tail -1
+}
+
+# glibc PV actually INSIDE the (tarball) stage3 we're about to build from.
+_stage3_glibc_installed(){
+  local tar="$1" pv
+  [ -s "$tar" ] && [ -f "/usr/bin/tar" ] || return 1
+  pv="$(tar -xJf "$tar" --wildcards --to-stdout 'var/db/pkg/sys-libs/glibc-*/PV' 2>/dev/null | head -1)"
+  [ -n "$pv" ] || return 1
+  printf '%s' "$pv"
+}
+
+# Catalyst dies ("Downgrading glibc is not supported") when the stage3's glibc
+# is newer than what the snapshot profile wants to build. Prevent that by
+# upgrading the stage3 chroot's glibc to the snapshot's newest FIRST, so the
+# toolchain merge is at worst an upgrade. This replicates a mini stage1.
+_bump_glibc(){
+  if [ "${BUMP_GLIBC:-0}" != 1 ]; then
+    _info "glibc bump disabled; pass --bump-glibc to enable pre-stage1 glibc upgrade"
+    return 0
+  fi
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] skip glibc bump"; return 0; fi
+  local tar target cur rootcmd
+  tar="$WORKDIR/distfiles/$STAGE3_RELDIR"
+  [ -s "$tar" ] || { _warn "no source stage3 tarball; skipping glibc bump"; return 0; }
+  target="$(_snapshot_glibc_newest)" || { _warn "cannot resolve snapshot glibc; skipping bump"; return 0; }
+  cur="$(_stage3_glibc_installed "$tar")" || cur=""
+  _info "glibc: inside-stage3=$cur  snapshot-newest=$target"
+  if [ -n "$cur" ] && [ "$cur" = "$target" ]; then
+    _ok "stage3 glibc already matches snapshot; nothing to bump"
+    return 0
+  fi
+  _info "Upgrading stage3 glibc to $target before catalyst stage1"
+  local root="$WORKDIR/bumproot"
+  rm -rf "$root"; mkdir -p "$root"
+  _run tar -xJf "$tar" -C "$root"
+  # overlay the snapshot's portage tree so the chroot sees its glibc ebuild
+  mkdir -p "$root/var/db/repos"
+  rm -rf "$root/var/db/repos/gentoo"
+  cp -a "$WORKDIR/repos/gentoo" "$root/var/db/repos/gentoo"
+  if [ "${GENTOO_BIND:-1}" = 1 ]; then
+    mount --bind /proc "$root/proc" 2>/dev/null || _warn "no /proc bind"
+    mount --bind /dev "$root/dev"   2>/dev/null || _warn "no /dev bind"
+    mount --bind /sys "$root/sys"   2>/dev/null || _warn "no /sys bind"
+  fi
+  [ -e "$root/etc/resolv.conf" ] || cp -f /etc/resolv.conf "$root/etc/resolv.conf" 2>/dev/null
+  local mkconf="$root/etc/portage/make.conf"
+  [ -f "$mkconf" ] || mkdir -p "$(dirname "$mkconf")"
+  grep -Es '^ *(CHOST|CFLAGS|CPPFLAGS|LDFLAGS|MAKEOPTS|FEATURES)=' /etc/portage/make.conf 2>/dev/null >> "$mkconf" 2>/dev/null || :
+  rootcmd="emerge -q --oneshot --nodeps --newuse \">=sys-libs/glibc-$target\""
+  chroot "$root" /bin/bash -lc "$rootcmd"
+  local rc=$?
+  if [ "$rc" -ne 0 ]; then
+    _warn "glibc bump in temporary chroot failed (rc=$rc); continuing with original stage3"
+  else
+    _info "Repacking bumped stage3"
+    _run tar -cJf "$WORKDIR/distfiles/stage3.bumped.tar.xz" -C "$root" --xattrs --acls .
+    [ -s "$WORKDIR/distfiles/stage3.bumped.tar.xz" ] && _run mv -f "$WORKDIR/distfiles/stage3.bumped.tar.xz" "$tar"
+    _ok "stage3 glibc bumped to $target"
+  fi
+  # tear down; root is removed by _cleanup with the rest of $WORKDIR
+  for m in proc dev sys; do umount "$root/$m" 2>/dev/null || true; done
+  return "$rc"
 }
 
 # --------------------------------------------------------------------------
@@ -409,6 +486,7 @@ main(){
   if [ "$ONLY" != stage2 ]; then
     _ensure_stage3
     _write_catalyst_conf
+    _bump_glibc
     _ensure_stage3_builds
     _run_stage1
   fi

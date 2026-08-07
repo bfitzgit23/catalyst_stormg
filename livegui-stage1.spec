@@ -130,6 +130,7 @@ livecd/packages:
 	net-misc/dhcpcd
 	net-misc/iputils
 	net-misc/ndisc6
+	net-misc/network-manager-applet
 	net-misc/openssh
 	net-misc/rdate
 	net-misc/rdesktop
