@@ -1,241 +1,306 @@
-/*
- * SPDX-FileCopyrightText: no
- * SPDX-License-Identifier: CC0-1.0
+/* StormOS Dark Theme for Calamares
+ * Fixed version with proper widget selectors and fallback styles
+ * Prevents white flash on load
  */
 
-/*
-A branding component can ship a stylesheet (like this one)
-which is applied to parts of the Calamares user-interface.
-In principle, all parts can be styled through CSS.
-Missing parts should be filed as issues.
-
-The IDs are based on the object names in the C++ code.
-You can use the Debug Dialog to find out object names:
-  - Open the debug dialog
-  - Choose tab *Tools*
-  - Click *Widget Tree* button
-The list of object names is printed in the log.
-
-Documentation for styling Qt Widgets through a stylesheet
-can be found at
-    https://doc.qt.io/qt-5/stylesheet-examples.html
-    https://doc.qt.io/qt-5/stylesheet-reference.html
-In Calamares, styling widget classes is supported (e.g.
-using `QComboBox` as a selector).
-
-This example stylesheet has all the actual styling commented out.
-The examples are not exhaustive.
-
-Use gammaray
-
-*/
-
-/*** Generic Widgets.
- *
- * You can style **all** widgets of a given class by selecting
- * the class name. Some widgets have specialized sub-selectors.
- */
-
-/*
-QPushButton { background-color: green; }
-*/
-
-/*** Main application window.
- *
- * The main application window has the sidebar, which in turn
- * contains a logo and a list of items -- note that the list
- * can **not** be styled, since it has its own custom C++
- * delegate code.
- */
-
-/*
-#mainApp { }
-#sidebarApp { }
-#logoApp { }
-*/
-
-/*** Welcome module.
- *
- * There are plenty of parts, but the buttons are the most interesting
- * ones (donate, release notes, ...). The little icon image can be
- * styled through *qproperty-icon*, which is a little obscure.
- * URLs can reference the QRC paths of the Calamares application
- * or loaded via plugins or within the filesystem. There is no
- * comprehensive list of available icons, though.
- */
-
-/*
-QPushButton#aboutButton { qproperty-icon: url(:/data/images/release.svg); }
-#donateButton,
-#supportButton,
-#releaseNotesButton,
-#knownIssuesButton { qproperty-icon: url(:/data/images/help.svg); }
-*/
-
-/*** Partitioning module.
- *
- * Many moving parts, which you will need to experiment with.
- */
-
-/*
-#bootInfoIcon { }
-#bootInfoLable { }
-#deviceInfoIcon { }
-#defineInfoLabel { }
-#scrollAreaWidgetContents { }
-#partitionBarView { }
-*/
-
-/*** Licensing module.
- *
- * The licensing module paints individual widgets for each of
- * the licenses. The item can be collapsed or expanded.
- */
-
-/*
-#licenseItem {  }
-#licenseItemFullText {  }
-*/
-
-/* Existing styles might be here */
-
-/* Package/Module Selection Styles */
-QTreeView {
-    font-size: 14pt;
-    color: #FFFFFF;         /* Text color */
-    padding: 5px;
-    margin: 2px;
+/* Main window background - prevents white flash */
+QWidget {
+    background-color: #252527;
+    color: #c0c0c0;
 }
 
-QListView {
-    font-size: 14pt;
-    color: #FFFFFF;         /* Text color */
-    padding: 5px;
-    margin: 2px;
+/* Apply dark background to main window immediately */
+QMainWindow {
+    background-color: #252527;
 }
 
-QComboBox {
-    font-size: 14pt;
-    color: #FFFFFF;         /* Text color */
-    padding: 5px;
-    margin: 2px;
-}
-
-/* If you want to specifically target the package selection module */
-#packagechooserq {
-    font-size: 14pt;
-}
-/* User account creation page */
-#textBoxUserName, #textBoxHostName, #textBoxUserPassword, #textBoxRootPassword, #textBoxVerify {
-    font-size: 14pt;
-}
-
-/* Labels for the input fields */
-#labelUsername, #labelHostname, #labelUserPassword, #labelUserVerify, #labelRootPassword, #labelRootVerify {
-    font-size: 14pt;
-}
-
-/* All input fields generally */
-QLineEdit {
-    font-size: 14pt;
-    padding: 5px;
-}
-
-/* All labels generally */
+/* Labels */
 QLabel {
-    font-size: 14pt;
+    color: #ffffff;
+    background: transparent;
 }
 
-/* Specific to the users page */
-#usersPage QWidget {
-    font-size: 14pt;
-}
-/* Partition page elements */
-#partitionBarView {
-    font-size: 14pt;
+/* Sidebar - matches branding.desc colors */
+#sidebarApp, #logoApp, #sidebarMenuApp {
+    background-color: #252527;
+    border: none;
 }
 
-#partitionLabels QLabel {
-    font-size: 14pt;
+#sidebarMenuApp QListView {
+    background-color: transparent;
+    border: none;
 }
 
-/* Mount point selector and fields */
-#mountPointComboBox {
-    font-size: 14pt;
+#sidebarMenuApp QListView::item {
+    color: #a0a0a0;
+    padding: 14px 20px;
+    border-left: 4px solid transparent;
 }
 
-/* Partition table */
-#partitionTable {
-    font-size: 14pt;
+#sidebarMenuApp QListView::item:selected {
+    background-color: #2d2d30;
+    color: #ffffff;
+    border-left: 4px solid #4a4a4d;
 }
 
-/* Device selection dropdown */
-#deviceComboBox {
-    font-size: 14pt;
+/* Buttons */
+QPushButton {
+    background-color: #38383b;
+    color: #ffffff;
+    border: 1px solid #454548;
+    border-radius: 4px;
+    padding: 6px 18px;
+    font-weight: bold;
+    min-height: 24px;
+    margin: 3px;
 }
 
-/* All partition related buttons and controls */
-#partitionPage QWidget {
-    font-size: 14pt;
+QPushButton:hover {
+    background-color: #4a4a4d;
+    border-color: #5a5a5d;
 }
 
-/* Specific mount point entries */
-#partitionMountPoint {
-    font-size: 14pt;
+QPushButton:pressed {
+    background-color: #2d2d30;
+    color: #ffffff;
 }
 
-/* File system type selector */
-#fileSystemComboBox {
-    font-size: 14pt;
+QPushButton:disabled {
+    background-color: #2a2a2c;
+    color: #5e5e60;
+    border-color: #323234;
 }
 
-/* Save this as style.qss in /etc/calamares/branding/yourbrand/ */
+/* Primary button styling */
+QPushButton[objectName="primaryButton"] {
+    background-color: #4a4a4d;
+}
 
+/* Inputs */
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox {
+    background-color: #1e1e20;
+    color: #ffffff;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding: 8px;
+    selection-background-color: #4a4a4d;
+}
+
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {
+    border: 1px solid #4a4a4d;
+    background-color: #252527;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #4a4a4d;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #1e1e20;
+    color: #ffffff;
+    border: 1px solid #3c3c3c;
+    selection-background-color: #4a4a4d;
+}
+
+/* Checkboxes */
 QCheckBox {
-    spacing: 5px;
+    spacing: 10px;
     color: #ffffff;
 }
 
 QCheckBox::indicator {
-    width: 16px;
-    height: 16px;
-    border: 2px solid #ffffff;  /* White border */
+    width: 18px;
+    height: 18px;
     border-radius: 3px;
-    background-color: #000000;  /* White background */
+    border: 2px solid #454548;
+    background-color: #1e1e20;
 }
 
-QCheckBox::indicator:unchecked {
-    background-color: #0000000;  /* Pure white */
-}
-
-QCheckBox::indicator:unchecked:hover {
-    background-color: #f0f0f0;  /* Slightly darker on hover */
-    border-color: #f0f0f0;
+QCheckBox::indicator:hover {
+    border-color: #5a5a5d;
 }
 
 QCheckBox::indicator:checked {
-    background-color: #ffffff;
-    border-color: #ffffff;
-    image: url(/path/to/check-black.svg);  /* Changed to black checkmark for visibility */
+    background-color: #4a4a4d;
+    border-color: #4a4a4d;
 }
 
-QCheckBox::indicator:checked:hover {
-    background-color: #f0f0f0;
-    border-color: #f0f0f0;
+/* Progress Bar */
+QProgressBar {
+    background-color: #1e1e20;
+    border: 1px solid #3c3c3c;
+    border-radius: 10px;
+    text-align: center;
+    height: 12px;
 }
 
-QCheckBox::indicator:disabled {
-    border-color: #000000;
-    background-color: #000000;
+QProgressBar::chunk {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4a4a4d, stop:1 #444342);
+    border-radius: 9px;
 }
 
-/* Optional: Style for focused checkboxes */
-QCheckBox::indicator:focus {
-    border-color: #f0f0f0;
+/* Lists & Tables */
+QListView, QTreeView, QTableView {
+    background-color: #303032;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    alternate-background-color: #2a2a2c;
 }
 
-/* Save this as check-black.svg instead of check-white.svg */
-/* <?xml version="1.0" encoding="UTF-8"?>
-<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
- <path d="m13.6 4.4-7.2 7.2-4-4" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-</svg> */
+QListView::item, QTreeView::item, QTableView::item {
+    padding: 6px;
+}
+
+QListView::item:hover, QTreeView::item:hover, QTableView::item:hover {
+    background-color: #3a3a3c;
+}
+
+QListView::item:selected, QTreeView::item:selected, QTableView::item:selected {
+    background-color: #4a4a4d;
+    color: #ffffff;
+}
+
+QHeaderView::section {
+    background-color: #303032;
+    color: #ffffff;
+    border: 1px solid #3c3c3c;
+    padding: 6px;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    background: #1e1e20;
+    width: 8px;
+    border-radius: 4px;
+}
+
+QScrollBar:horizontal {
+    background: #1e1e20;
+    height: 8px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+    background: #454548;
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+    background: #4a4a4d;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line,
+QScrollBar::add-page, QScrollBar::sub-page {
+    background: none;
+    border: none;
+}
+
+/* GroupBox */
+QGroupBox {
+    color: #fec431;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    margin-top: 14px;
+    padding-top: 14px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+    left: 12px;
+}
+
+/* Tabs */
+QTabBar::tab {
+    background: #303032;
+    color: #c0c0c0;
+    border: 1px solid #3c3c3c;
+    padding: 8px 16px;
+    margin-right: 2px;
+}
+
+QTabBar::tab:hover {
+    background: #3a3a3c;
+    color: #ffffff;
+}
+
+QTabBar::tab:selected {
+    background: #252527;
+    color: #ffffff;
+    border-bottom: 2px solid #4a4a4d;
+}
+
+/* Tooltips */
+QToolTip {
+    background-color: #303032;
+    color: #ffffff;
+    border: 1px solid #4a4a4d;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+/* Menus and Status Bar */
+QMenuBar, QMenu, QStatusBar {
+    background-color: #252527;
+    color: #ffffff;
+}
+
+QMenu::item:selected, QMenuBar::item:selected {
+    background-color: #4a4a4d;
+}
+
+/* Dialogs */
+QDialog {
+    background-color: #252527;
+}
+
+/* Radio buttons */
+QRadioButton {
+    color: #ffffff;
+    spacing: 8px;
+}
+
+QRadioButton::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    border: 2px solid #454548;
+    background-color: #1e1e20;
+}
+
+QRadioButton::indicator:checked {
+    background-color: #4a4a4d;
+    border-color: #4a4a4d;
+}
+
+/* Sliders */
+QSlider::groove:horizontal {
+    background: #1e1e20;
+    height: 6px;
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal {
+    background: #4a4a4d;
+    width: 16px;
+    height: 16px;
+    margin: -5px 0;
+    border-radius: 8px;
+}
+
+QSlider::sub-page:horizontal {
+    background: #4a4a4d;
+    border-radius: 3px;
+}

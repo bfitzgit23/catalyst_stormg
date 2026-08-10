@@ -2,7 +2,7 @@
 
 <channel name="xsettings" version="1.0">
   <property name="Net" type="empty">
-    <property name="ThemeName" type="string" value="Marwaita-X-dark-Purple"/>
+    <property name="ThemeName" type="string" value="adw-gtk3-dark"/>
     <property name="IconThemeName" type="string" value="Tela-dracula-dark"/>
     <property name="DoubleClickTime" type="empty"/>
     <property name="DoubleClickDistance" type="empty"/>

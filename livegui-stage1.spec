@@ -244,6 +244,12 @@ livecd/packages:
 	net-print/epson-inkjet-printer-escpr
 	dev-vcs/subversion
 	xfce-base/xfce4-meta
+	xfce-extra/xfce4-docklike-plugin
+	xfce-extra/xfce4-whiskermenu-plugin
+	xfce-extra/xfce4-weather-plugin
+	xfce-extra/xfce4-pulseaudio-plugin
+	xfce-base/xfce4-power-manager
+	x11-themes/adw-gtk3
 	x11-misc/lightdm
 	x11-misc/lightdm-gtk-greeter
 	gui-libs/display-manager-init
