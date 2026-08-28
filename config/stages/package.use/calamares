@@ -1,4 +1,9 @@
-app-admin/calamares qt6
+# app-admin/calamares is Qt6-only in 3.4.x (no qt6 USE flag exists).
+# USE=livecd applies the Gentoo livecd patch (TableFlipper9/gentoo-patches-3.4.2b),
+# which adds the gentoo modules downloadstage3 / gentoopkg / dracut_gentoo /
+# stagechoose and the calamares-pkexec launcher, and pulls in app-portage/gemato
+# for stage3 PGP verification. Needed by the calamares-debug gentoo checks.
+app-admin/calamares livecd
 sys-auth/polkit-qt qt6
 app-crypt/qca qt6
 kde-frameworks/kwindowsystem wayland

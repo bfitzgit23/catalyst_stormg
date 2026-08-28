@@ -1,0 +1,11 @@
+# Enforce LF line endings for all text files.
+# This prevents Windows CRLF from breaking shell/python shebangs and
+# Calamares configs when building on Windows.
+* text=auto eol=lf
+
+# Explicitly mark binary files
+*.png binary
+*.jpg binary
+*.svg binary
+*.tar.* binary
+*.iso binary

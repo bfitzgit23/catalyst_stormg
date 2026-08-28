@@ -1,9 +1,13 @@
 subarch: amd64
+# version_stamp / source_subpath / iso / volid dates are rewritten to the
+# current date (MM-DD-YYYY) by autocatalyst.sh so stage1 and stage2 stay in sync
 version_stamp: stormg-08-06-2026
 target: livecd-stage2
 rel_type: 23.0-default
 profile: default/linux/amd64/23.0/desktop
-snapshot_treeish: f0cc80d850136b68015cc9ebefd28431da1c3dc4
+# snapshot_treeish is autodetected: autocatalyst.sh rewrites this to the
+# fresh-synced gentoo tree HEAD (or --snapshot <ref>) before building
+snapshot_treeish: HEAD
 source_subpath: 23.0-default/livecd-stage1-amd64-stormg-08-06-2026
 portage_confdir: /home/bennji/Desktop/catalyst_stormg/config/stages
 repos: /home/bennji/Desktop/catalyst_stormg/overlay/var/db/repos/guru

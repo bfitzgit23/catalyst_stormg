@@ -3,7 +3,9 @@ gui-libs/gtk ~amd64
 gui-libs/libadwaita ~amd64
 sys-boot/plymouth-openrc-plugin ~amd64
 sys-fs/go-mtpfs ~amd64
-app-admin/calamares ~amd64
+# app-admin/calamares pinned to 3.4.2 (root_overlay/etc/calamares configs target
+# 3.4.2 schemas); anything newer is masked in package.mask/stage4.
+=app-admin/calamares-3.4.2* ~amd64
 www-client/firefox-bin ~amd64
 sys-kernel/gentoo-kernel-bin ~amd64
 virtual/dist-kernel ~amd64

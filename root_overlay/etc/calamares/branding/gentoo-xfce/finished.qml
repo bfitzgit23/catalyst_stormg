@@ -8,18 +8,16 @@ Item {
 
     ColumnLayout {
         anchors.centerIn: parent
-        spacing: 10
+        spacing: 20
 
-        Image {
-            source: "stormg.svg"
+        Text {
+            text: "✅"
+            font.pixelSize: 48
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: 120
-            Layout.preferredHeight: 120
-            fillMode: Image.PreserveAspectFit
         }
 
         Text {
-            text: qsTr("StormG Installer")
+            text: qsTr("Installation Complete!")
             font.pixelSize: 24
             font.bold: true
             color: "#ffffff"
@@ -27,9 +25,10 @@ Item {
         }
 
         Text {
-            text: qsTr("Powered by Calamares")
-            font.pixelSize: 12
-            color: "#999999"
+            text: qsTr("StormG has been installed successfully.\nYou may now reboot into your new system.")
+            font.pixelSize: 14
+            color: "#cccccc"
+            horizontalAlignment: Text.AlignHCenter
             Layout.alignment: Qt.AlignHCenter
         }
     }

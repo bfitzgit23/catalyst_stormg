@@ -34,6 +34,8 @@
 #   CATALYST_JOBS  make jobs (default: nproc)
 #   CATALYST_OPTS  extra args passed to catalyst
 #   GLIBC_MIN      minimum glibc the pre-stage1 bump targets (default 2.43-r2)
+#   BUILD_DATE     build date used in version_stamp/iso/volid (default: today,
+#                  format MM-DD-YYYY - same shape as the hardcoded 08-06-2026)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -65,6 +67,9 @@ DRY=0
 JOBS="${CATALYST_JOBS:-$(nproc)}"
 SNAP_REF=""            # resolved below: SHA of the fresh gentoo tree (or --snapshot override)
 SNAP_REF_EXPLICIT=0
+# Build date - autodetected so the ISO/spec names carry the day you build.
+# Override with BUILD_DATE=MM-DD-YYYY to pin a specific date.
+DATE="${BUILD_DATE:-$(date +%m-%d-%Y)}"
 GENTOO_REPO="https://github.com/gentoo/gentoo"
 GURU_REPO="https://github.com/gentoo-mirror/guru"
 STEAM_REPO="https://github.com/anyc/steam-overlay"
@@ -166,16 +171,24 @@ _write_specs(){
   local esc escw
   esc="$(printf '%s' "$REPO_DIR"  | sed 's/[\\&]/\\&/g')"
   escw="$(printf '%s' "$WORKDIR"  | sed 's/[\\&]/\\&/g')"
+  # The committed specs carry a stale example date (stormg-08-06-2026 etc.);
+  # stamp the real build date in, so version_stamp / source_subpath / iso /
+  # volid all stay in sync and the output names reflect the day of the build.
+  local dpat='[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]'
   for pair in "$SPEC_S1:$CONF_STAGE1" "$SPEC_S2:$CONF_STAGE2"; do
     local src="${pair%%:*}" dst="${pair#*:}"
     sed -e "s#${OLD_PREFIX}#${esc}#g" \
         -e "s#${esc}/overlay/var/db/repos/gentoo#${escw}/repos/gentoo#g" \
         -e "s#${esc}/overlay/var/db/repos/guru#${escw}/repos/guru#g" \
         -e "s#${esc}/overlay/var/db/repos/steam-overlay#${escw}/repos/steam-overlay#g" \
+        -e "s#stormg-${dpat}#stormg-${DATE}#g" \
+        -e "s#livecd-stage1-amd64-stormg-${dpat}#livecd-stage1-amd64-stormg-${DATE}#g" \
+        -e "s#StormG_xfce_${dpat}#StormG_xfce_${DATE}#g" \
+        -e "s#StormG_LiveDVD_${dpat}#StormG_LiveDVD_${DATE}#g" \
         -e "s#^snapshot_treeish:.*#snapshot_treeish: ${SNAP_REF:-HEAD}#" \
         "$src" > "$dst"
   done
-  _ok "specs written (fresh git repos + treeish ${SNAP_REF:-HEAD})"
+  _ok "specs written (fresh git repos + treeish ${SNAP_REF:-HEAD}, date ${DATE})"
 }
 
 # --------------------------------------------------------------------------
@@ -498,7 +511,7 @@ _run_stage2(){
 }
 
 _report(){
-  local iso="$WORKDIR/StormG_xfce_08-06-2026.iso"
+  local iso="$WORKDIR/StormG_xfce_${DATE}.iso"
   # iso name comes from livecd/iso in stage2 spec; keep in sync
   iso="$(awk -F' *: *' '/^livecd\/iso:/{print $2}' "$CONF_STAGE2" 2>/dev/null || echo "$iso")"
   echo
@@ -515,7 +528,7 @@ main(){
   _info "StormG autocatalyst"
   _info "REPO_DIR=$REPO_DIR"
   _info "WORKDIR=$WORKDIR"
-  _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY"
+  _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY DATE=$DATE"
   trap _cleanup EXIT
   _max_tmpfs
   _scratch_space

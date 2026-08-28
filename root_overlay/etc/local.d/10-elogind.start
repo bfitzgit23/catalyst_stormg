@@ -1,0 +1,6 @@
+#!/bin/bash
+# Start elogind if not already running (needed for polkit session tracking)
+# This ensures reboot/shutdown/logout options work in Xfce session menus.
+if ! pidof elogind >/dev/null 2>&1; then
+    rc-service elogind start 2>/dev/null || /usr/libexec/elogind/elogind &
+fi

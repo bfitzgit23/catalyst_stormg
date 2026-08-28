@@ -1,5 +1,10 @@
-app-admin/calamares
+# app-admin/calamares pinned to 3.4.2 (upper bound masked in package.mask/stage4).
+=app-admin/calamares-3.4.2*
 dev-libs/boost
+# app-misc/calamares-gentoo-livecd is the StefanCristian livecd config package
+# (NOT used by this repo's build - root_overlay ships its own /etc/calamares
+# configs, including the gentoo-xfce branding); kept here in case it is ever
+# added to the livecd package list.
 app-misc/calamares-gentoo-livecd
 dev-qt/*
 sys-apps/ckbcomp

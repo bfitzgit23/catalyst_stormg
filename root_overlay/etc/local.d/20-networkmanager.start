@@ -1,0 +1,14 @@
+#!/bin/bash
+# Start NetworkManager in the live session for WiFi connectivity
+if ! pidof NetworkManager >/dev/null 2>&1; then
+    rc-service NetworkManager start 2>/dev/null || NetworkManager &
+    sleep 2
+fi
+
+# Auto-connect to known networks if any exist
+nmcli general connect 2>/dev/null || true
+
+# Launch nm-applet in the background for user WiFi management
+if [ -n "$DISPLAY" ] && pidof Xorg >/dev/null 2>&1; then
+    su - gentoo -c "nm-applet &" 2>/dev/null || true
+fi

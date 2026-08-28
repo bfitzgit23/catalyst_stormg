@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Calamares Diagnostics
+GenericName=Installer Debug Tool
+Comment=Diagnose Calamares hangs and cryptic errors (run from terminal for output)
+Exec=xfce4-terminal --title="Calamares Diagnostics" -e "sudo calamares-debug"
+Icon=utilities-terminal
+Terminal=false
+StartupNotify=false
+Categories=System;
+X-AppStream-Ignore=true

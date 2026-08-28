@@ -1,3 +1,10 @@
 dev-lang/rust
+# StormG builds calamares 3.4.2 (see package.accept_keywords/stage4 and
+# package.use/calamares). The root_overlay/etc/calamares configs are written for
+# 3.4.2's schemas, so:
+#  - the old 3.3.14-r1 (whose configs these files used to target) stays masked;
+#  - anything newer than 3.4.2 is masked so a future bump cannot silently break
+#    the installer (drop this line to allow a newer version on purpose).
 =app-admin/calamares-3.3.14-r1
+>=app-admin/calamares-3.4.3
 #

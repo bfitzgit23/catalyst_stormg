@@ -1,40 +1,17 @@
 ---
-componentName:  gentoo-xfce
-
-welcomeStyleCalamares:   false
-
-welcomeExpandingLogo:   true
-
-windowExpanding:    noexpand
-windowSize: 1280px,720px
-windowPlacement: center
-
-sidebar: qml,top
-
-strings:
-    productName:         StormG
-    shortProductName:    StormG
-    version:             Rolling
-    shortVersion:        Rolling
-    versionedName:       StormG
-    shortVersionedName:  StormG
-    bootloaderEntryName: StormG
-
-images:
-    productLogo:         "squid.png"
-    productIcon:         "logo.png"
-    productWelcome:      "languages.png"
-
-uploadServer :
-    type :    "fiche"
-    url :     "http://termbin.com:9999"
-    sizeLimit : -1
-
-slideshow:               "show.qml"
-
-slideshowAPI: 1
-
-style:
-   SidebarBackground:    "#31313a"
-   SidebarText:          "#FFFFFF"
-   SidebarBackgroundCurrent: "#ebe0c9"
+# StormG XFCE branding descriptor
+type:       "calamares branding"
+version:    "1.0"
+name:       "StormG"
+versionedName: "StormG Live"
+shortName:  "stormg"
+versionedComponentName: "stormg-xfce"
+logo:       "stormg.svg"
+welcome:    "welcome.qml"
+welcomeShow: true
+sidebar:    "sidebar.qml"
+sidebarPage: "partition"
+about:      "about.qml"
+darkSidebar: true
+supportUrl: "https://github.com/bfitzgit23/catalyst_stormg"
+productLogo: "stormg.svg"

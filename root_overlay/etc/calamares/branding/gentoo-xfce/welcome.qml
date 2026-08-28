@@ -8,28 +8,29 @@ Item {
 
     ColumnLayout {
         anchors.centerIn: parent
-        spacing: 10
+        spacing: 20
 
         Image {
             source: "stormg.svg"
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: 120
-            Layout.preferredHeight: 120
+            Layout.preferredWidth: 180
+            Layout.preferredHeight: 180
             fillMode: Image.PreserveAspectFit
         }
 
         Text {
-            text: qsTr("StormG Installer")
-            font.pixelSize: 24
+            text: qsTr("Welcome to StormG")
+            font.pixelSize: 28
             font.bold: true
             color: "#ffffff"
             Layout.alignment: Qt.AlignHCenter
         }
 
         Text {
-            text: qsTr("Powered by Calamares")
-            font.pixelSize: 12
-            color: "#999999"
+            text: qsTr("Gentoo Linux made calm.\nThis installer will guide you through the process.")
+            font.pixelSize: 14
+            color: "#cccccc"
+            horizontalAlignment: Text.AlignHCenter
             Layout.alignment: Qt.AlignHCenter
         }
     }

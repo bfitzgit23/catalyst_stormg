@@ -1,0 +1,268 @@
+#!/usr/bin/env bash
+#
+# calamares-debug - make "calamares -d" failures legible on StormG live ISOs.
+#
+# "calamares -d" alone prints a wall of Qt noise, and when the partition
+# module hangs probing disks there is no error at all - it just never
+# reaches the welcome page. This script:
+#
+#   1. lists every block device and probes each one with a per-device
+#      timeout, so a device that stalls the KPMCore scan is identified
+#      up front instead of hanging forever (Calamares waits indefinitely
+#      on that scan - see calamares issue #2271);
+#   2. checks the calamares build for the Gentoo livecd modules
+#      (downloadstage3, gentoopkg, dracut_gentoo, stagechoose - compiled
+#      in by app-admin/calamares[livecd]) and cross-checks settings.conf
+#      against the module configs, so a missing or broken config file is
+#      caught before calamares fails on it cryptically;
+#   3. runs `calamares -d -D8` with output captured to a timestamped log
+#      and kills it after a timeout if it hangs;
+#   4. greps the Calamares session log for the warnings that actually
+#      matter and explains each one in plain English.
+#
+# Usage:
+#   calamares-debug             full run: probe disks, run calamares, explain
+#   calamares-debug --probe     only the disk probe (fast, no GUI needed)
+#   calamares-debug --log FILE  explain an existing calamares log instead
+#
+set -uo pipefail
+
+PROBE_ONLY=0
+LOG=""
+
+usage(){ sed -n '2,27p' "$0" | grep -E '^#|Usage' | sed 's/^# \{0,1\}//'; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --probe)      PROBE_ONLY=1 ;;
+    --log=*)      LOG="${1#*=}" ;;
+    --log)        shift; [ $# -gt 0 ] || { printf 'Option --log needs a file argument\n' >&2; exit 1; }; LOG="$1" ;;
+    -h|--help)    usage; exit 0 ;;
+    *)            printf 'Unknown option: %s (try --help)\n' "$1" >&2; exit 1 ;;
+  esac
+  shift
+done
+
+info(){ printf '\033[36m[*]\033[0m %s\n' "$*"; }
+ok(){   printf '\033[32m[+]\033[0m %s\n' "$*"; }
+warn(){ printf '\033[33m[!]\033[0m %s\n' "$*" >&2; }
+
+[ "$(id -u)" -eq 0 ] || warn "Not running as root: the probe and Calamares will be limited. Use 'sudo calamares-debug'."
+
+echo
+info "StormG Calamares diagnostic"
+echo
+
+# ---------------------------------------------------------------------------
+# 1. Disk probe - replicate what the partition module does at startup, but
+#    with a timeout per device so a stalling disk is NAMED, not hung on.
+# ---------------------------------------------------------------------------
+info "Storage devices (this is what the partition module scans at startup)"
+if ! command -v lsblk >/dev/null 2>&1; then
+  warn "lsblk not found; skipping device list"
+else
+  echo
+  lsblk -o NAME,TRAN,TYPE,SIZE,FSTYPE,MOUNTPOINTS,MODEL,SERIAL 2>/dev/null
+  echo
+fi
+
+# Known KPMCore stall trigger: a JFS filesystem on any disk (calamares#2271).
+badfs="$(lsblk -no FSTYPE 2>/dev/null | grep -i '^jfs$' | sort -u || true)"
+if [ -n "$badfs" ]; then
+  warn "JFS filesystem(s) detected - KPMCore can hang scanning JFS."
+  warn "Wipe or convert them first (e.g. GParted -> Format to) then re-run calamares."
+fi
+
+if command -v partprobe >/dev/null 2>&1 && [ "$(id -u)" -eq 0 ]; then
+  info "Probing each disk (5s timeout each) to find any stalling device..."
+  stalled=0
+  for sys in /sys/block/*; do
+    name="$(basename "$sys")"
+    # Skip live-ISO noise: loop/squashfs mounts, zram, optical media.
+    case "$name" in loop*|ram*|zram*|sr*) continue ;; esac
+    [ -e "/dev/$name" ] || continue
+    node="/dev/$name"
+    timeout 5 partprobe "$node" >/dev/null 2>&1
+    rc=$?
+    if [ "$rc" -eq 124 ]; then
+      warn "  $node: probe TIMED OUT after 5s -> this device stalls the scan"
+      stalled=1
+    else
+      ok "  $node: probe ok (rc=$rc)"
+    fi
+  done
+  echo
+  if [ "$stalled" -eq 1 ]; then
+    warn "Verdict: a device above stalls the partition scan. Calamares hangs"
+    warn "waiting for it. Unplug the device, or wipe its filesystem with"
+    warn "GParted (Device -> Create Partition Table), then re-run calamares."
+  else
+    ok "No stalling device found - the hang is probably not a stuck disk."
+    ok "Continue to the Calamares run below to see where it stops."
+  fi
+fi
+
+[ "$PROBE_ONLY" -eq 1 ] && { echo; info "Probe done (--probe). Run 'calamares-debug' for the full session."; exit 0; }
+
+# ---------------------------------------------------------------------------
+# 2. Gentoo livecd modules + settings.conf cross-check. Catches the "vague
+#    error" class of problems BEFORE calamares has to fail on them.
+# ---------------------------------------------------------------------------
+CFG_DIR=/etc/calamares/modules
+[ -d "$CFG_DIR" ] || CFG_DIR=/usr/share/calamares/modules
+
+echo
+info "Calamares build / config cross-check"
+
+# 2a. Does this calamares build include the Gentoo livecd modules?
+gentoo_found=0
+for m in downloadstage3 gentoopkg dracut_gentoo; do
+  for base in /usr/lib/calamares/modules /usr/lib64/calamares/modules /usr/libexec/calamares/modules; do
+    if [ -d "$base/$m" ]; then gentoo_found=1; fi
+  done
+done
+command -v calamares-pkexec >/dev/null 2>&1 && gentoo_found=1
+
+if [ "$gentoo_found" -eq 1 ]; then
+  ok "Gentoo livecd modules present (calamares built with USE=livecd):"
+  ok "  downloadstage3, gentoopkg, dracut_gentoo, stagechoose + calamares-pkexec"
+else
+  warn "Gentoo livecd modules NOT found in this calamares build."
+  warn "  They are compiled in by 'app-admin/calamares livecd' (config/stages/package.use/calamares)."
+  warn "  Any settings.conf using downloadstage3 / gentoopkg / dracut_gentoo /"
+  warn "  stagechoose will fail with 'no such module' - rebuild with USE=livecd."
+fi
+
+# 2b. Every module referenced by settings.conf must have its config file.
+SETTINGS=/etc/calamares/settings.conf
+[ -f "$SETTINGS" ] || SETTINGS="$(find /etc/calamares /usr/share/calamares -name settings.conf 2>/dev/null | head -1)"
+if [ -n "$SETTINGS" ] && [ -f "$SETTINGS" ]; then
+  info "Cross-checking $(basename "$SETTINGS") against $CFG_DIR ..."
+  # Modules that legitimately ship no config file.
+  no_config="summary localecfg downloadstage3 dracut_gentoo"
+
+  # config: entries from the instances: block (e.g. shellprocess-locale.conf)
+  inst_cfgs="$(grep -E '^[[:space:]]*config:' "$SETTINGS" | sed -E 's/^[[:space:]]*config:[[:space:]]*//' | tr -d '\r' || true)"
+  # module names from the sequence: block (strip @instance suffixes)
+  seq_mods="$(sed -n '/^sequence:/,/^branding:/p' "$SETTINGS" \
+    | grep -oE '^[[:space:]]*-[[:space:]]*[A-Za-z0-9_@-]+' \
+    | sed -E 's/^[[:space:]]*-[[:space:]]*//; s/@.*$//' \
+    | grep -vE '^(show|exec)$' | sort -u | tr -d '\r' || true)"
+
+  missing=0
+  for m in $seq_mods; do
+    case " $no_config " in *" $m "*) continue ;; esac
+    if [ ! -f "$CFG_DIR/$m.conf" ]; then
+      warn "  settings.conf uses module '$m' but $CFG_DIR/$m.conf is MISSING"
+      missing=1
+    fi
+  done
+  for c in $inst_cfgs; do
+    if [ ! -f "$CFG_DIR/$c" ]; then
+      warn "  instance config $CFG_DIR/$c is MISSING (settings.conf instances)"
+      missing=1
+    fi
+  done
+  [ "$missing" -eq 1 ] && warn "  -> restore the missing configs (calamares silently uses defaults otherwise)"
+
+  # Config files present but not referenced by settings.conf (informational).
+  referenced="$( { printf '%s.conf\n' $seq_mods; printf '%s\n' $inst_cfgs; } | sort -u)"
+  unused="$(find "$CFG_DIR" -maxdepth 1 -name '*.conf' -printf '%f\n' 2>/dev/null \
+    | grep -vxF -f <(printf '%s\n' "$referenced") | sort | head -20 || true)"
+  if [ -n "$unused" ]; then
+    info "Config files in $CFG_DIR not referenced by settings.conf (ignored, can be removed):"
+    printf '%s\n' "$unused" | sed 's/^/    /'
+  fi
+else
+  warn "settings.conf not found - cannot cross-check module configs."
+fi
+
+# ---------------------------------------------------------------------------
+# 3. Run calamares with full debug logging, bounded by a timeout.
+# ---------------------------------------------------------------------------
+if [ -z "$LOG" ]; then
+  if ! command -v calamares >/dev/null 2>&1; then
+    warn "calamares not found in PATH; skipping the run."
+  else
+    LOG="/root/calamares-debug-$(date +%Y%m%d-%H%M%S).log"
+    # sudo / pkexec clear DISPLAY and XAUTHORITY; point them back at the
+    # live session's X server so the GUI can actually open.
+    if [ -z "${DISPLAY:-}" ]; then
+      for sock in /tmp/.X11-unix/X*; do
+        [ -e "$sock" ] || continue
+        export DISPLAY=":${sock##*X}"
+        break
+      done
+    fi
+    if [ -z "${XAUTHORITY:-}" ]; then
+      for xauth in /home/*/.Xauthority /run/user/*/gdm/Xauthority "$HOME/.Xauthority"; do
+        [ -f "$xauth" ] && export XAUTHORITY="$xauth" && break
+      done
+    fi
+    info "Running: calamares -d -D8   (killed after 180s if hung)"
+    info "Full output: $LOG"
+    timeout 180 calamares -d -D8 >"$LOG" 2>&1
+    rc=$?
+    echo
+    if [ "$rc" -eq 124 ]; then
+      warn "Calamares was killed after 180s (it hung). The last log lines"
+      warn "below show exactly where it stopped."
+    elif [ "$rc" -ne 0 ]; then
+      warn "Calamares exited with status $rc (see the log for details)."
+    else
+      ok "Calamares exited normally - if a step still failed, see below."
+    fi
+  fi
+else
+  info "Using existing log: $LOG"
+fi
+
+# ---------------------------------------------------------------------------
+# 4. Explain what actually went wrong.
+# ---------------------------------------------------------------------------
+SESSION=""
+for c in "$HOME/.cache/calamares/session.log" /root/.cache/calamares/session.log; do
+  [ -f "$c" ] && SESSION="$c" && break
+done
+
+echo
+info "Interpreting logs ..."
+[ -n "$SESSION" ] && info "Session log: $SESSION"
+[ -n "$LOG" ] && [ -f "$LOG" ] && info "Debug log: $LOG"
+
+# The last lines before a hang are the important ones - show them clearly.
+lastlog=""
+if [ -n "$LOG" ] && [ -f "$LOG" ]; then lastlog="$LOG"; fi
+if [ -z "$lastlog" ] && [ -n "$SESSION" ]; then lastlog="$SESSION"; fi
+if [ -n "$lastlog" ]; then
+  echo
+  warn "Last 30 lines (where it stopped / what it complained about):"
+  tail -n 30 "$lastlog" | sed 's/^/    /'
+  echo
+fi
+
+# Config-level warnings - these are the "vague" ones users see.
+for f in "$SESSION" "$LOG"; do
+  [ -n "$f" ] && [ -f "$f" ] || continue
+  grep -a -E 'Partition-module|failed to (load|parse|read)|YAML|deprecated|unset|Traceback|No config file for|gentoopkg|downloadstage3|dracut_gentoo|stagechoose' "$f" \
+    | sort -u | head -15 | sed 's/^/    [config] /'
+done
+
+echo
+info "Common verdicts:"
+info "  - Last lines before a hang mention 'DeviceScanner' / a /dev/ node:"
+info "      a disk probe stalled (see the probe step above)."
+info "  - Last lines are a Python 'Traceback' during install:"
+info "      a module config is wrong - paste the traceback into a bug report."
+info "  - Traceback mentions 'downloadstage3': the stage3 download/verify failed"
+info "      (network, PGP key, SHA256/DIGESTS mismatch, or gemato missing)."
+info "  - Traceback mentions 'gentoopkg': an emerge in the target failed"
+info "      (package missing, keywords, USE conflict - read the emerge output)."
+info "  - 'dracut_gentoo': initramfs generation failed (kernel not installed?)."
+info "  - 'stagechoose': stage3 fetch/selection problem (network)."
+info "  - 'No config file for <module>': that config is missing; the module"
+info "      then runs with defaults (or not at all) - restore the .conf file."
+info "  - Warnings about 'Partition-module setting *...* is unset':"
+info "      cosmetic; defaults are used, safe to ignore."
+echo
+ok "Done. Full logs: ${LOG:-none} ${SESSION:-}"
