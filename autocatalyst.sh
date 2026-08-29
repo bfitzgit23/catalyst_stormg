@@ -435,7 +435,8 @@ _drop_host_keywords(){
 # Gentoo-based derivatives (CalamaroOS etc.) boot a live root on
 # overlay/squashfs. Either signals a tmpfs-backed live GUI session.
 _live_session(){
-  [ -e /etc/init.d/livecd ] && return 0  grep -Eq ' (overlay|squashfs|livecd)' /proc/mounts && return 0
+  [ -e /etc/init.d/livecd ] && return 0
+  grep -Eq ' (overlay|squashfs|livecd)' /proc/mounts && return 0
   return 1
 }
 _max_tmpfs(){

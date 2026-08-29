@@ -114,10 +114,6 @@ cp -af /usr/share/applications/gentoo-pkg-manager.desktop /home/gentoo/Desktop/g
 chown -R gentoo:users /home/gentoo/Desktop/gentoo-pkg-manager.desktop
 chmod +x /home/gentoo/Desktop/gentoo-pkg-manager.desktop
 
-groupadd lightdm
-
-chage -E -1 lightdm
-
 LC_ALL=C xdg-user-dirs-update --force
 
 chown -R gentoo:users /home/gentoo
@@ -139,9 +135,9 @@ chown -R gentoo /tmp
 
 
 ## Wifi not available with networkmanager (BugFix)
-su -c 'echo "" >> /etc/NetworkManager/NetworkManager.conf'
-su -c 'echo "[device]" >> /etc/NetworkManager/NetworkManager.conf'
-su -c 'echo "wifi.scan-rand-mac-address=no" >> /etc/NetworkManager.conf'
+echo "" >> /etc/NetworkManager/NetworkManager.conf
+echo "[device]" >> /etc/NetworkManager/NetworkManager.conf
+echo "wifi.scan-rand-mac-address=no" >> /etc/NetworkManager/NetworkManager.conf
 
 chmod 644 /etc/passwd
 
