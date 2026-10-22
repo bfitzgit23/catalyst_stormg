@@ -45,8 +45,8 @@ jobs:
                   # 2. Inject explicit target fallbacks and accept keywords right after strict bash flags
                   if 'set -euo pipefail' in line:
                       out.append(line)
-                      out.append('base=\"\hbarse:-\$REPO_DIR/build}\"\n')
-                      out.append('hconf=\"\hhconf:-/etc/portage/make.conf}\"\n')
+                      out.append('base=\"\${base:-\$REPO_DIR/build}\"\n')
+                      out.append('hconf=\"\${hconf:-/etc/portage/make.conf}\"\n')
                       out.append('mkdir -p /etc/portage/package.accept_keywords\n')
                       out.append('echo \"dev-util/catalyst ~amd64\" > /etc/portage/package.accept_keywords/catalyst\n')
                       out.append('mkdir -p /etc/portage/package.use\n')
@@ -92,7 +92,7 @@ jobs:
               f.writelines(out)
           "
           echo "=== VERIFYING WORKFLOW REWRITE ==="
-          cat autocatalyst.sh | grep -A 2 -B 1 "Importing existing local"
+          cat autocatalyst.sh | grep -A 4 "set -euo"
 
       - name: Run Build in Privileged Gentoo Container
         run: |
