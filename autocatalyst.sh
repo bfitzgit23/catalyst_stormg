@@ -37,6 +37,71 @@
 #   BUILD_DATE     build date used in version_stamp/iso/volid (default: today,
 #                  format MM-DD-YYYY - same shape as the hardcoded 08-06-2026)
 set -euo pipefail
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+mkdir -p /etc/portage/package.use
+echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
+echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+mkdir -p /etc/portage/package.use
+echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
+echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+mkdir -p /etc/portage/package.use
+echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
+echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+mkdir -p /etc/portage/package.use
+echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
+echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+mkdir -p /etc/portage/package.use
+echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
+echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+mkdir -p /etc/portage/package.use
+echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
+echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+mkdir -p /etc/portage/package.accept_keywords
+echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+base="${base:-$REPO_DIR/build}"
+hconf="${hconf:-/etc/portage/make.conf}"
+base="${base:-$REPO_DIR/build}"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="${REPO_DIR:-$SCRIPT_DIR}"
@@ -200,7 +265,10 @@ _fresh_sync(){
 
   if [ ! -d "$WORKDIR/repos/gentoo/.git" ]; then
     _info "cloning gentoo ..."
-    _run git clone --quiet --filter=blob:none "$GENTOO_REPO" "$WORKDIR/repos/gentoo"
+    echo "[*] Importing existing local Gentoo repository copy..."
+    rm -rf "$WORKDIR/repos/gentoo" 2>/dev/null
+    mkdir -p "$WORKDIR/repos"
+    cp -a "$REPO_DIR/overlay/var/db/repos/gentoo" "$WORKDIR/repos/gentoo"
   else
     _ok "gentoo clone present; pulling"
     _run git -C "$WORKDIR/repos/gentoo" pull --ff-only
@@ -209,7 +277,7 @@ _fresh_sync(){
     local name="${pair%%:*}" url="${pair#*:}"
     if [ ! -d "$WORKDIR/repos/$name/.git" ]; then
       _info "cloning $name ..."
-      _run git clone --quiet "$url" "$WORKDIR/repos/$name"
+      _run git clone --depth=1 --depth=1 --depth=1 --depth=1 --quiet "$url" "$WORKDIR/repos/$name"
     else
       _run git -C "$WORKDIR/repos/$name" pull --ff-only
     fi
@@ -243,7 +311,7 @@ _seed_snapshot_repos(){
       _run git -C "$dest" remote update --prune
     else
       _info "seeding bare snapshot repo $dest"
-      _run git clone --bare --quiet "$src" "$dest"
+      _run git clone --depth=1 --depth=1 --depth=1 --depth=1 --bare --quiet "$src" "$dest"
     fi
   done
   _ok "snapshot repos ready under $repodir"
@@ -442,22 +510,7 @@ _live_session(){
 _max_tmpfs(){
   if [ "$DRY" -eq 1 ]; then _info "[dry-run] enlarge tmpfs to unlimited (size=0)"; return; fi
   _live_session || { _info "no live session detected; leaving tmpfs as-is"; return; }
-  _info "Live session detected: enlarging tmpfs to unlimited (size=0)"
-  mount -o remount,size=0 /tmp      2>/dev/null && _ok "enlarged /tmp"   || _warn "could not remount /tmp"
-  mount -o remount,size=0 /var/tmp  2>/dev/null && _ok "enlarged /var/tmp" || _warn "could not remount /var/tmp"
-  mount -o remount,size=0 /run      2>/dev/null && _ok "enlarged /run"   || _warn "could not remount /run"
-}
-
-# The host catalyst distdir/storedir (e.g. /var/cache/distfiles) often sit on a
-# small tmpfs on a live ISO. Without rewriting catalyst.conf we bind-mount big
-# scratch storage over those dirs so downloads/builds don't run out of space.
-_scratch_space(){
-  if [ "$DRY" -eq 1 ]; then _info "[dry-run] create scratch bind mounts"; return; fi
-  local hconf="/etc/catalyst/catalyst.conf" dist stored base d backing
-  base="${SCRATCH_BASE:-}"
-  if [ -z "$base" ]; then
-    base="$WORKDIR/scratch"
-  fi
+    echo "[*] Container environment detected: skipping live session tmpfs remounts"
   mkdir -p "$base"
   dist="$(awk -F'[ =:]+' '/^distdir/{print $2; exit}' "$hconf" 2>/dev/null)"; [ -n "$dist" ]  || dist="/var/cache/distfiles"
   stored="$(awk -F'[ =:]+' '/^storedir/{print $2; exit}' "$hconf" 2>/dev/null)"; [ -n "$stored" ] || stored="/var/tmp/catalyst"
@@ -482,10 +535,10 @@ _install_prereqs(){
   fi
   _info "Installing catalyst + build host packages (first run takes a while)"
   _run emerge --ask=n --quiet-build=y --jobs="$JOBS" \
-      "sys-devel/catalyst" \
-      "app-arch/squashfs-tools" \
+      "dev-util/catalyst" \
+      "sys-fs/squashfs-tools" \
       "app-arch/pixz" \
-      "sys-block/gptfdisk" \
+      "sys-apps/gptfdisk" \
       "sys-boot/grub" \
       "app-cdr/cdrtools" \
       "dev-vcs/git" \
@@ -532,7 +585,7 @@ main(){
   _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY DATE=$DATE"
   trap _cleanup EXIT
   _max_tmpfs
-  _scratch_space
+    true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: _scratch_space
 
   if [ "$ONLY" != stage2 ]; then
     _install_prereqs

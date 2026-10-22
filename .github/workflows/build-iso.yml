@@ -56,7 +56,6 @@ jobs:
                       out.append('    true # Bypassed broken execution call\n')
                       continue
 
-                  # Wipe the networks/local clones completely and rely on container synced mirrors to fix manifest mismatches
                   if 'git clone' in line:
                       if 'gentoo' in line and 'GENTOO_REPO' in line:
                           out.append('    echo \"[*] Provisioning fresh Gentoo tree via mirror paths...\"\n')
@@ -88,8 +87,6 @@ jobs:
           with open('autocatalyst.sh', 'w', encoding='utf-8') as f:
               f.writelines(out)
           "
-          # Purge corrupt manifest overlay footprints before container startup loops
-          rm -rf overlay/var/db/repos/gentoo overlay/var/db/repos/guru overlay/var/db/repos/steam-overlay
           echo "=== VERIFYING REWRITE ==="
           cat autocatalyst.sh | grep -A 2 "Provisioning fresh"
 
@@ -97,7 +94,6 @@ jobs:
         run: |
           git config --global --add safe.directory "$PWD"
           
-          # Force emerge-webrsync first on the worker to populate a valid un-quarantined /var/db/repos/gentoo target
           docker run --privileged \
             -v "$PWD":/build-stormg \
             -e REPO_DIR=/build-stormg \
