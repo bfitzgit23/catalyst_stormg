@@ -28,13 +28,13 @@ jobs:
           # 1. Standardize access safety checks inside the host runner environment
           git config --global --add safe.directory "$PWD"
           
-          # 2. Fire up the container, install git, configure permissions, and execute the builder script
+          # 2. Fire up the container, sync Portage, install git, patch the mount lines, and build
           docker run --privileged \
             -v "$PWD":/build-stormg \
             -e REPO_DIR=/build-stormg \
             -w /build-stormg \
             gentoo/stage3:amd64-openrc \
-            bash -c "emerge --sync && emerge --oneshot dev-vcs/git && git config --global --add safe.directory /build-stormg && ./autocatalyst.sh"
+            bash -c "emerge --sync && emerge --oneshot dev-vcs/git && git config --global --add safe.directory /build-stormg && sed -i 's/mount -o remount/# mount -o remount/g' ./autocatalyst.sh && ./autocatalyst.sh"
 
       - name: Upload Finished ISO Artifact
         uses: actions/upload-artifact@v4
