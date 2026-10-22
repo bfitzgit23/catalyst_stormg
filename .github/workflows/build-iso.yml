@@ -23,35 +23,76 @@ jobs:
           docker-images: true
           swap: false
 
-      - name: Hard Patch Mount Routine
+      - name: Hard Patch Mount, Unbound Variables, and Local Imports
         run: |
           python3 -c "
-          with open('autocatalyst.sh', 'r') as f:
+          with open('autocatalyst.sh', 'r', encoding='utf-8') as f:
               lines = f.readlines()
           
           out = []
           skip = False
           for line in lines:
-              # Dynamically find the live session check block, regardless of indentation
-              if 'enlarging tmpfs' in line or 'Live session detected' in line:
+              # 1. Strip the breaking live session tmpfs check block entirely
+              if 'Live session detected' in line or 'enlarging tmpfs' in line:
                   skip = True
                   out.append('    echo \"[*] Container build context: skipping host tmpfs expansion\"\n')
                   continue
-              # Comment out any active remount instructions found inside this context
-              if skip and 'mount -o remount' in line:
-                  out.append(f'    # {line.lstrip()}')
-                  continue
               if skip and line.strip() == 'fi':
                   skip = False
-                  out.append(line)
                   continue
-              out.append(line)
               
-          with open('autocatalyst.sh', 'w') as f:
+              if not skip:
+                  # 2. Inject explicit target fallbacks and accept keywords right after strict bash flags
+                  if 'set -euo pipefail' in line:
+                      out.append(line)
+                      out.append('base=\"\hbarse:-\$REPO_DIR/build}\"\n')
+                      out.append('hconf=\"\hhconf:-/etc/portage/make.conf}\"\n')
+                      out.append('mkdir -p /etc/portage/package.accept_keywords\n')
+                      out.append('echo \"dev-util/catalyst ~amd64\" > /etc/portage/package.accept_keywords/catalyst\n')
+                      out.append('mkdir -p /etc/portage/package.use\n')
+                      out.append('echo \"sys-apps/util-linux python\" >> /etc/portage/package.use/catalyst-deps\n')
+                      out.append('echo \"sys-boot/grub grub_platforms_efi-32\" >> /etc/portage/package.use/catalyst-deps\n')
+                      continue
+
+                  if '_scratch_space' in line and not line.strip().startswith('#') and '=' not in line:
+                      out.append('    true # Bypassed broken execution call\n')
+                      continue
+
+                  # 3. Intercept git clones and point to the repository paths checked out by the runner
+                  if 'git clone' in line:
+                      if 'gentoo' in line and 'GENTOO_REPO' in line:
+                          out.append('    echo \"[*] Importing existing local Gentoo repository copy...\"\n')
+                          out.append('    rm -rf \"\$WORKDIR/repos/gentoo\" 2>/dev/null\n')
+                          out.append('    mkdir -p \"\$WORKDIR/repos\"\n')
+                          out.append('    cp -a \"\$REPO_DIR/overlay/var/db/repos/gentoo\" \"\$WORKDIR/repos/gentoo\"\n')
+                      elif 'guru' in line and 'GURU_REPO' in line:
+                          out.append('    echo \"[*] Importing existing local GURU overlay copy...\"\n')
+                          out.append('    rm -rf \"\$WORKDIR/repos/guru\" 2>/dev/null\n')
+                          out.append('    cp -a \"\$REPO_DIR/overlay/var/db/repos/guru\" \"\$WORKDIR/repos/guru\"\n')
+                      elif 'steam' in line or 'STEAM_REPO' in line:
+                          out.append('    echo \"[*] Importing existing local Steam overlay copy...\"\n')
+                          out.append('    rm -rf \"\$WORKDIR/repos/steam-overlay\" 2>/dev/null\n')
+                          out.append('    cp -a \"\$REPO_DIR/overlay/var/db/repos/steam-overlay\" \"\$WORKDIR/repos/steam-overlay\"\n')
+                      else:
+                          out.append(line.replace('git clone', 'git clone --depth=1'))
+                      continue
+
+                  # 4. Correct legacy package categories
+                  modified_line = line
+                  if 'sys-devel/catalyst' in modified_line:
+                      modified_line = modified_line.replace('sys-devel/catalyst', 'dev-util/catalyst')
+                  if 'app-arch/squashfs-tools' in modified_line:
+                      modified_line = modified_line.replace('app-arch/squashfs-tools', 'sys-fs/squashfs-tools')
+                  if 'sys-block/gptfdisk' in modified_line:
+                      modified_line = modified_line.replace('sys-block/gptfdisk', 'sys-apps/gptfdisk')
+                      
+                  out.append(modified_line)
+                      
+          with open('autocatalyst.sh', 'w', encoding='utf-8') as f:
               f.writelines(out)
           "
-          echo "=== VERIFYING PATCHED SCRIPT ==="
-          cat autocatalyst.sh | grep -A 5 -B 2 "Container build context"
+          echo "=== VERIFYING WORKFLOW REWRITE ==="
+          cat autocatalyst.sh | grep -A 2 -B 1 "Importing existing local"
 
       - name: Run Build in Privileged Gentoo Container
         run: |
