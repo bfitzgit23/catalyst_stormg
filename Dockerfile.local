@@ -1,0 +1,8 @@
+FROM gentoo/stage3:amd64-openrc
+
+# Use HTTP-based webrsync to bypass rsync network and firewall blocks
+RUN emerge-webrsync && emerge --oneshot dev-vcs/git
+
+RUN git config --global --add safe.directory /build-stormg
+WORKDIR /build-stormg
+ENTRYPOINT ["./autocatalyst.sh"]
