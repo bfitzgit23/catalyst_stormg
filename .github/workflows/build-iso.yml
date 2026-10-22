@@ -1,4 +1,4 @@
-name: Build StormG Linux ISO
+﻿name: Build StormG Linux ISO
 
 on:
   push:
