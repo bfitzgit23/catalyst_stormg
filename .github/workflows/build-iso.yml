@@ -23,25 +23,35 @@ jobs:
           docker-images: true
           swap: false
 
-      - name: Patch Mount Routine Natively
+      - name: Hard Patch Mount Routine
         run: |
-          # Use a quick Python command to completely strip the live session tmpfs check out of the bash script
           python3 -c "
-          with open('autocatalyst.sh', 'r') as f: lines = f.readlines()
+          with open('autocatalyst.sh', 'r') as f:
+              lines = f.readlines()
+          
           out = []
           skip = False
           for line in lines:
-              if 'Live session detected: enlarging tmpfs' in line:
+              # Dynamically find the live session check block, regardless of indentation
+              if 'enlarging tmpfs' in line or 'Live session detected' in line:
                   skip = True
                   out.append('    echo \"[*] Container build context: skipping host tmpfs expansion\"\n')
                   continue
+              # Comment out any active remount instructions found inside this context
+              if skip and 'mount -o remount' in line:
+                  out.append(f'    # {line.lstrip()}')
+                  continue
               if skip and line.strip() == 'fi':
                   skip = False
-                  continue
-              if not skip:
                   out.append(line)
-          with open('autocatalyst.sh', 'w') as f: f.writelines(out)
+                  continue
+              out.append(line)
+              
+          with open('autocatalyst.sh', 'w') as f:
+              f.writelines(out)
           "
+          echo "=== VERIFYING PATCHED SCRIPT ==="
+          cat autocatalyst.sh | grep -A 5 -B 2 "Container build context"
 
       - name: Run Build in Privileged Gentoo Container
         run: |
