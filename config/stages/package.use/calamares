@@ -13,3 +13,13 @@ x11-libs/gtk+ wayland
 dev-python/pillow webp
 media-libs/gd fontconfig
 sys-kernel/installkernel dracut
+
+# Graphical Desktop and Bluetooth Dependency Flags
+xfce-base/xfce4-meta minimal -handbook MATE
+x11-misc/lightdm gtk policykit -qt5
+x11-misc/lightdm-gtk-greeter brand
+sys-auth/polkit-gnome -qt5
+net-wireless/blueman policykit notification
+sys-apps/util-linux python
+dev-libs/libxml2 python
+app-misc/calamares -systemd modules +kpmcore

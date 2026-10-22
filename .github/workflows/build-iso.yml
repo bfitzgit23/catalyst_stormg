@@ -1,0 +1,38 @@
+name: Build StormG Linux ISO
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Large Disk Space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap: false
+
+      - name: Run Build in Privileged Gentoo Container
+        run: |
+          docker run --privileged \
+            -v "$PWD":/build-stormg \
+            gentoo/stage3:amd64-openrc \
+            bash -c "cd /build-stormg && REPO_DIR=/build-stormg ./autocatalyst.sh"
+
+      - name: Upload Finished ISO Artifact
+        uses: actions/artifacts@v4
+        with:
+          name: StormG-Xfce-ISO
+          path: build/StormG_xfce_*.iso
+          if-no-files-found: error
