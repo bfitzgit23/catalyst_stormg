@@ -25,16 +25,16 @@ jobs:
 
       - name: Run Build in Privileged Gentoo Container
         run: |
-          # 1. Standardize access safety checks inside the worker environment
-          git config --global --add safe.directory /build-stormg
+          # 1. Standardize access safety checks inside the host runner environment
+          git config --global --add safe.directory "$PWD"
           
-          # 2. Bind execute with systemic path overrides mapped to the root directory
+          # 2. Fire up the container, install git, configure permissions, and execute the builder script
           docker run --privileged \
             -v "$PWD":/build-stormg \
             -e REPO_DIR=/build-stormg \
             -w /build-stormg \
             gentoo/stage3:amd64-openrc \
-            bash -c "git config --global --add safe.directory /build-stormg && ./autocatalyst.sh"
+            bash -c "emerge --sync && emerge --oneshot dev-vcs/git && git config --global --add safe.directory /build-stormg && ./autocatalyst.sh"
 
       - name: Upload Finished ISO Artifact
         uses: actions/upload-artifact@v4
