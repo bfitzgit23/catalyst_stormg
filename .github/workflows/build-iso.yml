@@ -23,7 +23,7 @@ jobs:
           docker-images: true
           swap: false
 
-      - name: Hard Patch Mount, Unbound Variables, and Local Imports
+      - name: Hard Patch Mount, Unbound Variables, and Resync Rules
         run: |
           python3 -c "
           with open('autocatalyst.sh', 'r', encoding='utf-8') as f:
@@ -32,7 +32,6 @@ jobs:
           out = []
           skip = False
           for line in lines:
-              # 1. Strip the breaking live session tmpfs check block entirely
               if 'Live session detected' in line or 'enlarging tmpfs' in line:
                   skip = True
                   out.append('    echo \"[*] Container build context: skipping host tmpfs expansion\"\n')
@@ -42,7 +41,6 @@ jobs:
                   continue
               
               if not skip:
-                  # 2. Inject explicit target fallbacks and accept keywords right after strict bash flags
                   if 'set -euo pipefail' in line:
                       out.append(line)
                       out.append('base=\"\${base:-\$REPO_DIR/build}\"\n')
@@ -58,26 +56,25 @@ jobs:
                       out.append('    true # Bypassed broken execution call\n')
                       continue
 
-                  # 3. Intercept git clones and point to the repository paths checked out by the runner
+                  # Wipe the networks/local clones completely and rely on container synced mirrors to fix manifest mismatches
                   if 'git clone' in line:
                       if 'gentoo' in line and 'GENTOO_REPO' in line:
-                          out.append('    echo \"[*] Importing existing local Gentoo repository copy...\"\n')
+                          out.append('    echo \"[*] Provisioning fresh Gentoo tree via mirror paths...\"\n')
                           out.append('    rm -rf \"\$WORKDIR/repos/gentoo\" 2>/dev/null\n')
                           out.append('    mkdir -p \"\$WORKDIR/repos\"\n')
-                          out.append('    cp -a \"\$REPO_DIR/overlay/var/db/repos/gentoo\" \"\$WORKDIR/repos/gentoo\"\n')
+                          out.append('    cp -a /var/db/repos/gentoo \"\$WORKDIR/repos/gentoo\"\n')
                       elif 'guru' in line and 'GURU_REPO' in line:
-                          out.append('    echo \"[*] Importing existing local GURU overlay copy...\"\n')
+                          out.append('    echo \"[*] Provisioning GURU overlay via shallow sync...\"\n')
                           out.append('    rm -rf \"\$WORKDIR/repos/guru\" 2>/dev/null\n')
-                          out.append('    cp -a \"\$REPO_DIR/overlay/var/db/repos/guru\" \"\$WORKDIR/repos/guru\"\n')
+                          out.append('    git clone --depth=1 https://github.com \"\$WORKDIR/repos/guru\"\n')
                       elif 'steam' in line or 'STEAM_REPO' in line:
-                          out.append('    echo \"[*] Importing existing local Steam overlay copy...\"\n')
+                          out.append('    echo \"[*] Provisioning Steam overlay via shallow sync...\"\n')
                           out.append('    rm -rf \"\$WORKDIR/repos/steam-overlay\" 2>/dev/null\n')
-                          out.append('    cp -a \"\$REPO_DIR/overlay/var/db/repos/steam-overlay\" \"\$WORKDIR/repos/steam-overlay\"\n')
+                          out.append('    git clone --depth=1 https://github.com \"\$WORKDIR/repos/steam-overlay\"\n')
                       else:
                           out.append(line.replace('git clone', 'git clone --depth=1'))
                       continue
 
-                  # 4. Correct legacy package categories
                   modified_line = line
                   if 'sys-devel/catalyst' in modified_line:
                       modified_line = modified_line.replace('sys-devel/catalyst', 'dev-util/catalyst')
@@ -91,19 +88,22 @@ jobs:
           with open('autocatalyst.sh', 'w', encoding='utf-8') as f:
               f.writelines(out)
           "
-          echo "=== VERIFYING WORKFLOW REWRITE ==="
-          cat autocatalyst.sh | grep -A 4 "set -euo"
+          # Purge corrupt manifest overlay footprints before container startup loops
+          rm -rf overlay/var/db/repos/gentoo overlay/var/db/repos/guru overlay/var/db/repos/steam-overlay
+          echo "=== VERIFYING REWRITE ==="
+          cat autocatalyst.sh | grep -A 2 "Provisioning fresh"
 
       - name: Run Build in Privileged Gentoo Container
         run: |
           git config --global --add safe.directory "$PWD"
           
+          # Force emerge-webrsync first on the worker to populate a valid un-quarantined /var/db/repos/gentoo target
           docker run --privileged \
             -v "$PWD":/build-stormg \
             -e REPO_DIR=/build-stormg \
             -w /build-stormg \
             gentoo/stage3:amd64-openrc \
-            bash -c "emerge --sync && emerge --oneshot dev-vcs/git && git config --global --add safe.directory /build-stormg && ./autocatalyst.sh"
+            bash -c "emerge-webrsync && emerge --oneshot dev-vcs/git && git config --global --add safe.directory /build-stormg && ./autocatalyst.sh"
 
       - name: Upload Finished ISO Artifact
         uses: actions/upload-artifact@v4
