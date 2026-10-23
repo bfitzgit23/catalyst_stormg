@@ -105,7 +105,7 @@ _in_container(){
 # tree into it takes ~4 hours and looks exactly like a hang. Keep it on the
 # container's own disk and copy only the finished ISO back into the workspace.
 if [ -n "${DATA_DIR:-}" ]; then
-  :
+  DATA_DIR_FROM_ENV=1
 elif _in_container; then
   DATA_DIR=/var/tmp/stormg-data
 else
@@ -124,6 +124,13 @@ _on_err(){
   printf '\033[31m[!]\033[0m %s line %s | WORKDIR=%s DATA_DIR=%s\n' \
     "${src##*/}" "$line" "${WORKDIR:-?}" "${DATA_DIR:-?}" >&2
   df -h "${DATA_DIR:-/}" "${WORKDIR:-/}" 2>/dev/null | sed 's/^/[!] /' >&2 || true
+  if [ -n "${DATA_DIR_FROM_ENV:-}" ] || [ "${DATA_DIR:-}" = "${WORKDIR:-}" ]; then
+    printf '\033[31m[!]\033[0m Re-run the same command to resume: %s keeps the synced tree, distfiles, bumped stage3 and catalyst chroots.\n' \
+      "${DATA_DIR:-?}" >&2
+  else
+    printf '\033[31m[!]\033[0m To resume, keep %s across runs: docker run ... -v stormg-data:%s\n' \
+      "${DATA_DIR:-?}" "${DATA_DIR:-?}" >&2
+  fi
   exit "$rc"
 }
 trap '_on_err' ERR
@@ -304,16 +311,40 @@ _fresh_sync(){
     _run _git -C "$REPOS_DIR/gentoo" pull --ff-only
   elif [ -d /var/db/repos/gentoo/profiles ]; then
     _info "Importing synced portage tree from /var/db/repos/gentoo"
-    _run rm -rf "$REPOS_DIR/gentoo"
-    _run cp -a /var/db/repos/gentoo "$REPOS_DIR/gentoo"
+    mkdir -p "$REPOS_DIR/gentoo"
+    if [ -d "$REPOS_DIR/gentoo/.git" ]; then
+      # Resume: refresh the working tree in place but KEEP the git history, so
+      # an unchanged tree keeps the same treeish and catalyst autoresume still
+      # finds its chroots instead of restarting from stage1.
+      if [ "$DRY" -eq 0 ]; then
+        if ! { _have rsync && rsync -a --delete --exclude=.git \
+                 /var/db/repos/gentoo/ "$REPOS_DIR/gentoo/"; }; then
+          _warn "rsync import failed; falling back to a full copy"
+          ( cd "$REPOS_DIR/gentoo" && \
+            find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} + )
+          cp -a /var/db/repos/gentoo/. "$REPOS_DIR/gentoo/"
+        fi
+      else
+        _info "[dry-run] rsync /var/db/repos/gentoo -> $REPOS_DIR/gentoo (keeping .git)"
+      fi
+    else
+      _run rm -rf "$REPOS_DIR/gentoo"
+      _run cp -a /var/db/repos/gentoo "$REPOS_DIR/gentoo"
+    fi
     # An rsync/webrsync tree has no git history, but catalyst snapshots need a
-    # treeish to archive. Give the synced tree a local commit (once).
-    if [ ! -d "$REPOS_DIR/gentoo/.git" ] && [ "$DRY" -eq 0 ]; then
-      _info "Creating local git history for the synced tree (catalyst snapshot_treeish)"
-      _git -C "$REPOS_DIR/gentoo" init -q
-      _git -C "$REPOS_DIR/gentoo" add -A -f
-      _git -C "$REPOS_DIR/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
-          commit -qm "synced portage tree $(date +%Y-%m-%d)"
+    # treeish to archive. Commit the synced state (once, or when it changed).
+    if [ "$DRY" -eq 0 ]; then
+      if [ ! -d "$REPOS_DIR/gentoo/.git" ]; then
+        _info "Creating local git history for the synced tree (catalyst snapshot_treeish)"
+        _git -C "$REPOS_DIR/gentoo" init -q
+      fi
+      _git -C "$REPOS_DIR/gentoo" add -A -f 2>/dev/null || true
+      if _git -C "$REPOS_DIR/gentoo" diff --cached --quiet 2>/dev/null; then
+        _ok "synced tree unchanged since the last import; reusing its treeish"
+      else
+        _git -C "$REPOS_DIR/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
+            commit -qm "synced portage tree $(date +%Y-%m-%d)"
+      fi
     fi
   else
     _info "cloning gentoo from $GENTOO_REPO ..."
@@ -440,9 +471,17 @@ _ensure_stage3_builds(){
 
 # Newest glibc PV available in the freshly-synced snapshot gentoo tree.
 _snapshot_glibc_newest(){
-  local dir="$REPOS_DIR/gentoo/sys-libs/glibc"
+  local dir="$REPOS_DIR/gentoo/sys-libs/glibc" v
   [ -d "$dir" ] || return 1
-  ls "$dir"/glibc-*.ebuild 2>/dev/null | sed -E 's#.*/glibc-(.*)\.ebuild#\1#' | sort -V | tail -1
+  # Live ebuilds (9999, 2.44.9999) sort highest under sort -V, but emerging one
+  # clones glibc from upstream git and rebuilds it from scratch - it is masked
+  # for a reason and fails in a bare stage3 chroot. Only consider released PVs.
+  v="$(ls "$dir"/glibc-*.ebuild 2>/dev/null \
+        | sed -E 's#.*/glibc-(.*)\.ebuild#\1#' \
+        | grep -vE '(^|\.)9999$' \
+        | sort -V | tail -1)" || v=""
+  [ -n "$v" ] || return 1
+  printf '%s' "$v"
 }
 
 # True if the first dot-version is >= the second (via sort -V).
@@ -452,11 +491,16 @@ _ver_ge(){
 
 # glibc PV actually INSIDE the (tarball) stage3 we're about to build from.
 _stage3_glibc_installed(){
-  local tar="$1" pv
+  local tar="$1" pv pat
   [ -s "$tar" ] && [ -f "/usr/bin/tar" ] || return 1
-  pv="$(tar -xJf "$tar" --wildcards --to-stdout 'var/db/pkg/sys-libs/glibc-*/PV' 2>/dev/null | head -1)"
-  [ -n "$pv" ] || return 1
-  printf '%s' "$pv"
+  # gentoo stage3 tarballs store paths with a leading './', which a pattern
+  # anchored at 'var/' never matches - try both so a bumped tarball is
+  # recognised (that is what makes a re-run skip the bump instead of redoing it).
+  for pat in './var/db/pkg/sys-libs/glibc-*/PV' 'var/db/pkg/sys-libs/glibc-*/PV'; do
+    pv="$(tar -xJf "$tar" --wildcards --to-stdout "$pat" 2>/dev/null | head -1)" || pv=""
+    if [ -n "$pv" ]; then printf '%s' "$pv"; return 0; fi
+  done
+  return 1
 }
 
 # Catalyst dies ("Downgrading glibc is not supported") when the stage3's glibc
@@ -483,14 +527,24 @@ _bump_glibc(){
     _ok "stage3 glibc already at target; nothing to bump"
     return 0
   fi
+  # Never try to move glibc backwards: portage refuses it, and the failure is
+  # only noise because the stage3 is already newer than the tree.
+  if [ -n "$cur" ] && ! _ver_ge "$target" "$cur"; then
+    _ok "stage3 glibc $cur is newer than the tree's $target; nothing to bump"
+    return 0
+  fi
   _info "Upgrading stage3 glibc to $target before catalyst stage1"
   local root="$DATA_DIR/bumproot"
   rm -rf "$root"; mkdir -p "$root"
+  _info "Extracting stage3 to $root"
   _run tar -xJf "$tar" -C "$root"
-  # overlay the snapshot's portage tree so the chroot sees its glibc ebuild
-  mkdir -p "$root/var/db/repos"
-  rm -rf "$root/var/db/repos/gentoo"
-  cp -a "$REPOS_DIR/gentoo" "$root/var/db/repos/gentoo"
+  # overlay the snapshot's portage tree so the chroot sees its glibc ebuild.
+  # Skip .git: the copy is throwaway and the objects are ~700 MB.
+  mkdir -p "$root/var/db/repos/gentoo"
+  if [ "$DRY" -eq 0 ]; then
+    tar -C "$REPOS_DIR/gentoo" --exclude=./.git -cf - . \
+      | tar -C "$root/var/db/repos/gentoo" -xf - || _warn "could not overlay the portage tree into $root"
+  fi
   if [ "${GENTOO_BIND:-1}" = 1 ]; then
     mount --bind /proc "$root/proc" 2>/dev/null || _warn "no /proc bind"
     mount --bind /dev "$root/dev"   2>/dev/null || _warn "no /dev bind"
@@ -502,20 +556,19 @@ _bump_glibc(){
   grep -Es '^ *(CHOST|CFLAGS|CPPFLAGS|LDFLAGS|MAKEOPTS|FEATURES)=' /etc/portage/make.conf 2>/dev/null >> "$mkconf" 2>/dev/null || :
   # accept the newest glibc (incl. testing) so catalyst's stable-only resolution
   # can never fall below the stage3's glibc.
-  cb="$(grep -Es '^(CHOST|CBUILD)=' /etc/portage/make.conf 2>/dev/null | head -1)"
+  cb="$(grep -Es '^(CHOST|CBUILD)=' /etc/portage/make.conf 2>/dev/null | head -1)" || cb=""
   case "$cb" in *aarch64*|*arm64*) arch="arm64" ;; *x86_64*|*amd64*) arch="amd64" ;; *) arch="amd64" ;; esac
   echo "ACCEPT_KEYWORDS=\"$arch ~$arch\"" >> "$mkconf"
   rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$GLIBC_MIN\" \">=sys-libs/glibc-$target\""
   rc=0
+  _info "Running the bump inside the chroot (this builds glibc; it takes a while)"
   chroot "$root" /bin/bash -lc "$rootcmd" || rc=$?
   if [ "$rc" -ne 0 ]; then
-    _warn "glibc bump to $target failed; retrying with newest $newest"
-    rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$newest\""
-    rc=0
-    chroot "$root" /bin/bash -lc "$rootcmd" || rc=$?
-  fi
-  if [ "$rc" -ne 0 ]; then
-    _warn "glibc bump failed (rc=$rc); continuing with original stage3"
+    # Never abort the whole build on a failed bump: the original stage3 may
+    # still build fine, and catalyst's own error is far more informative than a
+    # silent exit here.
+    _warn "glibc bump to $target failed (rc=$rc); continuing with the original stage3"
+    _warn "if catalyst then reports 'Downgrading glibc is not supported', re-run with --no-bump-glibc"
   else
     _info "Repacking bumped stage3"
     _run tar -cJf "$DISTFILES_DIR/stage3.bumped.tar.xz" -C "$root" --xattrs --acls .
@@ -523,7 +576,8 @@ _bump_glibc(){
     _ok "stage3 glibc bumped to $target"
   fi
   for m in proc dev sys; do umount "$root/$m" 2>/dev/null || true; done
-  return "$rc"
+  [ -n "${KEEP:-}" ] || rm -rf "$root"
+  return 0
 }
 
 # Catalyst builds each stage's chroot make.conf off the HOST's

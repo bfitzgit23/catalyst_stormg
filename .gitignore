@@ -2,3 +2,5 @@ root_overlay/etc/chromium
 overlay
 build/
 build_var_*
+.stormg-data/
+.tmp-test/

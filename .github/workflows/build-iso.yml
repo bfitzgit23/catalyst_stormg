@@ -37,18 +37,33 @@ jobs:
           docker-images: true
           swap-storage: false
 
+      - name: Restore Resumable Build Data
+        uses: actions/cache@v4
+        with:
+          # The synced portage tree, distfiles, catalyst's storedir/chroots and
+          # any already-bumped stage3. A failed run resumes from these instead
+          # of rebuilding for hours; a fresh key each run keeps saving them.
+          path: .stormg-data
+          key: stormg-resume-${{ github.run_id }}
+          restore-keys: |
+            stormg-resume-
+
       - name: Run Build in Privileged Gentoo Container
         env:
           CATALYST_ARGS: ${{ inputs.catalyst_args }}
         run: |
           git config --global --add safe.directory "$PWD"
+          mkdir -p .stormg-data
 
           # The script syncs its own portage tree (emerge --sync, falling back
           # to emerge-webrsync) and installs git/catalyst itself, so a bare
-          # stage3 image is enough.
+          # stage3 image is enough. DATA_DIR is on the runner's own disk (fast)
+          # and cached between runs, which is what makes a re-run resume.
           docker run --rm --privileged \
             -v "$PWD":/build-stormg \
+            -v "$PWD/.stormg-data":/var/tmp/stormg-data \
             -e REPO_DIR=/build-stormg \
+            -e DATA_DIR=/var/tmp/stormg-data \
             -w /build-stormg \
             gentoo/stage3:amd64-openrc \
             bash ./autocatalyst.sh $CATALYST_ARGS

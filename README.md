@@ -121,6 +121,23 @@ but to `/var/tmp/stormg-data` inside a container — a bind-mounted workspace (D
 Windows/macOS) manages only a few hundred small files per *minute*, so importing the 134k-file
 portage tree there takes ~4 hours. Only the finished ISO is copied back into `$WORKDIR`.
 
+**Resuming after a failure:** just run the same command again. The script reuses the
+already-downloaded stage3 tarball, re-imports the synced tree *in place* (keeping its git
+history, so an unchanged tree keeps the same treeish), and catalyst's own autoresume picks its
+chroots back up in `storedir` instead of restarting from stage1. For that to work `DATA_DIR` must
+survive between runs — keep the container (`docker run --name stormg …`, no `--rm`) or, better,
+give it a volume:
+
+```sh
+docker run --rm --privileged -v "$PWD":/build-stormg \
+  -v stormg-data:/var/tmp/stormg-data gentoo/stage3:amd64-openrc \
+  bash -c "cd /build-stormg && REPO_DIR=/build-stormg ./autocatalyst.sh"
+```
+
+The glibc pre-bump targets the newest *released* glibc in the snapshot tree (live `9999`
+ebuilds are skipped — they clone upstream glibc and cannot build in a bare stage3). If the bump
+still fails it only warns and continues; pass `--no-bump-glibc` to skip it entirely.
+
 ```sh
 chmod +x autocatalyst.sh
 sudo ./autocatalyst.sh                 # stage1 + stage2, all defaults
@@ -136,6 +153,7 @@ Options / env overrides:
 - `BUILD_DATE=MM-DD-YYYY` — pin the date stamped into `version_stamp`, the stage1
   `source_subpath`, `livecd/iso` and `livecd/volid`. Default: today's date, autodetected.
 - `-j <jobs>` / `CATALYST_JOBS` — make jobs (default `nproc`).
+- `--no-bump-glibc` — skip the pre-stage1 glibc upgrade of the stage3 chroot.
 - `--keep` — don't regenerate `$WORKDIR/catalyst.conf` before stage2.
 - `REPO_DIR`, `WORKDIR` — override where the repo and the build live.
 - `DATA_DIR` — where the bulky, disposable build data lives (trees, `storedir`, distfiles).
@@ -155,6 +173,7 @@ Gentoo Release Engineering uses:
 #  2. bind-mount this repo inside it
 docker run -it --privileged \
   -v "$PWD":/build-stormg \
+  -v stormg-data:/var/tmp/stormg-data \
   gentoo/stage3:amd64-openrc \
   bash -c "cd /build-stormg && REPO_DIR=/build-stormg ./autocatalyst.sh"
 ```
@@ -172,6 +191,9 @@ stamps with the current date).
 from `build/`. GitHub-hosted runners are limited to 6 hours (and 4 cores / limited disk), which a
 full live GUI ISO can exceed; the workflow exposes `runs_on`, `timeout_minutes` and
 `catalyst_args` inputs (Actions → Run workflow) so it can target a larger or self-hosted runner.
+`DATA_DIR` points at `.stormg-data` in the workspace and is saved with `actions/cache`, so a
+re-run restores the synced tree, distfiles, bumped stage3 and catalyst chroots and resumes instead
+of starting over (a cache save over GitHub's 10 GB limit only warns; the build still ran).
 
 ### Known remaining work
 - `overlay/` is gitignored, so it is not part of a fresh clone. `autocatalyst.sh` handles that by
