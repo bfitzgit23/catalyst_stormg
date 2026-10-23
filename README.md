@@ -125,14 +125,8 @@ portage tree there takes ~4 hours. Only the finished ISO is copied back into `$W
 already-downloaded stage3 tarball, re-imports the synced tree *in place* (keeping its git
 history, so an unchanged tree keeps the same treeish), and catalyst's own autoresume picks its
 chroots back up in `storedir` instead of restarting from stage1. For that to work `DATA_DIR` must
-survive between runs — keep the container (`docker run --name stormg …`, no `--rm`) or, better,
-give it a volume:
-
-```sh
-docker run --rm --privileged -v "$PWD":/build-stormg \
-  -v stormg-data:/var/tmp/stormg-data gentoo/stage3:amd64-openrc \
-  bash -c "cd /build-stormg && REPO_DIR=/build-stormg ./autocatalyst.sh"
-```
+survive between runs, which the named `stormg-data` volume in the container command below does.
+Delete it with `docker volume rm stormg-data` to force a clean rebuild.
 
 The glibc pre-bump targets the newest *released* glibc in the snapshot tree (live `9999`
 ebuilds are skipped — they clone upstream glibc and cannot build in a bare stage3). If the bump
@@ -171,12 +165,36 @@ Gentoo Release Engineering uses:
 # Ubuntu/Debian/Arch/Fedora — any box with Docker (or Podman):
 #  1. official stage3 image provides a Gentoo rootfs
 #  2. bind-mount this repo inside it
-docker run -it --privileged \
+#  3. keep the bulk build data in a named volume, so a failed run resumes
+docker run -it --rm --privileged \
+  --name stormg-build \
   -v "$PWD":/build-stormg \
   -v stormg-data:/var/tmp/stormg-data \
+  -e REPO_DIR=/build-stormg \
+  -e DATA_DIR=/var/tmp/stormg-data \
+  -w /build-stormg \
   gentoo/stage3:amd64-openrc \
-  bash -c "cd /build-stormg && REPO_DIR=/build-stormg ./autocatalyst.sh"
+  bash ./autocatalyst.sh
 ```
+
+PowerShell (Docker Desktop on Windows):
+
+```powershell
+docker run -it --rm --privileged `
+  --name stormg-build `
+  -v "${PWD}:/build-stormg" `
+  -v stormg-data:/var/tmp/stormg-data `
+  -e REPO_DIR=/build-stormg `
+  -e DATA_DIR=/var/tmp/stormg-data `
+  -w /build-stormg `
+  gentoo/stage3:amd64-openrc `
+  bash ./autocatalyst.sh
+```
+
+Re-run the exact same command to resume. Once stage1 has finished you can jump straight to
+stage2 (and keep editing the specs) by appending `--only stage2`, and `--dry-run` prints the
+planned catalyst invocations without touching the volume. If a previous container was left
+behind, `docker rm -f stormg-build` frees the name.
 
 (For Podman: same command with `podman` and add `--userns=keep-id` / `--privileged` as needed;
 running needs `--privileged` so catalyst can mount the stage3 chroot.) The image does not need a
