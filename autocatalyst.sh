@@ -29,6 +29,9 @@
 # Env overrides:
 #   REPO_DIR       repo root   (default: directory containing this script)
 #   WORKDIR        build work  (default: $REPO_DIR/build)
+#   DATA_DIR       bulk build data: portage trees + git objects, catalyst
+#                  storedir, distfiles, glibc bump chroot
+#                  (default: $WORKDIR, or /var/tmp/stormg-data in a container)
 #   STAGE3_URL     stage3 tarball URL (else auto-detect latest)
 #   --snapshot REF uses a specific gentoo treeish (default: fresh HEAD)
 #   CATALYST_JOBS  make jobs (default: nproc)
@@ -56,8 +59,8 @@ OLD_PREFIX='/home/bennji/Desktop/catalyst_stormg'
 # Where to save the finished ISO - the installed CalamaroOS SSD (user Desktop).
 # Override with $ISO_DIR or --iso-dir.
 ISO_DIR="${ISO_DIR:-$HOME/Desktop}"
-SCRATCH_BASE=""
 SCRATCH_MNT=""
+ISO_FILE=""
 BUMP_GLIBC="${BUMP_GLIBC:-1}"
 GLIBC_MIN="${GLIBC_MIN:-2.43-r2}"
 HOST_MAKE_CONF="${HOST_MAKE_CONF:-/etc/portage/make.conf}"
@@ -93,6 +96,24 @@ _in_container(){
   if grep -qaE '(docker|containerd|kubepods|podman|libpod)' /proc/1/cgroup 2>/dev/null; then return 0; fi
   return 1
 }
+
+# Where the bulk, ephemeral build data lives: the imported portage tree plus
+# its git objects, catalyst's storedir, the distfiles cache and the glibc bump
+# chroot. In a container the workspace is normally bind-mounted from another
+# OS, and Docker Desktop's filesystem bridge manages only a few hundred small
+# files per minute (measured ~570); importing the 134k-file / ~720 MB portage
+# tree into it takes ~4 hours and looks exactly like a hang. Keep it on the
+# container's own disk and copy only the finished ISO back into the workspace.
+if [ -n "${DATA_DIR:-}" ]; then
+  :
+elif _in_container; then
+  DATA_DIR=/var/tmp/stormg-data
+else
+  DATA_DIR="$WORKDIR"
+fi
+REPOS_DIR="$DATA_DIR/repos"
+DISTFILES_DIR="$DATA_DIR/distfiles"
+SCRATCH_BASE="${SCRATCH_BASE:-$DATA_DIR/scratch}"
 
 # First value of `key = value` in a catalyst.conf/make.conf, quotes stripped.
 _conf_val(){
@@ -214,9 +235,9 @@ case "$ONLY" in all|stage1|stage2) ;; *) _die "Bad --only value: $ONLY (all|stag
 _write_specs(){
   _info "Rewriting hardcoded '$OLD_PREFIX' -> '$REPO_DIR' in spec copies"
   mkdir -p "$WORKDIR"
-  local esc escw
+  local esc escr
   esc="$(printf '%s' "$REPO_DIR"  | sed 's/[\\&]/\\&/g')"
-  escw="$(printf '%s' "$WORKDIR"  | sed 's/[\\&]/\\&/g')"
+  escr="$(printf '%s' "$REPOS_DIR" | sed 's/[\\&]/\\&/g')"
   # The committed specs carry a stale example date (stormg-08-06-2026 etc.);
   # stamp the real build date in, so version_stamp / source_subpath / iso /
   # volid all stay in sync and the output names reflect the day of the build.
@@ -224,9 +245,9 @@ _write_specs(){
   for pair in "$SPEC_S1:$CONF_STAGE1" "$SPEC_S2:$CONF_STAGE2"; do
     local src="${pair%%:*}" dst="${pair#*:}"
     sed -e "s#${OLD_PREFIX}#${esc}#g" \
-        -e "s#${esc}/overlay/var/db/repos/gentoo#${escw}/repos/gentoo#g" \
-        -e "s#${esc}/overlay/var/db/repos/guru#${escw}/repos/guru#g" \
-        -e "s#${esc}/overlay/var/db/repos/steam-overlay#${escw}/repos/steam-overlay#g" \
+        -e "s#${esc}/overlay/var/db/repos/gentoo#${escr}/gentoo#g" \
+        -e "s#${esc}/overlay/var/db/repos/guru#${escr}/guru#g" \
+        -e "s#${esc}/overlay/var/db/repos/steam-overlay#${escr}/steam-overlay#g" \
         -e "s#stormg-${dpat}#stormg-${DATE}#g" \
         -e "s#livecd-stage1-amd64-stormg-${dpat}#livecd-stage1-amd64-stormg-${DATE}#g" \
         -e "s#StormG_xfce_${dpat}#StormG_xfce_${DATE}#g" \
@@ -262,43 +283,43 @@ _ensure_host_tree(){
 
 _fresh_sync(){
   _info "Fresh-syncing the gentoo tree + overlay repos"
-  mkdir -p "$WORKDIR/repos"
+  mkdir -p "$REPOS_DIR"
 
-  if [ -d "$WORKDIR/repos/gentoo/.git" ] && \
-     _git -C "$WORKDIR/repos/gentoo" remote get-url origin >/dev/null 2>&1; then
+  if [ -d "$REPOS_DIR/gentoo/.git" ] && \
+     _git -C "$REPOS_DIR/gentoo" remote get-url origin >/dev/null 2>&1; then
     _ok "gentoo clone present; pulling"
-    _run _git -C "$WORKDIR/repos/gentoo" pull --ff-only
+    _run _git -C "$REPOS_DIR/gentoo" pull --ff-only
   elif [ -d /var/db/repos/gentoo/profiles ]; then
     _info "Importing synced portage tree from /var/db/repos/gentoo"
-    _run rm -rf "$WORKDIR/repos/gentoo"
-    _run cp -a /var/db/repos/gentoo "$WORKDIR/repos/gentoo"
+    _run rm -rf "$REPOS_DIR/gentoo"
+    _run cp -a /var/db/repos/gentoo "$REPOS_DIR/gentoo"
     # An rsync/webrsync tree has no git history, but catalyst snapshots need a
     # treeish to archive. Give the synced tree a local commit (once).
-    if [ ! -d "$WORKDIR/repos/gentoo/.git" ] && [ "$DRY" -eq 0 ]; then
+    if [ ! -d "$REPOS_DIR/gentoo/.git" ] && [ "$DRY" -eq 0 ]; then
       _info "Creating local git history for the synced tree (catalyst snapshot_treeish)"
-      _git -C "$WORKDIR/repos/gentoo" init -q
-      _git -C "$WORKDIR/repos/gentoo" add -A -f
-      _git -C "$WORKDIR/repos/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
+      _git -C "$REPOS_DIR/gentoo" init -q
+      _git -C "$REPOS_DIR/gentoo" add -A -f
+      _git -C "$REPOS_DIR/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
           commit -qm "synced portage tree $(date +%Y-%m-%d)"
     fi
   else
     _info "cloning gentoo from $GENTOO_REPO ..."
-    _run rm -rf "$WORKDIR/repos/gentoo"
-    _run git clone --depth=1 --quiet "$GENTOO_REPO" "$WORKDIR/repos/gentoo"
+    _run rm -rf "$REPOS_DIR/gentoo"
+    _run git clone --depth=1 --quiet "$GENTOO_REPO" "$REPOS_DIR/gentoo"
   fi
   for pair in "guru:$GURU_REPO" "steam-overlay:$STEAM_REPO"; do
     local name="${pair%%:*}" url="${pair#*:}"
-    if [ ! -d "$WORKDIR/repos/$name/.git" ]; then
+    if [ ! -d "$REPOS_DIR/$name/.git" ]; then
       _info "cloning $name ..."
-      _run rm -rf "$WORKDIR/repos/$name"
-      _run git clone --depth=1 --quiet "$url" "$WORKDIR/repos/$name"
+      _run rm -rf "$REPOS_DIR/$name"
+      _run git clone --depth=1 --quiet "$url" "$REPOS_DIR/$name"
     else
-      _run _git -C "$WORKDIR/repos/$name" pull --ff-only
+      _run _git -C "$REPOS_DIR/$name" pull --ff-only
     fi
   done
 
 if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
-    SNAP_REF="$(_git -C "$WORKDIR/repos/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
+    SNAP_REF="$(_git -C "$REPOS_DIR/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
   fi
   _ok "snapshot will be built from gentoo treeish ${SNAP_REF}"
 }
@@ -317,7 +338,7 @@ _seed_snapshot_repos(){
   fi
   mkdir -p "$repodir"
   for name in gentoo guru steam-overlay; do
-    src="$WORKDIR/repos/$name"
+    src="$REPOS_DIR/$name"
     [ -d "$src/.git" ] || { _warn "no git checkout at $src to seed (rsync tree?); skipping"; continue; }
     dest="$repodir/$name.git"
     # Re-create it: a bare clone gets no fetch refspec, so a stale mirror
@@ -337,7 +358,7 @@ _seed_snapshot_repos(){
 # --------------------------------------------------------------------------
 _ensure_stage3(){
   if [ "$DRY" -eq 1 ]; then _info "skipping stage3 fetch (dry-run)"; return; fi
-  local dist="$WORKDIR/distfiles"
+  local dist="$DISTFILES_DIR"
   local out="$dist/$STAGE3_RELDIR"
   local url
   mkdir -p "$(dirname "$out")"
@@ -385,7 +406,7 @@ _ensure_stage3_builds(){
   storedir="$(_conf_val storedir "$CATALYST_CONF" || true)"
   [ -n "$storedir" ] || storedir="/var/tmp/catalyst"
   dest="$storedir/builds/$STAGE3_RELDIR"
-  src="$WORKDIR/distfiles/$STAGE3_RELDIR"
+  src="$DISTFILES_DIR/$STAGE3_RELDIR"
   if [ -s "$dest" ] && [ "$dest" -nt "$src" ]; then
     _ok "stage3 already in catalyst builds dir: $dest"
     return
@@ -406,7 +427,7 @@ _ensure_stage3_builds(){
 
 # Newest glibc PV available in the freshly-synced snapshot gentoo tree.
 _snapshot_glibc_newest(){
-  local dir="$WORKDIR/repos/gentoo/sys-libs/glibc"
+  local dir="$REPOS_DIR/gentoo/sys-libs/glibc"
   [ -d "$dir" ] || return 1
   ls "$dir"/glibc-*.ebuild 2>/dev/null | sed -E 's#.*/glibc-(.*)\.ebuild#\1#' | sort -V | tail -1
 }
@@ -436,7 +457,7 @@ _bump_glibc(){
   fi
   if [ "$DRY" -eq 1 ]; then _info "[dry-run] skip glibc bump"; return 0; fi
   local tar newest cur target root rootcmd rc mkconf cb arch
-  tar="$WORKDIR/distfiles/$STAGE3_RELDIR"
+  tar="$DISTFILES_DIR/$STAGE3_RELDIR"
   [ -s "$tar" ] || { _warn "no source stage3 tarball; skipping glibc bump"; return 0; }
   newest="$(_snapshot_glibc_newest)" || { _warn "cannot resolve snapshot glibc; skipping bump"; return 0; }
   cur="$(_stage3_glibc_installed "$tar")" || cur=""
@@ -450,13 +471,13 @@ _bump_glibc(){
     return 0
   fi
   _info "Upgrading stage3 glibc to $target before catalyst stage1"
-  local root="$WORKDIR/bumproot"
+  local root="$DATA_DIR/bumproot"
   rm -rf "$root"; mkdir -p "$root"
   _run tar -xJf "$tar" -C "$root"
   # overlay the snapshot's portage tree so the chroot sees its glibc ebuild
   mkdir -p "$root/var/db/repos"
   rm -rf "$root/var/db/repos/gentoo"
-  cp -a "$WORKDIR/repos/gentoo" "$root/var/db/repos/gentoo"
+  cp -a "$REPOS_DIR/gentoo" "$root/var/db/repos/gentoo"
   if [ "${GENTOO_BIND:-1}" = 1 ]; then
     mount --bind /proc "$root/proc" 2>/dev/null || _warn "no /proc bind"
     mount --bind /dev "$root/dev"   2>/dev/null || _warn "no /dev bind"
@@ -484,8 +505,8 @@ _bump_glibc(){
     _warn "glibc bump failed (rc=$rc); continuing with original stage3"
   else
     _info "Repacking bumped stage3"
-    _run tar -cJf "$WORKDIR/distfiles/stage3.bumped.tar.xz" -C "$root" --xattrs --acls .
-    [ -s "$WORKDIR/distfiles/stage3.bumped.tar.xz" ] && _run mv -f "$WORKDIR/distfiles/stage3.bumped.tar.xz" "$tar"
+    _run tar -cJf "$DISTFILES_DIR/stage3.bumped.tar.xz" -C "$root" --xattrs --acls .
+    [ -s "$DISTFILES_DIR/stage3.bumped.tar.xz" ] && _run mv -f "$DISTFILES_DIR/stage3.bumped.tar.xz" "$tar"
     _ok "stage3 glibc bumped to $target"
   fi
   for m in proc dev sys; do umount "$root/$m" 2>/dev/null || true; done
@@ -541,7 +562,7 @@ _max_tmpfs(){
 _scratch_space(){
   if [ "$DRY" -eq 1 ]; then _info "[dry-run] create scratch bind mounts"; return; fi
   local hconf="/etc/catalyst/catalyst.conf" dist stored d backing
-  local base="${SCRATCH_BASE:-$WORKDIR/scratch}"
+  local base="${SCRATCH_BASE:-$DATA_DIR/scratch}"
   mkdir -p "$base"
   dist="$(_conf_val distdir "$hconf" || true)";   [ -n "$dist" ]   || dist="/var/cache/distfiles"
   stored="$(_conf_val storedir "$hconf" || true)"; [ -n "$stored" ] || stored="/var/tmp/catalyst"
@@ -597,14 +618,43 @@ _run_stage2(){
   _run catalyst -c "$CATALYST_CONF" -f "$CONF_STAGE2" ${CATALYST_OPTS:-}
 }
 
+# catalyst writes the ISO under <storedir>/builds/livecd/, which is now on the
+# container's own disk (or $WORKDIR/scratch on a host run). Copy it into the
+# bind-mounted workspace so it survives the container and the GitHub Actions
+# artifact upload really finds build/*.iso.
+_collect_iso(){
+  local stored src
+  stored="$(_conf_val storedir "$CATALYST_CONF" || true)"
+  [ -n "$stored" ] || stored=/var/tmp/catalyst
+  if [ "$DRY" -eq 1 ]; then
+    _info "[dry-run] copy ISO from $stored/builds/livecd into $WORKDIR"
+    return 0
+  fi
+  if [ ! -d "$stored/builds" ]; then
+    _warn "No catalyst builds dir at $stored/builds; no ISO to collect"
+    return 0
+  fi
+  src="$(find "$stored/builds" -maxdepth 3 -name '*.iso' -print -quit 2>/dev/null || true)"
+  if [ -z "$src" ]; then
+    _warn "No ISO found under $stored/builds"
+    return 0
+  fi
+  ISO_FILE="$WORKDIR/$(basename "$src")"
+  if [ ! "$src" -ef "$ISO_FILE" ]; then
+    _info "Copying ISO into the workspace: $ISO_FILE"
+    cp -f "$src" "$ISO_FILE" || { _warn "could not copy ISO to $ISO_FILE"; return 0; }
+  fi
+  _ok "ISO ready: $ISO_FILE"
+}
+
 _report(){
-  local iso="$WORKDIR/StormG_xfce_${DATE}.iso"
-  # iso name comes from livecd/iso in stage2 spec; keep in sync
-  iso="$(awk -F' *: *' '/^livecd\/iso:/{print $2}' "$CONF_STAGE2" 2>/dev/null || echo "$iso")"
+  [ "$DRY" -eq 1 ] || [ -n "$ISO_FILE" ] || _collect_iso
   echo
   _ok "Build finished."
-  printf '\033[36m  ISO: %s\033[0m\n' "$WORKDIR/$iso"
-  _info "Verify (on the live ISO):  isoinfo -l -i $WORKDIR/$iso"
+  if [ -n "$ISO_FILE" ] && [ -f "$ISO_FILE" ]; then
+    printf '\033[36m  ISO: %s\033[0m\n' "$ISO_FILE"
+    _info "Verify (on the live ISO):  isoinfo -l -i $ISO_FILE"
+  fi
   _info "If calamares hangs on 'loading modules', see README: clear the target disk's filesystem (JFS etc.) first."
 }
 
@@ -638,6 +688,7 @@ main(){
   if [ "$ONLY" != stage1 ]; then
     [ -n "${KEEP:-}" ] || _write_catalyst_conf
     _run_stage2
+    _collect_iso
   fi
 
   _report

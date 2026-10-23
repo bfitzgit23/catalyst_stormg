@@ -112,8 +112,14 @@ livecd-stage2.
 The bundled `overlay/` tree is gitignored, so a clean checkout (docker image, GitHub Actions
 runner) has no `overlay/var/db/repos/*` to copy. In that case the script runs `emerge --sync`
 (falling back to `emerge-webrsync` when `rsync` is unavailable or blocked) to create
-`/var/db/repos/gentoo`, copies that synced tree into `$WORKDIR/repos/gentoo`, and shallow-clones
+`/var/db/repos/gentoo`, copies that synced tree into `$DATA_DIR/repos/gentoo`, and shallow-clones
 `guru` / `steam-overlay` from GitHub.
+
+`$DATA_DIR` holds everything big and disposable: the imported trees and their git objects,
+catalyst's `storedir`, the distfiles cache and the glibc bump chroot. It defaults to `$WORKDIR`,
+but to `/var/tmp/stormg-data` inside a container — a bind-mounted workspace (Docker Desktop on
+Windows/macOS) manages only a few hundred small files per *minute*, so importing the 134k-file
+portage tree there takes ~4 hours. Only the finished ISO is copied back into `$WORKDIR`.
 
 ```sh
 chmod +x autocatalyst.sh
@@ -132,6 +138,8 @@ Options / env overrides:
 - `-j <jobs>` / `CATALYST_JOBS` — make jobs (default `nproc`).
 - `--keep` — don't regenerate `$WORKDIR/catalyst.conf` before stage2.
 - `REPO_DIR`, `WORKDIR` — override where the repo and the build live.
+- `DATA_DIR` — where the bulky, disposable build data lives (trees, `storedir`, distfiles).
+  Default: `WORKDIR`, or `/var/tmp/stormg-data` inside a container.
 
 **Why it works on a live GUI ISO:** catalyst is Gentoo-only (it drives `emerge` + a stage3
 chroot), but a system booted from the live GUI ISO is already Gentoo, so this script runs
@@ -155,7 +163,8 @@ docker run -it --privileged \
 running needs `--privileged` so catalyst can mount the stage3 chroot.) The image does not need a
 pre-synced portage tree or `git` — the script syncs the tree and installs both itself. The ISO
 lands in `build/StormG_xfce_<MM-DD-YYYY>.iso`; because the workspace is bind-mounted, the file
-survives the container (so GitHub Actions can upload it as an artifact). The date is autodetected
+survives the container (so GitHub Actions can upload it as an artifact). Set `DATA_DIR` to override
+where the disposable bulk data goes. The date is autodetected
 at build time (name comes from `livecd/iso` in `livegui-stage2.spec`, which `autocatalyst.sh`
 stamps with the current date).
 
@@ -167,7 +176,7 @@ full live GUI ISO can exceed; the workflow exposes `runs_on`, `timeout_minutes` 
 ### Known remaining work
 - `overlay/` is gitignored, so it is not part of a fresh clone. `autocatalyst.sh` handles that by
   syncing a portage tree (`emerge --sync`, falling back to `emerge-webrsync`) when
-  `overlay/var/db/repos/gentoo` is absent, then copying the synced tree into the build workspace.
+  `overlay/var/db/repos/gentoo` is absent, then copying the synced tree into `$DATA_DIR/repos`.
   The `snapshot_treeish` in the `*.spec` files is autodetected: the committed specs say `HEAD`,
   and `autocatalyst.sh` rewrites the line to the synced gentoo tree HEAD (or `--snapshot <ref>`)
   before building. Note: `profile: default/linux/amd64/23.0/desktop` must still exist in that tree
