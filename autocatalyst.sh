@@ -503,6 +503,21 @@ _stage3_glibc_installed(){
   return 1
 }
 
+# Unmount the live kernel filesystems we bind into the bump chroot. This MUST
+# happen before the chroot is repacked: tarring a mounted sysfs/procfs fills the
+# log with "File shrank by N bytes" / "Input/output error" / "Permission
+# denied", exits 2, and writes a multi-GB archive of kernel state instead of a
+# stage3.
+_bump_unmount(){
+  local root="$1" m
+  for m in proc dev sys; do
+    [ -d "$root/$m" ] || continue
+    if _have mountpoint && ! mountpoint -q "$root/$m"; then continue; fi
+    umount "$root/$m" 2>/dev/null || umount -l "$root/$m" 2>/dev/null || \
+      _warn "could not unmount $root/$m; the repack excludes it"
+  done
+}
+
 # Catalyst dies ("Downgrading glibc is not supported") when the stage3's glibc
 # is newer than what the snapshot profile wants to build. Prevent that by
 # upgrading the stage3 chroot's glibc to the snapshot's newest FIRST, so the
@@ -534,16 +549,26 @@ _bump_glibc(){
     return 0
   fi
   _info "Upgrading stage3 glibc to $target before catalyst stage1"
-  local root="$DATA_DIR/bumproot"
-  rm -rf "$root"; mkdir -p "$root"
-  _info "Extracting stage3 to $root"
-  _run tar -xJf "$tar" -C "$root"
-  # overlay the snapshot's portage tree so the chroot sees its glibc ebuild.
-  # Skip .git: the copy is throwaway and the objects are ~700 MB.
-  mkdir -p "$root/var/db/repos/gentoo"
-  if [ "$DRY" -eq 0 ]; then
-    tar -C "$REPOS_DIR/gentoo" --exclude=./.git -cf - . \
-      | tar -C "$root/var/db/repos/gentoo" -xf - || _warn "could not overlay the portage tree into $root"
+  local root="$DATA_DIR/bumproot" oldroot="$DISTFILES_DIR/stage3.bumped.tar.xz"
+  rm -f "$oldroot" "$oldroot.part" 2>/dev/null || true
+  # Resume: a previous attempt may already have emerged the target glibc and
+  # then died while repacking. The emerge is the expensive part (tens of
+  # minutes), so reuse the chroot instead of extracting + rebuilding it again.
+  local need_emerge=1
+  if [ -f "$root/var/db/pkg/sys-libs/glibc-$target/PV" ]; then
+    _ok "reusing bump chroot at $root (glibc $target already emerged)"
+    need_emerge=0
+  else
+    rm -rf "$root"; mkdir -p "$root"
+    _info "Extracting stage3 to $root"
+    _run tar -xJf "$tar" -C "$root"
+    # overlay the snapshot's portage tree so the chroot sees its glibc ebuild.
+    # Skip .git: the copy is throwaway and the objects are ~700 MB.
+    mkdir -p "$root/var/db/repos/gentoo"
+    if [ "$DRY" -eq 0 ]; then
+      tar -C "$REPOS_DIR/gentoo" --exclude=./.git -cf - . \
+        | tar -C "$root/var/db/repos/gentoo" -xf - || _warn "could not overlay the portage tree into $root"
+    fi
   fi
   if [ "${GENTOO_BIND:-1}" = 1 ]; then
     mount --bind /proc "$root/proc" 2>/dev/null || _warn "no /proc bind"
@@ -558,25 +583,47 @@ _bump_glibc(){
   # can never fall below the stage3's glibc.
   cb="$(grep -Es '^(CHOST|CBUILD)=' /etc/portage/make.conf 2>/dev/null | head -1)" || cb=""
   case "$cb" in *aarch64*|*arm64*) arch="arm64" ;; *x86_64*|*amd64*) arch="amd64" ;; *) arch="amd64" ;; esac
-  echo "ACCEPT_KEYWORDS=\"$arch ~$arch\"" >> "$mkconf"
+  grep -q '^ACCEPT_KEYWORDS=' "$mkconf" 2>/dev/null || echo "ACCEPT_KEYWORDS=\"$arch ~$arch\"" >> "$mkconf"
   rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$GLIBC_MIN\" \">=sys-libs/glibc-$target\""
   rc=0
-  _info "Running the bump inside the chroot (this builds glibc; it takes a while)"
-  chroot "$root" /bin/bash -lc "$rootcmd" || rc=$?
+  if [ "$need_emerge" = 1 ]; then
+    _info "Running the bump inside the chroot (this builds glibc; it takes a while)"
+    chroot "$root" /bin/bash -lc "$rootcmd" || rc=$?
+  else
+    _ok "skipping the emerge; repacking the already-bumped chroot"
+  fi
+  # The chroot still has /proc, /dev and /sys bind-mounted from the emerge: a
+  # tar of the root now would archive live kernel state (the endless "File
+  # shrank by N bytes" / "Input/output error" noise) and fail. Unmount first.
+  _bump_unmount "$root"
+  local repacked=0
   if [ "$rc" -ne 0 ]; then
     # Never abort the whole build on a failed bump: the original stage3 may
     # still build fine, and catalyst's own error is far more informative than a
     # silent exit here.
     _warn "glibc bump to $target failed (rc=$rc); continuing with the original stage3"
     _warn "if catalyst then reports 'Downgrading glibc is not supported', re-run with --no-bump-glibc"
+    [ -n "${KEEP:-}" ] || rm -rf "$root"
   else
+    # Build the new tarball beside the old one and only replace it once it is
+    # complete and readable, so a failed repack (or a full disk) can never
+    # destroy a working stage3.
     _info "Repacking bumped stage3"
-    _run tar -cJf "$DISTFILES_DIR/stage3.bumped.tar.xz" -C "$root" --xattrs --acls .
-    [ -s "$DISTFILES_DIR/stage3.bumped.tar.xz" ] && _run mv -f "$DISTFILES_DIR/stage3.bumped.tar.xz" "$tar"
-    _ok "stage3 glibc bumped to $target"
+    rm -f "$oldroot.part"
+    if _run tar -cJf "$oldroot.part" -C "$root" --xattrs --acls \
+         --exclude=./proc/* --exclude=./sys/* --exclude=./dev/* \
+         --exclude=./var/tmp/portage/* --exclude=./var/cache/distfiles/* . \
+       && [ -s "$oldroot.part" ] && tar -tJf "$oldroot.part" >/dev/null 2>&1; then
+      _run mv -f "$oldroot.part" "$tar"
+      repacked=1
+      _ok "stage3 glibc bumped to $target"
+    else
+      rm -f "$oldroot.part"
+      _warn "could not repack the bumped stage3; keeping the original tarball"
+      _warn "the emerged chroot is kept at $root, so the next run skips the glibc rebuild"
+    fi
   fi
-  for m in proc dev sys; do umount "$root/$m" 2>/dev/null || true; done
-  [ -n "${KEEP:-}" ] || rm -rf "$root"
+  if [ "$repacked" -eq 1 ] && [ -z "${KEEP:-}" ]; then rm -rf "$root"; fi
   return 0
 }
 

@@ -132,6 +132,12 @@ The glibc pre-bump targets the newest *released* glibc in the snapshot tree (liv
 ebuilds are skipped — they clone upstream glibc and cannot build in a bare stage3). If the bump
 still fails it only warns and continues; pass `--no-bump-glibc` to skip it entirely.
 
+After the bump the chroot is repacked into the stage3 tarball, so `/proc`, `/dev` and `/sys` are
+unmounted first and excluded from the archive (tarring live kernel filesystems produced thousands
+of `File shrank by N bytes` errors and a corrupt tarball). The replacement is written to a
+`.part` file and only swapped in once it lists cleanly, and if the repack still fails the emerged
+chroot is kept — the next run reuses it and skips the glibc rebuild.
+
 ```sh
 chmod +x autocatalyst.sh
 sudo ./autocatalyst.sh                 # stage1 + stage2, all defaults
