@@ -15,8 +15,10 @@ services:
     volumes:
       - .:/build-stormg
       # synced tree + git history, guru/steam-overlay, distfiles, catalyst
-      # storedir and chroots: keeping it here is what makes a re-run resume
-      - stormg-data:/var/tmp/stormg-data
+      # storedir and chroots: keeping it here is what makes a re-run resume.
+      # Default is the named volume; CI sets STORMG_DATA=./.stormg-data so the
+      # data sits in the checkout and can be cached between workflow runs.
+      - ${STORMG_DATA:-stormg-data}:/var/tmp/stormg-data
     environment:
       REPO_DIR: /build-stormg
       DATA_DIR: /var/tmp/stormg-data
