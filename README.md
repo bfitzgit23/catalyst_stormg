@@ -209,6 +209,18 @@ stage2 (and keep editing the specs) by appending `--only stage2`, and `--dry-run
 planned catalyst invocations without touching the volume. If a previous container was left
 behind, `docker rm -f stormg-build` frees the name.
 
+**Simplest, and immune to shell quoting:** the repo ships a [compose.yaml](compose.yaml), so the
+`-v` path is resolved by Compose instead of by your shell:
+
+```sh
+docker compose run --rm build              # stage1 + stage2 (or resume)
+docker compose run --rm build --only stage2
+docker compose run --rm build --dry-run
+```
+
+The build data lives in the Compose-managed `stormg-data` volume (shown as
+`<project>_stormg-data`); `docker compose down -v` throws it away for a clean rebuild.
+
 > `docker: invalid reference format` from a Windows shell means the `-v` colon landed outside the
 > quotes: `-v "$PWD":/build-stormg` is split by PowerShell into two arguments (`C:\...\repo` and
 > `:/build-stormg`), and Docker reads the stray one as the image name. Use

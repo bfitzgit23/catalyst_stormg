@@ -1,0 +1,28 @@
+# Local StormG ISO build, resumable, no shell path quoting involved.
+#
+#   docker compose run --rm build              # stage1 + stage2
+#   docker compose run --rm build --only stage2
+#   docker compose run --rm build --dry-run
+#
+# Compose resolves `.` (this file's directory) itself, so there is no "$PWD" /
+# "%CD%" to expand and nothing for PowerShell or cmd.exe to split apart.
+services:
+  build:
+    image: gentoo/stage3:amd64-openrc
+    # catalyst bind-mounts /proc, /dev and /sys into its chroots
+    privileged: true
+    working_dir: /build-stormg
+    volumes:
+      - .:/build-stormg
+      # synced tree + git history, guru/steam-overlay, distfiles, catalyst
+      # storedir and chroots: keeping it here is what makes a re-run resume
+      - stormg-data:/var/tmp/stormg-data
+    environment:
+      REPO_DIR: /build-stormg
+      DATA_DIR: /var/tmp/stormg-data
+    # entrypoint, not command, so `docker compose run build --only stage2`
+    # still starts the script and just appends the arguments
+    entrypoint: ["bash", "./autocatalyst.sh"]
+
+volumes:
+  stormg-data:
