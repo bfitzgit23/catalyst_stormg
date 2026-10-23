@@ -2,4 +2,8 @@
 # new glibc tends to lead to trouble with sandbox (and qemu),
 # especially for the unstable arches
 #
+# NOTE: autocatalyst.sh raises this threshold at build time to just above the
+# glibc the seed stage3 carries (see _prepare_portage_confdir). Masking the
+# installed glibc makes portage install an older one over it, which the ebuild
+# aborts with "Downgrading glibc is not supported".
 >=sys-libs/glibc-2.43

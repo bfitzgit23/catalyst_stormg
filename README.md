@@ -138,6 +138,18 @@ of `File shrank by N bytes` errors and a corrupt tarball). The replacement is wr
 `.part` file and only swapped in once it lists cleanly, and if the repack still fails the emerged
 chroot is kept — the next run reuses it and skips the glibc rebuild.
 
+A bumped stage3 carries a glibc that is *newer* than `config/stages/package.mask/releng/glibc`
+allows (it masks `>=sys-libs/glibc-2.43`). With that mask, portage ignores the installed glibc and
+picks the newest *allowed* one — `2.42-r7` — then refuses to install it over the newer version:
+`Downgrading glibc is not supported and a sure way to destruction`. So the script gives catalyst a
+staged copy of the confdir in `$WORKDIR/portage-conf` whose glibc mask is raised just above the
+version the stage3 actually carries (keeping the original "hold back anything newer" intent) and
+adds `sys-libs/glibc ~amd64` to `package.accept_keywords` — catalyst's chroot has no
+`ACCEPT_KEYWORDS` of its own, so the newest glibc is otherwise still rejected as testing-only.
+Catalyst copies `portage_confdir` only once (`setup_confdir` is skipped as soon as its autoresume
+marker exists), so each stage run clears just that marker to make it re-copy the fixed confdir
+while package progress is preserved.
+
 ```sh
 chmod +x autocatalyst.sh
 sudo ./autocatalyst.sh                 # stage1 + stage2, all defaults

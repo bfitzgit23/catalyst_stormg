@@ -255,9 +255,10 @@ case "$ONLY" in all|stage1|stage2) ;; *) _die "Bad --only value: $ONLY (all|stag
 _write_specs(){
   _info "Rewriting hardcoded '$OLD_PREFIX' -> '$REPO_DIR' in spec copies"
   mkdir -p "$WORKDIR"
-  local esc escr
+  local esc escr escw
   esc="$(printf '%s' "$REPO_DIR"  | sed 's/[\\&]/\\&/g')"
   escr="$(printf '%s' "$REPOS_DIR" | sed 's/[\\&]/\\&/g')"
+  escw="$(printf '%s' "$WORKDIR"    | sed 's/[\\&]/\\&/g')"
   # The committed specs carry a stale example date (stormg-08-06-2026 etc.);
   # stamp the real build date in, so version_stamp / source_subpath / iso /
   # volid all stay in sync and the output names reflect the day of the build.
@@ -273,6 +274,7 @@ _write_specs(){
         -e "s#StormG_xfce_${dpat}#StormG_xfce_${DATE}#g" \
         -e "s#StormG_LiveDVD_${dpat}#StormG_LiveDVD_${DATE}#g" \
         -e "s#^snapshot_treeish:.*#snapshot_treeish: ${SNAP_REF:-HEAD}#" \
+        -e "s#^portage_confdir:.*#portage_confdir: ${escw}/portage-conf#" \
         "$src" > "$dst"
   done
   _ok "specs written (fresh git repos + treeish ${SNAP_REF:-HEAD}, date ${DATE})"
@@ -491,16 +493,91 @@ _ver_ge(){
 
 # glibc PV actually INSIDE the (tarball) stage3 we're about to build from.
 _stage3_glibc_installed(){
-  local tar="$1" pv pat
+  local tar="$1" val pat
   [ -s "$tar" ] && [ -f "/usr/bin/tar" ] || return 1
   # gentoo stage3 tarballs store paths with a leading './', which a pattern
   # anchored at 'var/' never matches - try both so a bumped tarball is
   # recognised (that is what makes a re-run skip the bump instead of redoing it).
-  for pat in './var/db/pkg/sys-libs/glibc-*/PV' 'var/db/pkg/sys-libs/glibc-*/PV'; do
-    pv="$(tar -xJf "$tar" --wildcards --to-stdout "$pat" 2>/dev/null | head -1)" || pv=""
-    if [ -n "$pv" ]; then printf '%s' "$pv"; return 0; fi
+  #
+  # PF is checked first: current portage no longer writes a PV file into the
+  # vdb (the directory name is authoritative), and every failed pattern costs a
+  # full decompression of the tarball.
+  for pat in './var/db/pkg/sys-libs/glibc-*/PF' 'var/db/pkg/sys-libs/glibc-*/PF' \
+             './var/db/pkg/sys-libs/glibc-*/PV' 'var/db/pkg/sys-libs/glibc-*/PV'; do
+    # head -1 closes the pipe early (tar is killed with SIGPIPE), hence the
+    # subshell: pipefail must not turn that into a failed assignment.
+    val="$( ( tar -xJf "$tar" --wildcards --to-stdout "$pat" 2>/dev/null || true ) | head -1 )"
+    val="${val#glibc-}"
+    val="$(printf '%s' "$val" | tr -d '\r\n')"
+    case "$val" in [0-9]*) printf '%s' "$val"; return 0 ;; esac
   done
-  return 1
+  # Last resort: read it off the vdb directory name.
+  val="$(tar -tJf "$tar" 2>/dev/null \
+        | sed -nE 's#^\.?/?var/db/pkg/sys-libs/glibc-([^/]+)/$#\1#p' \
+        | grep -vE '(^|\.)9999$' | sort -V | tail -1)" || val=""
+  [ -n "$val" ] || return 1
+  printf '%s' "$val"
+}
+
+# Next minor above a glibc PV: 2.44-r4 -> 2.45.
+_glibc_mask_above(){
+  local v="${1%%-*}" maj min
+  maj="${v%%.*}"; min="${v#*.}"
+  case "$v" in *.*) ;; *) return 1 ;; esac
+  case "$min" in ''|*[!0-9]*) return 1 ;; esac
+  printf '%s.%s' "$maj" "$((min+1))"
+}
+
+# The committed portage confdir masks >=sys-libs/glibc-2.43 ("new glibc tends
+# to lead to trouble with sandbox"). Once a stage3 ships that glibc or newer,
+# the mask makes portage fall back to the newest ALLOWED glibc - 2.42-r7 - and
+# install it OVER the newer installed one, which the ebuild aborts with
+# "Downgrading glibc is not supported and a sure way to destruction".
+#
+# Give catalyst a copy of the confdir whose glibc mask sits just above the
+# glibc the seed stage3 actually carries: the candidate is then either that
+# same version (nothing to do) or older than what is installed, which portage
+# simply leaves alone. The original intent - hold back anything newer than the
+# seed - is preserved.
+_prepare_portage_confdir(){
+  local src="$REPO_DIR/config/stages" dst="$WORKDIR/portage-conf"
+  local tar="$DISTFILES_DIR/$STAGE3_RELDIR" pv thr f
+  if [ "$DRY" -eq 1 ]; then
+    _info "[dry-run] would copy $src to $dst and raise the glibc mask"
+    return 0
+  fi
+  [ -d "$src" ] || { _warn "no portage confdir at $src; using catalyst defaults"; return 0; }
+  rm -rf "$dst"
+  cp -a "$src" "$dst" || _die "could not copy $src to $dst"
+  pv="$(_stage3_glibc_installed "$tar")" || pv=""
+  if [ -z "$pv" ]; then
+    _warn "could not read the stage3's glibc PV; leaving the glibc mask as committed"
+    return 0
+  fi
+  if ! thr="$(_glibc_mask_above "$pv")"; then
+    _warn "unexpected glibc PV '$pv'; leaving the glibc mask as committed"
+    return 0
+  fi
+  f="$dst/package.mask/releng/glibc"
+  mkdir -p "$(dirname "$f")"
+  cat > "$f" <<EOF
+# Rewritten by autocatalyst.sh for this build: the seed stage3 carries
+# sys-libs/glibc-$pv. Masking that version makes portage choose the newest
+# ALLOWED glibc (an older one) and install it over the newer installed
+# glibc, which aborts with "Downgrading glibc is not supported".
+#
+# The original intent is kept: hold back anything NEWER than the seed.
+>=sys-libs/glibc-$thr
+EOF
+  # The newest glibc is usually still testing-keyworded, and catalyst's chroot
+  # make.conf carries no ACCEPT_KEYWORDS of its own - without this, portage
+  # falls back to the newest STABLE glibc, which is again older than the seed's.
+  mkdir -p "$dst/package.accept_keywords"
+  cat > "$dst/package.accept_keywords/glibc" <<EOF
+# Added by autocatalyst.sh: the seed stage3 carries glibc $pv.
+sys-libs/glibc ~$GLIBC_ACCEPT_ARCH
+EOF
+  _ok "portage confdir staged at $dst; glibc mask >=sys-libs/glibc-$thr, ~$GLIBC_ACCEPT_ARCH accepted (stage3 has $pv)"
 }
 
 # Unmount the live kernel filesystems we bind into the bump chroot. This MUST
@@ -555,7 +632,7 @@ _bump_glibc(){
   # then died while repacking. The emerge is the expensive part (tens of
   # minutes), so reuse the chroot instead of extracting + rebuilding it again.
   local need_emerge=1
-  if [ -f "$root/var/db/pkg/sys-libs/glibc-$target/PV" ]; then
+  if [ -d "$root/var/db/pkg/sys-libs/glibc-$target" ]; then
     _ok "reusing bump chroot at $root (glibc $target already emerged)"
     need_emerge=0
   else
@@ -602,7 +679,7 @@ _bump_glibc(){
     # still build fine, and catalyst's own error is far more informative than a
     # silent exit here.
     _warn "glibc bump to $target failed (rc=$rc); continuing with the original stage3"
-    _warn "if catalyst then reports 'Downgrading glibc is not supported', re-run with --no-bump-glibc"
+    _warn "catalyst will build against whatever glibc the original stage3 carries"
     [ -n "${KEEP:-}" ] || rm -rf "$root"
   else
     # Build the new tarball beside the old one and only replace it once it is
@@ -718,8 +795,31 @@ _install_prereqs(){
 # --------------------------------------------------------------------------
 # 6. run the build
 # --------------------------------------------------------------------------
+# catalyst copies portage_confdir ONCE: setup_confdir returns immediately when
+# its autoresume marker exists. A build resumed after the confdir changed would
+# therefore keep the old (glibc-masking) copy in its chroot and fail again, so
+# drop just that marker - catalyst re-rsyncs the confdir while unpack,
+# chroot_setup and package progress stay untouched.
+_force_confdir_refresh(){
+  local storedir d n=0
+  storedir="$(_conf_val storedir "$CATALYST_CONF" 2>/dev/null || true)"
+  [ -n "$storedir" ] || storedir=/var/tmp/catalyst
+  if [ "$DRY" -eq 1 ]; then
+    _info "[dry-run] would clear catalyst setup_confdir resume markers under $storedir/tmp"
+    return 0
+  fi
+  for d in "$storedir"/tmp/*/.autoresume-livecd-stage*/; do
+    [ -d "$d" ] || continue
+    [ -f "$d/setup_confdir" ] || continue
+    rm -f "$d/setup_confdir" && n=$((n+1))
+  done
+  [ "$n" -eq 0 ] || _ok "cleared $n setup_confdir resume marker(s); the portage confdir will be re-copied"
+  return 0
+}
+
 _run_stage1(){
   _accept_host_keywords
+  _force_confdir_refresh
   _info "== building portage snapshot (git treeish ${SNAP_REF:-HEAD}) =="
   mkdir -p "$WORKDIR/snapshot"
   _run catalyst -c "$CATALYST_CONF" -s "${SNAP_REF:-HEAD}" ${CATALYST_OPTS:-}
@@ -728,6 +828,7 @@ _run_stage1(){
 }
 
 _run_stage2(){
+  _force_confdir_refresh
   _info "== livecd-stage2 =="
   _run catalyst -c "$CATALYST_CONF" -f "$CONF_STAGE2" ${CATALYST_OPTS:-}
 }
@@ -796,11 +897,14 @@ main(){
     _write_catalyst_conf
     _bump_glibc
     _ensure_stage3_builds
+    _prepare_portage_confdir
     _run_stage1
   fi
 
   if [ "$ONLY" != stage1 ]; then
     [ -n "${KEEP:-}" ] || _write_catalyst_conf
+    # --only stage2 still needs the confdir (and its glibc mask) staged.
+    [ -d "$WORKDIR/portage-conf" ] || _prepare_portage_confdir
     _run_stage2
     _collect_iso
   fi
