@@ -4,10 +4,24 @@ on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      runs_on:
+        description: "Runner label (a full ISO usually needs more than a hosted runner)"
+        type: string
+        default: "ubuntu-latest"
+      timeout_minutes:
+        description: "Job timeout in minutes (GitHub-hosted runners cap at 360)"
+        type: string
+        default: "360"
+      catalyst_args:
+        description: "Extra autocatalyst.sh arguments (e.g. --only stage2)"
+        type: string
+        default: ""
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs_on || 'ubuntu-latest' }}
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes || '360') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -23,83 +37,21 @@ jobs:
           docker-images: true
           swap: false
 
-      - name: Hard Patch Mount, Unbound Variables, and Resync Rules
-        run: |
-          python3 -c "
-          with open('autocatalyst.sh', 'r', encoding='utf-8') as f:
-              lines = f.readlines()
-          
-          out = []
-          skip = False
-          for line in lines:
-              if 'Live session detected' in line or 'enlarging tmpfs' in line:
-                  skip = True
-                  out.append('    echo \"[*] Container build context: skipping host tmpfs expansion\"\n')
-                  continue
-              if skip and line.strip() == 'fi':
-                  skip = False
-                  continue
-              
-              if not skip:
-                  if 'set -euo pipefail' in line:
-                      out.append(line)
-                      out.append('base=\"\${base:-\$REPO_DIR/build}\"\n')
-                      out.append('hconf=\"\${hconf:-/etc/portage/make.conf}\"\n')
-                      out.append('mkdir -p /etc/portage/package.accept_keywords\n')
-                      out.append('echo \"dev-util/catalyst ~amd64\" > /etc/portage/package.accept_keywords/catalyst\n')
-                      out.append('mkdir -p /etc/portage/package.use\n')
-                      out.append('echo \"sys-apps/util-linux python\" >> /etc/portage/package.use/catalyst-deps\n')
-                      out.append('echo \"sys-boot/grub grub_platforms_efi-32\" >> /etc/portage/package.use/catalyst-deps\n')
-                      continue
-
-                  if '_scratch_space' in line and not line.strip().startswith('#') and '=' not in line:
-                      out.append('    true # Bypassed broken execution call\n')
-                      continue
-
-                  if 'git clone' in line:
-                      if 'gentoo' in line and 'GENTOO_REPO' in line:
-                          out.append('    echo \"[*] Provisioning fresh Gentoo tree via mirror paths...\"\n')
-                          out.append('    rm -rf \"\$WORKDIR/repos/gentoo\" 2>/dev/null\n')
-                          out.append('    mkdir -p \"\$WORKDIR/repos\"\n')
-                          out.append('    cp -a /var/db/repos/gentoo \"\$WORKDIR/repos/gentoo\"\n')
-                      elif 'guru' in line and 'GURU_REPO' in line:
-                          out.append('    echo \"[*] Provisioning GURU overlay via shallow sync...\"\n')
-                          out.append('    rm -rf \"\$WORKDIR/repos/guru\" 2>/dev/null\n')
-                          out.append('    git clone --depth=1 https://github.com \"\$WORKDIR/repos/guru\"\n')
-                      elif 'steam' in line or 'STEAM_REPO' in line:
-                          out.append('    echo \"[*] Provisioning Steam overlay via shallow sync...\"\n')
-                          out.append('    rm -rf \"\$WORKDIR/repos/steam-overlay\" 2>/dev/null\n')
-                          out.append('    git clone --depth=1 https://github.com \"\$WORKDIR/repos/steam-overlay\"\n')
-                      else:
-                          out.append(line.replace('git clone', 'git clone --depth=1'))
-                      continue
-
-                  modified_line = line
-                  if 'sys-devel/catalyst' in modified_line:
-                      modified_line = modified_line.replace('sys-devel/catalyst', 'dev-util/catalyst')
-                  if 'app-arch/squashfs-tools' in modified_line:
-                      modified_line = modified_line.replace('app-arch/squashfs-tools', 'sys-fs/squashfs-tools')
-                  if 'sys-block/gptfdisk' in modified_line:
-                      modified_line = modified_line.replace('sys-block/gptfdisk', 'sys-apps/gptfdisk')
-                      
-                  out.append(modified_line)
-                      
-          with open('autocatalyst.sh', 'w', encoding='utf-8') as f:
-              f.writelines(out)
-          "
-          echo "=== VERIFYING REWRITE ==="
-          cat autocatalyst.sh | grep -A 2 "Provisioning fresh"
-
       - name: Run Build in Privileged Gentoo Container
+        env:
+          CATALYST_ARGS: ${{ inputs.catalyst_args }}
         run: |
           git config --global --add safe.directory "$PWD"
-          
-          docker run --privileged \
+
+          # The script syncs its own portage tree (emerge --sync, falling back
+          # to emerge-webrsync) and installs git/catalyst itself, so a bare
+          # stage3 image is enough.
+          docker run --rm --privileged \
             -v "$PWD":/build-stormg \
             -e REPO_DIR=/build-stormg \
             -w /build-stormg \
             gentoo/stage3:amd64-openrc \
-            bash -c "emerge-webrsync && emerge --oneshot dev-vcs/git && git config --global --add safe.directory /build-stormg && ./autocatalyst.sh"
+            bash ./autocatalyst.sh $CATALYST_ARGS
 
       - name: Upload Finished ISO Artifact
         uses: actions/upload-artifact@v4

@@ -37,71 +37,6 @@
 #   BUILD_DATE     build date used in version_stamp/iso/volid (default: today,
 #                  format MM-DD-YYYY - same shape as the hardcoded 08-06-2026)
 set -euo pipefail
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-mkdir -p /etc/portage/package.use
-echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
-echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-mkdir -p /etc/portage/package.use
-echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
-echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-mkdir -p /etc/portage/package.use
-echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
-echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-mkdir -p /etc/portage/package.use
-echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
-echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-mkdir -p /etc/portage/package.use
-echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
-echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-mkdir -p /etc/portage/package.use
-echo "sys-apps/util-linux python" >> /etc/portage/package.use/catalyst-deps
-echo "sys-boot/grub grub_platforms_efi-32" >> /etc/portage/package.use/catalyst-deps
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-mkdir -p /etc/portage/package.accept_keywords
-echo "dev-util/catalyst ~amd64" > /etc/portage/package.accept_keywords/catalyst
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-base="${base:-$REPO_DIR/build}"
-hconf="${hconf:-/etc/portage/make.conf}"
-base="${base:-$REPO_DIR/build}"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="${REPO_DIR:-$SCRIPT_DIR}"
@@ -148,6 +83,43 @@ _warn(){ printf '\033[33m[!]\033[0m %s\n' "$*" >&2; }
 _die(){  printf '\033[31m[!]\033[0m %s\n' "$*" >&2; exit 1; }
 _have(){ command -v "$1" >/dev/null 2>&1; }
 
+# git wrapper for trees copied/extracted by another uid (containers, live ISOs),
+# which would otherwise trip git's "dubious ownership" check.
+_git(){ git -c safe.directory='*' "$@"; }
+
+# True inside docker/podman/containerd (GitHub Actions runners included).
+_in_container(){
+  if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then return 0; fi
+  if grep -qaE '(docker|containerd|kubepods|podman|libpod)' /proc/1/cgroup 2>/dev/null; then return 0; fi
+  return 1
+}
+
+# First value of `key = value` in a catalyst.conf/make.conf, quotes stripped.
+_conf_val(){
+  [ -f "$2" ] || return 1
+  awk -v k="$1" 'index($0,k)==1 { sub("^" k "[ \t]*[=:][ \t]*",""); gsub(/"/,""); print; exit }' "$2" 2>/dev/null
+}
+
+# Accept the testing keyword for catalyst and enable the USE flags the build
+# host needs. Idempotent on purpose: re-running the script must not duplicate
+# lines in /etc/portage (the old inline patch did exactly that).
+_portage_prep(){
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] seed /etc/portage keywords + USE"; return 0; fi
+  local arch kw use line
+  case "$(uname -m)" in aarch64|arm64) arch=arm64 ;; *) arch=amd64 ;; esac
+  kw=/etc/portage/package.accept_keywords/stormg-catalyst
+  use=/etc/portage/package.use/stormg-catalyst
+  if ! mkdir -p /etc/portage/package.accept_keywords /etc/portage/package.use 2>/dev/null; then
+    _warn "cannot write /etc/portage; skipping keyword/USE setup"
+    return 0
+  fi
+  printf 'dev-util/catalyst ~%s\n' "$arch" > "$kw"
+  for line in 'sys-apps/util-linux python' 'sys-boot/grub grub_platforms_efi-32'; do
+    grep -qxF "$line" "$use" 2>/dev/null || printf '%s\n' "$line" >> "$use"
+  done
+  _ok "catalyst keyword/USE flags configured ($arch)"
+}
+
 _run(){
   if [ "$DRY" -eq 1 ]; then
     _info "[dry-run] $*"
@@ -185,18 +157,27 @@ _cleanup(){
   local rc=$?
   local iso m
   _drop_host_keywords
+  # Unmount scratch BEFORE rm -rf: its backing dirs live under $WORKDIR.
+  for m in $SCRATCH_MNT; do
+    umount "$m" 2>/dev/null && _ok "unmounted scratch over $m" || true
+  done
+  if _in_container; then
+    # docker / GitHub Actions: the bind-mounted workspace is the only place
+    # that survives the container, so keep the ISO and build tree there.
+    iso="$(find "$WORKDIR" -maxdepth 3 -name '*.iso' -print -quit 2>/dev/null)"
+    if [ -n "$iso" ]; then _ok "ISO kept in workspace: $iso"; else _warn "No ISO built."; fi
+    return "$rc"
+  fi
   _copy_iso
   iso="$(find "$WORKDIR" -maxdepth 3 -name '*.iso' -print -quit 2>/dev/null)"
   if [ -n "${KEEP:-}" ] && [ -d "$WORKDIR" ]; then
     _warn "--keep set; build dir retained: $WORKDIR"
   elif [ -n "$iso" ] && [ "$COPY_OK" -eq 0 ] && [ "$DRY" -eq 0 ]; then
     _warn "ISO present but could not be copied to '$ISO_DIR'; keeping build dir."
-  else
-    [ -d "$WORKDIR" ] && { _info "Removing build dir: $WORKDIR"; rm -rf "$WORKDIR"; }
+  elif [ -d "$WORKDIR" ]; then
+    _info "Removing build dir: $WORKDIR"
+    rm -rf "$WORKDIR"
   fi
-  for m in $SCRATCH_MNT; do
-    umount "$m" 2>/dev/null && _ok "unmounted scratch over $m"
-  done
   return "$rc"
 }
 
@@ -257,34 +238,67 @@ _write_specs(){
 }
 
 # --------------------------------------------------------------------------
-# 2. snapshot - FRESH git sync (no reliance on the bundled, stale overlay tree)
+# 2. snapshot - fresh sync (no reliance on the gitignored overlay/ tree)
 # --------------------------------------------------------------------------
+# The bundled overlay/var/db/repos/* tree is gitignored, so a clean checkout
+# (docker image, GitHub Actions runner) has no portage tree at all. Sync one
+# on the build host: emerge --sync first, emerge-webrsync if rsync is blocked
+# or missing (the usual case in containers).
+_ensure_host_tree(){
+  local tree=/var/db/repos/gentoo
+  if [ -d "$tree/profiles" ]; then
+    _ok "host portage tree present: $tree"
+    return 0
+  fi
+  _info "No portage tree at $tree (overlay/ is gitignored); running emerge --sync"
+  if _run emerge --sync; then
+    _ok "portage tree synced"
+    return 0
+  fi
+  _warn "emerge --sync failed; falling back to emerge-webrsync"
+  _run emerge-webrsync || _die "could not create a portage tree (emerge --sync and emerge-webrsync both failed)"
+  _ok "portage tree synced via webrsync"
+}
+
 _fresh_sync(){
   _info "Fresh-syncing the gentoo tree + overlay repos"
   mkdir -p "$WORKDIR/repos"
 
-  if [ ! -d "$WORKDIR/repos/gentoo/.git" ]; then
-    _info "cloning gentoo ..."
-    echo "[*] Importing existing local Gentoo repository copy..."
-    rm -rf "$WORKDIR/repos/gentoo" 2>/dev/null
-    mkdir -p "$WORKDIR/repos"
-    cp -a "$REPO_DIR/overlay/var/db/repos/gentoo" "$WORKDIR/repos/gentoo"
-  else
+  if [ -d "$WORKDIR/repos/gentoo/.git" ] && \
+     _git -C "$WORKDIR/repos/gentoo" remote get-url origin >/dev/null 2>&1; then
     _ok "gentoo clone present; pulling"
-    _run git -C "$WORKDIR/repos/gentoo" pull --ff-only
+    _run _git -C "$WORKDIR/repos/gentoo" pull --ff-only
+  elif [ -d /var/db/repos/gentoo/profiles ]; then
+    _info "Importing synced portage tree from /var/db/repos/gentoo"
+    _run rm -rf "$WORKDIR/repos/gentoo"
+    _run cp -a /var/db/repos/gentoo "$WORKDIR/repos/gentoo"
+    # An rsync/webrsync tree has no git history, but catalyst snapshots need a
+    # treeish to archive. Give the synced tree a local commit (once).
+    if [ ! -d "$WORKDIR/repos/gentoo/.git" ] && [ "$DRY" -eq 0 ]; then
+      _info "Creating local git history for the synced tree (catalyst snapshot_treeish)"
+      _git -C "$WORKDIR/repos/gentoo" init -q
+      _git -C "$WORKDIR/repos/gentoo" add -A -f
+      _git -C "$WORKDIR/repos/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
+          commit -qm "synced portage tree $(date +%Y-%m-%d)"
+    fi
+  else
+    _info "cloning gentoo from $GENTOO_REPO ..."
+    _run rm -rf "$WORKDIR/repos/gentoo"
+    _run git clone --depth=1 --quiet "$GENTOO_REPO" "$WORKDIR/repos/gentoo"
   fi
   for pair in "guru:$GURU_REPO" "steam-overlay:$STEAM_REPO"; do
     local name="${pair%%:*}" url="${pair#*:}"
     if [ ! -d "$WORKDIR/repos/$name/.git" ]; then
       _info "cloning $name ..."
-      _run git clone --depth=1 --depth=1 --depth=1 --depth=1 --quiet "$url" "$WORKDIR/repos/$name"
+      _run rm -rf "$WORKDIR/repos/$name"
+      _run git clone --depth=1 --quiet "$url" "$WORKDIR/repos/$name"
     else
-      _run git -C "$WORKDIR/repos/$name" pull --ff-only
+      _run _git -C "$WORKDIR/repos/$name" pull --ff-only
     fi
   done
 
 if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
-    SNAP_REF="$(git -C "$WORKDIR/repos/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
+    SNAP_REF="$(_git -C "$WORKDIR/repos/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
   fi
   _ok "snapshot will be built from gentoo treeish ${SNAP_REF}"
 }
@@ -296,23 +310,24 @@ _seed_snapshot_repos(){
   _info "Seeding catalyst git-snapshot repos (bare mirrors for the host)"
   local hconf="/etc/catalyst/catalyst.conf" repodir sd name src dest
   # catalyst snapshot reads bare repos from repos_storedir (default <storedir>/repos)
-  repodir="$(awk -F'[ =:]+' '/^repos_storedir/{print $2; exit}' "$hconf" 2>/dev/null)"
+  repodir="$(_conf_val repos_storedir "$hconf" || true)"
   if [ -z "$repodir" ]; then
-    sd="$(awk -F'[ =:]+' '/^storedir/{print $2; exit}' "$hconf" 2>/dev/null)"
+    sd="$(_conf_val storedir "$hconf" || true)"
     repodir="${sd:-/var/tmp/catalyst}/repos"
   fi
   mkdir -p "$repodir"
   for name in gentoo guru steam-overlay; do
     src="$WORKDIR/repos/$name"
-    [ -d "$src/.git" ] || { _warn "no clone at $src to seed"; continue; }
+    [ -d "$src/.git" ] || { _warn "no git checkout at $src to seed (rsync tree?); skipping"; continue; }
     dest="$repodir/$name.git"
+    # Re-create it: a bare clone gets no fetch refspec, so a stale mirror
+    # would not see the new treeish after a re-sync.
     if [ -d "$dest" ]; then
-      _info "updating bare snapshot repo $dest"
-      _run git -C "$dest" remote update --prune
-    else
-      _info "seeding bare snapshot repo $dest"
-      _run git clone --depth=1 --depth=1 --depth=1 --depth=1 --bare --quiet "$src" "$dest"
+      _info "refreshing bare snapshot repo $dest"
+      _run rm -rf "$dest"
     fi
+    _info "seeding bare snapshot repo $dest"
+    _run _git clone --bare --quiet "$src" "$dest"
   done
   _ok "snapshot repos ready under $repodir"
 }
@@ -365,8 +380,9 @@ _write_catalyst_conf(){
 
 # catalyst needs the source stage3 in its builds dir: <storedir>/builds/<rel_type>/...
 _ensure_stage3_builds(){
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] place stage3 in catalyst builds dir"; return; fi
   local storedir dest src
-  storedir="$(awk -F'[ =:]+' '/^storedir/{print $2; exit}' "$CATALYST_CONF")"
+  storedir="$(_conf_val storedir "$CATALYST_CONF" || true)"
   [ -n "$storedir" ] || storedir="/var/tmp/catalyst"
   dest="$storedir/builds/$STAGE3_RELDIR"
   src="$WORKDIR/distfiles/$STAGE3_RELDIR"
@@ -456,13 +472,13 @@ _bump_glibc(){
   case "$cb" in *aarch64*|*arm64*) arch="arm64" ;; *x86_64*|*amd64*) arch="amd64" ;; *) arch="amd64" ;; esac
   echo "ACCEPT_KEYWORDS=\"$arch ~$arch\"" >> "$mkconf"
   rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$GLIBC_MIN\" \">=sys-libs/glibc-$target\""
-  chroot "$root" /bin/bash -lc "$rootcmd"
-  rc=$?
+  rc=0
+  chroot "$root" /bin/bash -lc "$rootcmd" || rc=$?
   if [ "$rc" -ne 0 ]; then
     _warn "glibc bump to $target failed; retrying with newest $newest"
     rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$newest\""
-    chroot "$root" /bin/bash -lc "$rootcmd"
-    rc=$?
+    rc=0
+    chroot "$root" /bin/bash -lc "$rootcmd" || rc=$?
   fi
   if [ "$rc" -ne 0 ]; then
     _warn "glibc bump failed (rc=$rc); continuing with original stage3"
@@ -509,11 +525,26 @@ _live_session(){
 }
 _max_tmpfs(){
   if [ "$DRY" -eq 1 ]; then _info "[dry-run] enlarge tmpfs to unlimited (size=0)"; return; fi
+  if _in_container; then
+    _info "Container detected: skipping live-session tmpfs remounts"
+    return 0
+  fi
   _live_session || { _info "no live session detected; leaving tmpfs as-is"; return; }
-    echo "[*] Container environment detected: skipping live session tmpfs remounts"
+  _info "Live session detected: enlarging tmpfs to unlimited (size=0)"
+  mount -o remount,size=0 /tmp      2>/dev/null && _ok "enlarged /tmp"     || _warn "could not remount /tmp"
+  mount -o remount,size=0 /var/tmp  2>/dev/null && _ok "enlarged /var/tmp" || _warn "could not remount /var/tmp"
+  mount -o remount,size=0 /run      2>/dev/null && _ok "enlarged /run"     || _warn "could not remount /run"
+}
+
+# Put the big consumer dirs (distfiles, catalyst's storedir) on the workspace
+# volume so a container layer or live root cannot fill up mid-build.
+_scratch_space(){
+  if [ "$DRY" -eq 1 ]; then _info "[dry-run] create scratch bind mounts"; return; fi
+  local hconf="/etc/catalyst/catalyst.conf" dist stored d backing
+  local base="${SCRATCH_BASE:-$WORKDIR/scratch}"
   mkdir -p "$base"
-  dist="$(awk -F'[ =:]+' '/^distdir/{print $2; exit}' "$hconf" 2>/dev/null)"; [ -n "$dist" ]  || dist="/var/cache/distfiles"
-  stored="$(awk -F'[ =:]+' '/^storedir/{print $2; exit}' "$hconf" 2>/dev/null)"; [ -n "$stored" ] || stored="/var/tmp/catalyst"
+  dist="$(_conf_val distdir "$hconf" || true)";   [ -n "$dist" ]   || dist="/var/cache/distfiles"
+  stored="$(_conf_val storedir "$hconf" || true)"; [ -n "$stored" ] || stored="/var/tmp/catalyst"
   for d in "$dist" "$stored"; do
     case "$d" in /*) ;; *) continue ;; esac
     mkdir -p "$d"
@@ -529,7 +560,9 @@ _max_tmpfs(){
 }
 
 _install_prereqs(){
-  if _have catalyst && [ -f /etc/catalyst/catalyst.conf ]; then
+  _portage_prep
+  _ensure_host_tree
+  if _have catalyst && [ -f /etc/catalyst/catalyst.conf ] && _have git && _have wget; then
     _ok "catalyst already installed"
     return
   fi
@@ -585,10 +618,10 @@ main(){
   _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY DATE=$DATE"
   trap _cleanup EXIT
   _max_tmpfs
-    true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: true # Bypassed broken execution call: _scratch_space
 
   if [ "$ONLY" != stage2 ]; then
     _install_prereqs
+    _scratch_space
     _fresh_sync
     _seed_snapshot_repos
   fi

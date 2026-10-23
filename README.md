@@ -104,10 +104,16 @@ silently drift:
 
 The two `*.spec` files bake in a build-host path (`/home/bennji/Desktop/catalyst_stormg/…`).
 `autocatalyst.sh` de-hardcodes that: it copies the specs into `./build/`, swaps the baked-in
-prefix for the real repo location, **fresh-syncs a current gentoo git tree** (plus `guru` and
+prefix for the real repo location, **obtains a current gentoo tree** (plus `guru` and
 `steam-overlay`) — so it does *not* depend on the stale bundled snapshot — then installs
 `catalyst` + host packages, fetches a stage3, builds the snapshot, and runs livecd-stage1 then
 livecd-stage2.
+
+The bundled `overlay/` tree is gitignored, so a clean checkout (docker image, GitHub Actions
+runner) has no `overlay/var/db/repos/*` to copy. In that case the script runs `emerge --sync`
+(falling back to `emerge-webrsync` when `rsync` is unavailable or blocked) to create
+`/var/db/repos/gentoo`, copies that synced tree into `$WORKDIR/repos/gentoo`, and shallow-clones
+`guru` / `steam-overlay` from GitHub.
 
 ```sh
 chmod +x autocatalyst.sh
@@ -146,17 +152,26 @@ docker run -it --privileged \
 ```
 
 (For Podman: same command with `podman` and add `--userns=keep-id` / `--privileged` as needed;
-running needs `--privileged` so catalyst can mount the stage3 chroot.) The ISO lands in
-`build/StormG_xfce_<MM-DD-YYYY>.iso` - the date is autodetected at build time (name comes from
-`livecd/iso` in `livegui-stage2.spec`, which `autocatalyst.sh` stamps with the current date).
+running needs `--privileged` so catalyst can mount the stage3 chroot.) The image does not need a
+pre-synced portage tree or `git` — the script syncs the tree and installs both itself. The ISO
+lands in `build/StormG_xfce_<MM-DD-YYYY>.iso`; because the workspace is bind-mounted, the file
+survives the container (so GitHub Actions can upload it as an artifact). The date is autodetected
+at build time (name comes from `livecd/iso` in `livegui-stage2.spec`, which `autocatalyst.sh`
+stamps with the current date).
+
+**GitHub Actions:** `.github/workflows/build-iso.yml` runs the same container and uploads the ISO
+from `build/`. GitHub-hosted runners are limited to 6 hours (and 4 cores / limited disk), which a
+full live GUI ISO can exceed; the workflow exposes `runs_on`, `timeout_minutes` and
+`catalyst_args` inputs (Actions → Run workflow) so it can target a larger or self-hosted runner.
 
 ### Known remaining work
-- Repo ships a *snapshot* gentoo tree in `overlay/var/db/repos/gentoo` (not a git clone), so the
-  `snapshot_treeish` in the `*.spec` files is autodetected: the committed specs say `HEAD`, and
-  `autocatalyst.sh` rewrites the line to the fresh-synced gentoo tree HEAD (or `--snapshot
-  <ref>`) before building. Note: `profile: default/linux/amd64/23.0/desktop` must still exist in
-  that fresh tree (23.0 profiles are still shipped, but this is the thing to re-check on a future
-  sync).
+- `overlay/` is gitignored, so it is not part of a fresh clone. `autocatalyst.sh` handles that by
+  syncing a portage tree (`emerge --sync`, falling back to `emerge-webrsync`) when
+  `overlay/var/db/repos/gentoo` is absent, then copying the synced tree into the build workspace.
+  The `snapshot_treeish` in the `*.spec` files is autodetected: the committed specs say `HEAD`,
+  and `autocatalyst.sh` rewrites the line to the synced gentoo tree HEAD (or `--snapshot <ref>`)
+  before building. Note: `profile: default/linux/amd64/23.0/desktop` must still exist in that tree
+  (23.0 profiles are still shipped, but this is the thing to re-check on a future sync).
 - The `grub-theme-gentoo` cdtar referenced by `livegui-stage2.spec` comes from an installed Gentoo
   system; ensure `sys-boot/grub-themes-gentoo` (or the build host cdtar) is present on the build host.
 - Pre-existing modified `overlay/var/db/repos/gentoo/dev-python/*/Manifest` files are from the stale

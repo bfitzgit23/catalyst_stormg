@@ -1,2 +1,4 @@
 root_overlay/etc/chromium
 overlay
+build/
+build_var_*
