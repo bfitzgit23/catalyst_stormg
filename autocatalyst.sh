@@ -39,7 +39,7 @@
 #   GLIBC_MIN      minimum glibc the pre-stage1 bump targets (default 2.43-r2)
 #   BUILD_DATE     build date used in version_stamp/iso/volid (default: today,
 #                  format MM-DD-YYYY - same shape as the hardcoded 08-06-2026)
-set -euo pipefail
+set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="${REPO_DIR:-$SCRIPT_DIR}"
@@ -114,6 +114,19 @@ fi
 REPOS_DIR="$DATA_DIR/repos"
 DISTFILES_DIR="$DATA_DIR/distfiles"
 SCRATCH_BASE="${SCRATCH_BASE:-$DATA_DIR/scratch}"
+
+# Report the exact command and line that aborted the build. Without this a CI
+# log ends in a bare "Process completed with exit code 1".
+_on_err(){
+  local rc=$? line="${BASH_LINENO[0]:-?}" src="${BASH_SOURCE[1]:-autocatalyst.sh}"
+  trap - ERR
+  printf '\n\033[31m[!] FAILED\033[0m exit %s: `%s`\n' "$rc" "${BASH_COMMAND:-?}" >&2
+  printf '\033[31m[!]\033[0m %s line %s | WORKDIR=%s DATA_DIR=%s\n' \
+    "${src##*/}" "$line" "${WORKDIR:-?}" "${DATA_DIR:-?}" >&2
+  df -h "${DATA_DIR:-/}" "${WORKDIR:-/}" 2>/dev/null | sed 's/^/[!] /' >&2 || true
+  exit "$rc"
+}
+trap '_on_err' ERR
 
 # First value of `key = value` in a catalyst.conf/make.conf, quotes stripped.
 _conf_val(){

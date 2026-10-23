@@ -35,7 +35,7 @@ jobs:
           haskell: true
           large-packages: true
           docker-images: true
-          swap: false
+          swap-storage: false
 
       - name: Run Build in Privileged Gentoo Container
         env:
