@@ -177,7 +177,7 @@ docker run -it --rm --privileged \
   bash ./autocatalyst.sh
 ```
 
-PowerShell (Docker Desktop on Windows):
+PowerShell (Docker Desktop on Windows) — note the colon is **inside** the quotes:
 
 ```powershell
 docker run -it --rm --privileged `
@@ -191,10 +191,29 @@ docker run -it --rm --privileged `
   bash ./autocatalyst.sh
 ```
 
+cmd.exe:
+
+```bat
+docker run -it --rm --privileged --name stormg-build ^
+  -v "%CD%:/build-stormg" ^
+  -v stormg-data:/var/tmp/stormg-data ^
+  -e REPO_DIR=/build-stormg ^
+  -e DATA_DIR=/var/tmp/stormg-data ^
+  -w /build-stormg ^
+  gentoo/stage3:amd64-openrc ^
+  bash ./autocatalyst.sh
+```
+
 Re-run the exact same command to resume. Once stage1 has finished you can jump straight to
 stage2 (and keep editing the specs) by appending `--only stage2`, and `--dry-run` prints the
 planned catalyst invocations without touching the volume. If a previous container was left
 behind, `docker rm -f stormg-build` frees the name.
+
+> `docker: invalid reference format` from a Windows shell means the `-v` colon landed outside the
+> quotes: `-v "$PWD":/build-stormg` is split by PowerShell into two arguments (`C:\...\repo` and
+> `:/build-stormg`), and Docker reads the stray one as the image name. Use
+> `-v "${PWD}:/build-stormg"` (PowerShell) or `-v "%CD%:/build-stormg"` (cmd.exe). Likewise the
+> trailing `\` in the bash block is not a continuation in PowerShell/cmd — use the blocks above.
 
 (For Podman: same command with `podman` and add `--userns=keep-id` / `--privileged` as needed;
 running needs `--privileged` so catalyst can mount the stage3 chroot.) The image does not need a
