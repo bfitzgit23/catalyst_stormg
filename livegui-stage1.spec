@@ -90,7 +90,6 @@ livecd/packages:
 	app-portage/gentoolkit
 	app-portage/mirrorselect
 	app-portage/portage-utils
-	app-portage/pram
 	app-portage/ufed
 	app-shells/bash-completion
 	app-shells/gentoo-bashcomp
