@@ -128,6 +128,13 @@ chroots back up in `storedir` instead of restarting from stage1. For that to wor
 survive between runs, which the named `stormg-data` volume in the container command below does.
 Delete it with `docker volume rm stormg-data` to force a clean rebuild.
 
+Catalyst keys a build off `version_stamp`, so the chroot lives in
+`storedir/tmp/livecd-stage1-amd64-stormg-<MM-DD-YYYY>`. Resuming the next day with a freshly
+stamped date would therefore create a *new* chroot and re-emerge all 600+ packages from scratch.
+`autocatalyst.sh` avoids that: unless `BUILD_DATE` is set, it adopts the stamp of the newest
+unfinished stage1 build, so a re-run days later resumes the same chroot (the ISO keeps that
+original date; remove the chroot or set `BUILD_DATE` to start a fresh one).
+
 The glibc pre-bump targets the newest *released* glibc in the snapshot tree (live `9999`
 ebuilds are skipped — they clone upstream glibc and cannot build in a bare stage3). If the bump
 still fails it only warns and continues; pass `--no-bump-glibc` to skip it entirely.
@@ -150,6 +157,14 @@ Catalyst copies `portage_confdir` only once (`setup_confdir` is skipped as soon 
 marker exists), so each stage run clears just that marker to make it re-copy the fixed confdir
 while package progress is preserved.
 
+`config/stages/make.conf` deliberately lists every `VIDEO_CARDS` value **except `nvidia`**.
+`VIDEO_CARDS="*"` also enables `video_cards_nvidia`, which makes `x11-base/xorg-drivers` depend on
+`x11-drivers/nvidia-drivers` — and that ebuild builds kernel modules, so it dies in the stage1
+chroot with `Kernel not configured; no .config found in /usr/src/linux` (the ISO ships a prebuilt
+binary kernel the modules could never match anyway). A `"* -nvidia"` entry is not possible:
+portage rejects `-` in `USE_EXPAND` variables (`Invalid '-' operator in non-incremental variable`).
+Nouveau, `xf86-video-*` and the Mesa drivers stay enabled, so NVIDIA cards still boot on the ISO.
+
 ```sh
 chmod +x autocatalyst.sh
 sudo ./autocatalyst.sh                 # stage1 + stage2, all defaults
@@ -163,7 +178,8 @@ Options / env overrides:
 - `--stage3 <url>` / `STAGE3_URL` — pin the stage3 tarball (auto-detects latest otherwise).
 - `--snapshot <ref>` — pin the gentoo treeish for the snapshot (default: fresh `HEAD` after sync).
 - `BUILD_DATE=MM-DD-YYYY` — pin the date stamped into `version_stamp`, the stage1
-  `source_subpath`, `livecd/iso` and `livecd/volid`. Default: today's date, autodetected.
+  `source_subpath`, `livecd/iso` and `livecd/volid`. Default: the stamp of the newest unfinished
+  build, else today; set it explicitly to force a new build date.
 - `-j <jobs>` / `CATALYST_JOBS` — make jobs (default `nproc`).
 - `--no-bump-glibc` — skip the pre-stage1 glibc upgrade of the stage3 chroot.
 - `--keep` — don't regenerate `$WORKDIR/catalyst.conf` before stage2.

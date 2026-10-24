@@ -250,6 +250,46 @@ case "$ONLY" in all|stage1|stage2) ;; *) _die "Bad --only value: $ONLY (all|stag
 [ -f "$FSS" ]     || _die "Missing $FSS"
 
 # --------------------------------------------------------------------------
+# 0. keep the build stamp of an interrupted run
+# --------------------------------------------------------------------------
+# Catalyst identifies a build by version_stamp: the chroot and the autoresume
+# markers live in <storedir>/tmp/livecd-stage1-amd64-stormg-<MM-DD-YYYY>.
+# The specs are stamped with today's date, so re-running the day after a
+# failure would create a NEW chroot and re-emerge all 600+ packages from
+# scratch - the 11+ GB already merged thrown away. Unless BUILD_DATE is given
+# explicitly, stay on the stamp of the newest unfinished stage1 build.
+_adopt_resume_date(){
+  [ -z "${BUILD_DATE:-}" ] || return 0
+  local storedir d stamp
+  storedir="$(_conf_val storedir /etc/catalyst/catalyst.conf 2>/dev/null || true)"
+  [ -n "$storedir" ] || storedir=/var/tmp/catalyst
+  if [ "$DRY" -eq 1 ]; then
+    # _scratch_space skips its bind mount on a dry run; inspect the backing dir
+    storedir="${SCRATCH_BASE:-$DATA_DIR/scratch}$(printf '%s' "$storedir" | tr '/' '_')"
+  fi
+  [ -d "$storedir/tmp" ] || return 0
+  while IFS= read -r d; do
+    [ -d "$d" ] || continue
+    stamp="${d##*stormg-}"
+    case "$stamp" in
+      [0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]) ;;
+      *) continue ;;
+    esac
+    # a finished stage1 has its tarball in builds/ - nothing left to resume
+    compgen -G "$storedir/builds/*/livecd-stage1-amd64-stormg-$stamp.tar.*" >/dev/null && continue
+    if [ "$stamp" = "$DATE" ]; then
+      _ok "resuming livecd-stage1 build $stamp"
+    else
+      _ok "resuming the unfinished livecd-stage1 from $stamp (today would be $DATE)"
+      _info "catalyst finds its chroot by that stamp; BUILD_DATE=$DATE forces a fresh build (discards the chroot)"
+      DATE="$stamp"
+    fi
+    return 0
+  done < <(ls -1dt "$storedir"/tmp/*/livecd-stage1-amd64-stormg-* 2>/dev/null)
+  return 0
+}
+
+# --------------------------------------------------------------------------
 # 1. de-hardcode the specs into $WORKDIR
 # --------------------------------------------------------------------------
 _write_specs(){
@@ -890,6 +930,7 @@ main(){
     _fresh_sync
     _seed_snapshot_repos
   fi
+  _adopt_resume_date
   _write_specs
 
   if [ "$ONLY" != stage2 ]; then
