@@ -268,7 +268,6 @@ livecd/packages:
 	app-admin/calamares
 	sys-boot/grub-themes-gentoo
 	sys-apps/ckbcomp
-	net-wireless/broadcom-sta
 	sys-firmware/b43-firmware
 	sys-firmware/ipw2100-firmware
 	sys-firmware/ipw2200-firmware
