@@ -127,7 +127,6 @@ livecd/packages:
 	net-ftp/ftp
 	net-ftp/ncftp
 	net-im/pidgin
-	net-irc/hexchat
 	net-misc/chrony
 	net-misc/dhcpcd
 	net-misc/iputils
