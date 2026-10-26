@@ -36,6 +36,10 @@ livecd/empty:
 
 boot/kernel: gentoo
 
+# Use the prebuilt distribution kernel. kmerge.sh treats this as the package
+# named by .../sources and runs dracut on its bzImage; compiling
+# sys-kernel/gentoo-kernel from source instead costs ~3 h per stage2 run.
 boot/kernel/gentoo/distkernel: yes
+boot/kernel/gentoo/sources: sys-kernel/gentoo-kernel-bin
 boot/kernel/gentoo/dracut_args: --xz --no-hostonly -a dmsquash-live -a dmsquash-live-ntfs -a mdraid -o btrfs -o crypt -o i18n -o usrmount -o lunmask -o qemu -o qemu-net -o nvdimm -o plymouth -o multipath -i /lib/keymaps /lib/keymaps -I busybox
-boot/kernel/gentoo/packages: --usepkg n broadcom-sta
+boot/kernel/gentoo/packages: broadcom-sta

@@ -132,8 +132,13 @@ Catalyst keys a build off `version_stamp`, so the chroot lives in
 `storedir/tmp/livecd-stage1-amd64-stormg-<MM-DD-YYYY>`. Resuming the next day with a freshly
 stamped date would therefore create a *new* chroot and re-emerge all 600+ packages from scratch.
 `autocatalyst.sh` avoids that: unless `BUILD_DATE` is set, it adopts the stamp of the newest
-unfinished stage1 build, so a re-run days later resumes the same chroot (the ISO keeps that
-original date; remove the chroot or set `BUILD_DATE` to start a fresh one).
+unfinished build — a stage1 chroot without its tarball, or a stage1 tarball whose stage2 never
+finished (catalyst only removes a stage2's autoresume directory when that build completes) — so a
+re-run days later resumes the same chroots (the ISO keeps that original date; remove the chroots
+or set `BUILD_DATE` to start a fresh one). Stamps are compared as dates, not by directory mtime:
+resuming an older chroot touches it, and mtime order would then point at the wrong build.
+`--only stage2` (or `--only=stage2`) resumes just the second half; it still installs catalyst and
+bind-mounts the `DATA_DIR` storedir/distfiles, so it works in a fresh container too.
 
 The glibc pre-bump targets the newest *released* glibc in the snapshot tree (live `9999`
 ebuilds are skipped — they clone upstream glibc and cannot build in a bare stage3). If the bump
@@ -164,6 +169,16 @@ chroot with `Kernel not configured; no .config found in /usr/src/linux` (the ISO
 binary kernel the modules could never match anyway). A `"* -nvidia"` entry is not possible:
 portage rejects `-` in `USE_EXPAND` variables (`Invalid '-' operator in non-incremental variable`).
 Nouveau, `xf86-video-*` and the Mesa drivers stay enabled, so NVIDIA cards still boot on the ISO.
+
+The live kernel comes from `sys-kernel/gentoo-kernel-bin`, not `sys-kernel/gentoo-kernel`. With
+`boot/kernel/gentoo/distkernel: yes`, catalyst's `kmerge.sh` reads `boot/kernel/gentoo/sources` as
+the kernel *package* and runs dracut on the `bzImage` that package installs; the default
+(`sys-kernel/gentoo-kernel`) compiles the whole kernel from source instead (over three hours for
+this machine). `config/stages/package.use/gentoo-kernel-bin` pins `-initramfs`, the same flag
+kmerge forces, so the stage2 merge of the already-installed kernel is a no-op — re-installing the
+same kernel version makes `installkernel` rename `/boot/vmlinuz-*` to `*.old`, after which
+catalyst's `mv vmlinuz-* /boot/gentoo` fails (silently: the livecd controller runs without
+`set -e`) and the ISO's grub entries point at a kernel that is not there.
 
 ```sh
 chmod +x autocatalyst.sh

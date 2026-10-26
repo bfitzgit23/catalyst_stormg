@@ -1,0 +1,8 @@
+# The livecd's kernel comes from sys-kernel/gentoo-kernel-bin (see
+# boot/kernel/gentoo/sources in livegui-stage2.spec), and catalyst's kmerge
+# re-merges it with USE="-initramfs" before running dracut itself. Keep the
+# installed USE identical so that merge is a no-op: re-installing the same
+# kernel version makes installkernel move vmlinuz/config/System.map/initramfs
+# to *.old, and catalyst's extract_kernels then cannot rename "vmlinuz-*" to
+# /boot/gentoo - the build carries on and the resulting ISO does not boot.
+sys-kernel/gentoo-kernel-bin -initramfs

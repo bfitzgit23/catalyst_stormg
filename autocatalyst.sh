@@ -228,9 +228,13 @@ _cleanup(){
 while [ $# -gt 0 ]; do
   case "$1" in
     --only=*)            ONLY="${1#*=}" ;;
+    --only)              ONLY="$2"; shift ;;
     --stage3=*)          STAGE3_URL="${1#*=}" ;;
+    --stage3)            STAGE3_URL="$2"; shift ;;
     --iso-dir=*)        ISO_DIR="${1#*=}" ;;
+    --iso-dir)          ISO_DIR="$2"; shift ;;
     --snapshot=*)        SNAP_REF="${1#*=}"; SNAP_REF_EXPLICIT=1 ;;
+    --snapshot)          SNAP_REF="$2"; SNAP_REF_EXPLICIT=1; shift ;;
     --bump-glibc)        BUMP_GLIBC=1 ;;
     --no-bump-glibc)     BUMP_GLIBC=0 ;;
     --keep)              KEEP=1 ;;
@@ -253,14 +257,15 @@ case "$ONLY" in all|stage1|stage2) ;; *) _die "Bad --only value: $ONLY (all|stag
 # 0. keep the build stamp of an interrupted run
 # --------------------------------------------------------------------------
 # Catalyst identifies a build by version_stamp: the chroot and the autoresume
-# markers live in <storedir>/tmp/livecd-stage1-amd64-stormg-<MM-DD-YYYY>.
+# markers live in <storedir>/tmp/livecd-stage[12]-amd64-stormg-<MM-DD-YYYY>.
 # The specs are stamped with today's date, so re-running the day after a
 # failure would create a NEW chroot and re-emerge all 600+ packages from
 # scratch - the 11+ GB already merged thrown away. Unless BUILD_DATE is given
-# explicitly, stay on the stamp of the newest unfinished stage1 build.
+# explicitly, stay on the stamp of the newest unfinished stage (either a stage1
+# without its tarball, or a stage1 tarball whose stage2 never finished).
 _adopt_resume_date(){
   [ -z "${BUILD_DATE:-}" ] || return 0
-  local storedir d stamp
+  local storedir stamp
   storedir="$(_conf_val storedir /etc/catalyst/catalyst.conf 2>/dev/null || true)"
   [ -n "$storedir" ] || storedir=/var/tmp/catalyst
   if [ "$DRY" -eq 1 ]; then
@@ -268,24 +273,45 @@ _adopt_resume_date(){
     storedir="${SCRATCH_BASE:-$DATA_DIR/scratch}$(printf '%s' "$storedir" | tr '/' '_')"
   fi
   [ -d "$storedir/tmp" ] || return 0
-  while IFS= read -r d; do
-    [ -d "$d" ] || continue
-    stamp="${d##*stormg-}"
+
+  # Newest stamp first, ordered by the stamp itself (YYYYMMDD key) rather than
+  # by directory mtime: every resume attempt touches the chroot, so mtime says
+  # nothing about which build is actually the most recent one.
+  local stamps
+  stamps="$(
+    { ls -1d "$storedir"/tmp/*/livecd-stage1-amd64-stormg-* 2>/dev/null
+      ls -1d "$storedir"/tmp/*/livecd-stage2-amd64-stormg-* 2>/dev/null; } |
+    sed 's#.*stormg-##' | sort -u |
+    awk -F- 'NF==3 {print $3 $1 $2 " " $0}' | sort -r | cut -d' ' -f2)"
+
+  _adopt_stamp(){
+    if [ "$1" = "$DATE" ]; then
+      _ok "resuming the unfinished $2 build $1"
+    else
+      _ok "resuming the unfinished $2 from $1 (today would be $DATE)"
+      _info "catalyst keys its chroots by that stamp; BUILD_DATE=$DATE forces a fresh build (discards them)"
+      DATE="$1"
+    fi
+  }
+
+  while IFS= read -r stamp; do
     case "$stamp" in
       [0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]) ;;
       *) continue ;;
     esac
-    # a finished stage1 has its tarball in builds/ - nothing left to resume
-    compgen -G "$storedir/builds/*/livecd-stage1-amd64-stormg-$stamp.tar.*" >/dev/null && continue
-    if [ "$stamp" = "$DATE" ]; then
-      _ok "resuming livecd-stage1 build $stamp"
-    else
-      _ok "resuming the unfinished livecd-stage1 from $stamp (today would be $DATE)"
-      _info "catalyst finds its chroot by that stamp; BUILD_DATE=$DATE forces a fresh build (discards the chroot)"
-      DATE="$stamp"
+    # no stage1 tarball yet: stage1 is what needs resuming
+    if ! compgen -G "$storedir/builds/*/livecd-stage1-amd64-stormg-$stamp.tar.*" >/dev/null; then
+      _adopt_stamp "$stamp" livecd-stage1
+      return 0
     fi
-    return 0
-  done < <(ls -1dt "$storedir"/tmp/*/livecd-stage1-amd64-stormg-* 2>/dev/null)
+    # stage1 done, but catalyst only removes a stage2 autoresume dir when the
+    # stage2 build completes - so its presence means stage2 is unfinished and
+    # source_subpath must keep naming this stamp's tarball.
+    if compgen -G "$storedir/tmp/*/.autoresume-livecd-stage2-amd64-stormg-$stamp" >/dev/null; then
+      _adopt_stamp "$stamp" livecd-stage2
+      return 0
+    fi
+  done <<< "$stamps"
   return 0
 }
 
@@ -924,9 +950,13 @@ main(){
   trap _cleanup EXIT
   _max_tmpfs
 
+  # Not stage1-only: `--only stage2` in a fresh container still needs catalyst
+  # installed and the storedir/distfiles bind-mounted from DATA_DIR, otherwise
+  # catalyst sees an empty /var/tmp/catalyst and finds neither chroot nor
+  # stage1 tarball (the "resume from an existing stage1" path in the README).
+  _install_prereqs
+  _scratch_space
   if [ "$ONLY" != stage2 ]; then
-    _install_prereqs
-    _scratch_space
     _fresh_sync
     _seed_snapshot_repos
   fi
@@ -944,8 +974,11 @@ main(){
 
   if [ "$ONLY" != stage1 ]; then
     [ -n "${KEEP:-}" ] || _write_catalyst_conf
-    # --only stage2 still needs the confdir (and its glibc mask) staged.
-    [ -d "$WORKDIR/portage-conf" ] || _prepare_portage_confdir
+    # Re-stage the confdir on every run: it is generated (glibc mask, accept
+    # keywords) and then copied into the chroot, so reusing a copy from an
+    # earlier run would silently ignore edits to config/stages - which is how
+    # a stale glibc mask and a stale package.use survive a resume.
+    _prepare_portage_confdir
     _run_stage2
     _collect_iso
   fi
