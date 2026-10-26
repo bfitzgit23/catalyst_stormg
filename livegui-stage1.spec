@@ -242,7 +242,6 @@ livecd/packages:
 	sys-process/psmisc
 	www-client/firefox-bin
 	net-print/epson-inkjet-printer-escpr
-	dev-vcs/subversion
 	xfce-base/xfce4-meta
 	xfce-extra/xfce4-docklike-plugin
 	xfce-extra/xfce4-whiskermenu-plugin
@@ -267,7 +266,4 @@ livecd/packages:
 	app-admin/calamares
 	sys-boot/grub-themes-gentoo
 	sys-apps/ckbcomp
-	sys-firmware/b43-firmware
-	sys-firmware/ipw2100-firmware
-	sys-firmware/ipw2200-firmware
 	sys-firmware/sof-firmware

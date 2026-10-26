@@ -136,9 +136,9 @@ plymouth-set-default-theme -R natural-gentoo-remastered
 rc-update add splash default
 echo 'splash' >> /etc/conf.d/rc
 
-# XFCE configs
-mkdir -p /etc/skel/.config
-cp -r /tmp/stormg-resources/root_overlay/xfce-configs/* /etc/skel/.config/
+# XFCE configs (the live tree ships them as /etc/skel)
+mkdir -p /etc/skel
+cp -a /tmp/stormg-resources/root_overlay/etc/skel/. /etc/skel/
 
 # Clean up
 rm -rf /tmp/stormg-resources

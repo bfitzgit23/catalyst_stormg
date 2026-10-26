@@ -29,7 +29,7 @@ livecd/overlay: /home/bennji/Desktop/catalyst_stormg/overlay
 livecd/cdtar: /usr/share/catalyst/livecd/cdtar/grub-theme-gentoo_frosted.tar.bz2
 
 livecd/fsscript: /build-stormg/livecd_fsscript.sh
-livecd/rcadd: udev|sysinit udev-mount|sysinit acpid|default dbus|default gpm|default NetworkManager|default bluetooth|default elogind|boot alsasound|boot ntpd|default display-manager|default cupsd|default sshd|default ntpd|default syslog-ng|default cronie|default bluetooth|default samba|default
+livecd/rcadd: udev|sysinit udev-mount|sysinit acpid|default dbus|default gpm|default NetworkManager|default elogind|boot syslog-ng|default display-manager|default cupsd|default chronyd|default sshd|default
 livecd/empty:
 	/var/db/repos
 	/usr/src

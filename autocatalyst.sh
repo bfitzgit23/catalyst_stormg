@@ -51,7 +51,7 @@ REPO_DIR="${REPO_DIR:-$SCRIPT_DIR}"
 WORKDIR="${WORKDIR:-$REPO_DIR/build}"
 SPEC_S1="$REPO_DIR/livegui-stage1.spec"
 SPEC_S2="$REPO_DIR/livegui-stage2.spec"
-FSS="$REPO_DIR/stage2.sh"
+FSS="$REPO_DIR/livecd_fsscript.sh"
 ROOT_OVL="$REPO_DIR/root_overlay"
 OVERLAY_DIR="$REPO_DIR/overlay"
 PORTAGE_CONFD="$REPO_DIR/config/stages"
@@ -368,7 +368,7 @@ _write_specs(){
     # catalyst cannot copy the script, the build stops and every retry redoes
     # root_overlay. Write the absolute path ourselves instead of trusting
     # whatever the committed spec (or a draft of it) says.
-    sed -i "s#^livecd/fsscript:.*#livecd/fsscript: ${esc}/livecd_fsscript.sh#" "$dst"
+    sed -i "s#^livecd/fsscript:.*#livecd/fsscript: ${esc}/$(basename "$FSS")#" "$dst"
   done
 
   # A surviving placeholder means a rewrite did not apply (stale copy, typo);
