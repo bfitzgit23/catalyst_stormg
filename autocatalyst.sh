@@ -876,6 +876,32 @@ _install_prereqs(){
   _ok "catalyst and dependencies installed"
 }
 
+# catalyst 4.2's dist-kernel path builds its kernel-cache tarball with a literal
+# "vmlinux*" glob. Binary dist-kernels (gentoo-kernel-bin) install no vmlinux,
+# so every stage2 prints
+#
+#   tar: vmlinux*: Cannot stat: No such file or directory
+#   tar: Exiting with failure status due to previous errors
+#
+# and tar exits 1. The archive is still written and extract_kernels consumes it,
+# so the build continues - but the red output reads like a fatal error. Hand tar
+# only the globs that actually match. Idempotent: the pattern is gone after the
+# first patch, and a catalyst upgrade restores it for the next run.
+_patch_catalyst_kmerge(){
+  [ "$DRY" -eq 1 ] && return 0
+  local kmerge=
+  for kmerge in /usr/share/catalyst/targets/support/kmerge.sh \
+                 /usr/lib/catalyst/targets/support/kmerge.sh \
+                 /usr/libexec/catalyst/targets/support/kmerge.sh; do
+    [ -f "$kmerge" ] && break
+    kmerge=
+  done
+  [ -n "$kmerge" ] || return 0
+  grep -q 'vmlinuz\* vmlinux\*' "$kmerge" || return 0
+  sed -i 's|System\.map\* config\* initramfs\* vmlinuz\* vmlinux\*$|System.map* config* initramfs* vmlinuz* $(ls vmlinux* 2>/dev/null)|' "$kmerge"
+  _ok "patched catalyst kmerge.sh: a missing vmlinux glob is no longer passed to tar"
+}
+
 # --------------------------------------------------------------------------
 # 6. run the build
 # --------------------------------------------------------------------------
@@ -973,6 +999,7 @@ main(){
   # catalyst sees an empty /var/tmp/catalyst and finds neither chroot nor
   # stage1 tarball (the "resume from an existing stage1" path in the README).
   _install_prereqs
+  _patch_catalyst_kmerge
   _scratch_space
   _adopt_resume_date
   _info "DATE=$DATE"

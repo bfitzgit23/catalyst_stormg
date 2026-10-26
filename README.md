@@ -186,6 +186,14 @@ same kernel version makes `installkernel` rename `/boot/vmlinuz-*` to `*.old`, a
 catalyst's `mv vmlinuz-* /boot/gentoo` fails (silently: the livecd controller runs without
 `set -e`) and the ISO's grub entries point at a kernel that is not there.
 
+catalyst's dist-kernel path also passes a literal `vmlinux*` to the tar that packs
+`/tmp/kerncache/<kernel>-kernel-initrd-<stamp>.tar.bz2`, and a binary dist-kernel installs no
+`vmlinux`. The build then prints `tar: vmlinux*: Cannot stat: No such file or directory` and
+`tar: Exiting with failure status due to previous errors`, and tar exits 1 — but the archive is
+still written and `extract_kernels` uses it, so this is noise rather than a failure. `autocatalyst.sh`
+patches the installed `kmerge.sh` (idempotently, after installing catalyst) to pass the glob only
+when it matches, so the log stays clean.
+
 ```sh
 chmod +x autocatalyst.sh
 sudo ./autocatalyst.sh                 # stage1 + stage2, all defaults
