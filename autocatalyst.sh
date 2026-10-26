@@ -297,8 +297,10 @@ _adopt_resume_date(){
   # nothing about which build is actually the most recent one.
   local stamps
   stamps="$(
-    { ls -1d "$storedir"/tmp/*/livecd-stage1-amd64-stormg-* 2>/dev/null
-      ls -1d "$storedir"/tmp/*/livecd-stage2-amd64-stormg-* 2>/dev/null; } |
+    # Either glob may match nothing (catalyst drops a finished stage1 chroot),
+    # and set -e/pipefail would otherwise abort the resume with "ls: exit 2".
+    { ls -1d "$storedir"/tmp/*/livecd-stage1-amd64-stormg-* 2>/dev/null || true
+      ls -1d "$storedir"/tmp/*/livecd-stage2-amd64-stormg-* 2>/dev/null || true; } |
     sed 's#.*stormg-##' | sort -u |
     awk -F- 'NF==3 {print $3 $1 $2 " " $0}' | sort -r | cut -d' ' -f2)"
 
@@ -349,7 +351,8 @@ _write_specs(){
   local dpat='[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]'
   for pair in "$SPEC_S1:$CONF_STAGE1" "$SPEC_S2:$CONF_STAGE2"; do
     local src="${pair%%:*}" dst="${pair#*:}"
-    sed -e "s#${OLD_PREFIX}#${esc}#g" \
+    sed -e 's/\r$//' \
+        -e "s#${OLD_PREFIX}#${esc}#g" \
         -e "s#@REPO_DIR@#${esc}#g" \
         -e "s#${esc}/overlay/var/db/repos/gentoo#${escr}/gentoo#g" \
         -e "s#${esc}/overlay/var/db/repos/guru#${escr}/guru#g" \
@@ -361,8 +364,30 @@ _write_specs(){
         -e "s#^snapshot_treeish:.*#snapshot_treeish: ${SNAP_REF:-HEAD}#" \
         -e "s#^portage_confdir:.*#portage_confdir: ${escw}/portage-conf#" \
         "$src" > "$dst"
+    # livecd/fsscript is the one stage2 action with no autoresume point: if
+    # catalyst cannot copy the script, the build stops and every retry redoes
+    # root_overlay. Write the absolute path ourselves instead of trusting
+    # whatever the committed spec (or a draft of it) says.
+    sed -i "s#^livecd/fsscript:.*#livecd/fsscript: ${esc}/livecd_fsscript.sh#" "$dst"
   done
+
+  # A surviving placeholder means a rewrite did not apply (stale copy, typo);
+  # say so now, not 30 minutes into stage2.
+  local left fss_line
+  left="$(grep -n '@REPO_DIR@' "$CONF_STAGE1" "$CONF_STAGE2" || true)"
+  if [ -n "$left" ]; then
+    _die "generated specs still contain @REPO_DIR@:
+$left"
+  fi
+  fss_line="$(sed -n 's#^livecd/fsscript:[[:space:]]*##p' "$CONF_STAGE2" | tail -n 1)"
+  if [ -n "$fss_line" ] && [ ! -f "$fss_line" ]; then
+    _die "livecd/fsscript resolves to '$fss_line', which does not exist"
+  fi
+
   _ok "specs written (fresh git repos + treeish ${SNAP_REF:-HEAD}, date ${DATE})"
+  if [ -n "$fss_line" ]; then
+    _info "stage2 fsscript: $fss_line"
+  fi
 }
 
 # --------------------------------------------------------------------------
