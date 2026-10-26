@@ -350,6 +350,7 @@ _write_specs(){
   for pair in "$SPEC_S1:$CONF_STAGE1" "$SPEC_S2:$CONF_STAGE2"; do
     local src="${pair%%:*}" dst="${pair#*:}"
     sed -e "s#${OLD_PREFIX}#${esc}#g" \
+        -e "s#@REPO_DIR@#${esc}#g" \
         -e "s#${esc}/overlay/var/db/repos/gentoo#${escr}/gentoo#g" \
         -e "s#${esc}/overlay/var/db/repos/guru#${escr}/guru#g" \
         -e "s#${esc}/overlay/var/db/repos/steam-overlay#${escr}/steam-overlay#g" \
