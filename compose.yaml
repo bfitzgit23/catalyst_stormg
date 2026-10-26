@@ -1,8 +1,9 @@
 # Local StormG ISO build, resumable, no shell path quoting involved.
 #
-#   docker compose run --rm build              # stage1 + stage2
+#   docker compose run --rm build              # stage1 (unless already built) + stage2
 #   docker compose run --rm build --only stage2
 #   docker compose run --rm build --dry-run
+#   docker compose run --rm build --rebuild-stage1
 #
 # Compose resolves `.` (this file's directory) itself, so there is no "$PWD" /
 # "%CD%" to expand and nothing for PowerShell or cmd.exe to split apart.

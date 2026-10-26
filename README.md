@@ -140,6 +140,12 @@ resuming an older chroot touches it, and mtime order would then point at the wro
 `--only stage2` (or `--only=stage2`) resumes just the second half; it still installs catalyst and
 bind-mounts the `DATA_DIR` storedir/distfiles, so it works in a fresh container too.
 
+A stage1 that already produced its tarball is **not** built again: a plain
+`docker compose run --rm build` goes straight to stage2, because emerging the 600+ livecd packages
+again would cost hours and stage2 only consumes that tarball. `--rebuild-stage1` (or `--only
+stage1`, or a fresh `BUILD_DATE`) forces it, and skipping stage1 also skips the gentoo-tree sync so
+the specs keep naming the snapshot the finished stage1 was built from.
+
 The glibc pre-bump targets the newest *released* glibc in the snapshot tree (live `9999`
 ebuilds are skipped — they clone upstream glibc and cannot build in a bare stage3). If the bump
 still fails it only warns and continues; pass `--no-bump-glibc` to skip it entirely.
@@ -190,6 +196,8 @@ sudo ./autocatalyst.sh --stage3 URL    # pin a specific stage3; else latest desk
 ```
 
 Options / env overrides:
+- `--only stage1` / `--only stage2` — run just one half of the build (both spellings work).
+- `--rebuild-stage1` — rebuild stage1 even though its tarball already exists (see above).
 - `--stage3 <url>` / `STAGE3_URL` — pin the stage3 tarball (auto-detects latest otherwise).
 - `--snapshot <ref>` — pin the gentoo treeish for the snapshot (default: fresh `HEAD` after sync).
 - `BUILD_DATE=MM-DD-YYYY` — pin the date stamped into `version_stamp`, the stage1

@@ -20,6 +20,11 @@
 # Usage:
 #   sudo ./autocatalyst.sh [--only stage1|stage2] [--stage3 <url>] [--snapshot <ref>]
 #                          [--no-bump-glibc] [-j <jobs>] [--keep] [--dry-run]
+#                          [--rebuild-stage1]
+#
+#   A livecd-stage1 whose tarball already exists for the build stamp is not run
+#   again: the script goes straight to stage2. Use --rebuild-stage1 (or a new
+#   BUILD_DATE) to rebuild it anyway.
 #
 #   Before catalyst stage1, the stage3's glibc is upgraded to the newest the
 #   snapshot tree can install (>= GLIBC_MIN, default 2.43-r2) with testing
@@ -238,6 +243,7 @@ while [ $# -gt 0 ]; do
     --bump-glibc)        BUMP_GLIBC=1 ;;
     --no-bump-glibc)     BUMP_GLIBC=0 ;;
     --keep)              KEEP=1 ;;
+    --rebuild-stage1)    REBUILD_STAGE1=1 ;;
     --dry-run)           DRY=1 ;;
     -j)                  JOBS="$2"; shift ;;
     --jobs=*)            JOBS="${1#*=}" ;;
@@ -263,15 +269,27 @@ case "$ONLY" in all|stage1|stage2) ;; *) _die "Bad --only value: $ONLY (all|stag
 # scratch - the 11+ GB already merged thrown away. Unless BUILD_DATE is given
 # explicitly, stay on the stamp of the newest unfinished stage (either a stage1
 # without its tarball, or a stage1 tarball whose stage2 never finished).
+# catalyst's storedir (chroots, builds, snapshots). On a dry run _scratch_space
+# has not bind-mounted the DATA_DIR backing directory over it yet, so look there.
+_storedir(){
+  local s
+  s="$(_conf_val storedir /etc/catalyst/catalyst.conf 2>/dev/null || true)"
+  [ -n "$s" ] || s=/var/tmp/catalyst
+  if [ "$DRY" -eq 1 ]; then
+    s="${SCRATCH_BASE:-$DATA_DIR/scratch}$(printf '%s' "$s" | tr '/' '_')"
+  fi
+  printf '%s' "$s"
+}
+
+# A finished stage1 leaves its tarball in <storedir>/builds/<rel_type>/.
+_stage1_done(){
+  compgen -G "$(_storedir)/builds/*/livecd-stage1-amd64-stormg-$DATE.tar.*" >/dev/null
+}
+
 _adopt_resume_date(){
   [ -z "${BUILD_DATE:-}" ] || return 0
   local storedir stamp
-  storedir="$(_conf_val storedir /etc/catalyst/catalyst.conf 2>/dev/null || true)"
-  [ -n "$storedir" ] || storedir=/var/tmp/catalyst
-  if [ "$DRY" -eq 1 ]; then
-    # _scratch_space skips its bind mount on a dry run; inspect the backing dir
-    storedir="${SCRATCH_BASE:-$DATA_DIR/scratch}$(printf '%s' "$storedir" | tr '/' '_')"
-  fi
+  storedir="$(_storedir)"
   [ -d "$storedir/tmp" ] || return 0
 
   # Newest stamp first, ordered by the stamp itself (YYYYMMDD key) rather than
@@ -946,7 +964,7 @@ main(){
   _info "StormG autocatalyst"
   _info "REPO_DIR=$REPO_DIR"
   _info "WORKDIR=$WORKDIR"
-  _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY DATE=$DATE"
+  _info "ONLY=$ONLY JOBS=$JOBS DRY=$DRY"
   trap _cleanup EXIT
   _max_tmpfs
 
@@ -956,14 +974,30 @@ main(){
   # stage1 tarball (the "resume from an existing stage1" path in the README).
   _install_prereqs
   _scratch_space
-  if [ "$ONLY" != stage2 ]; then
+  _adopt_resume_date
+  _info "DATE=$DATE"
+
+  # A stage1 that already produced its tarball is not run again: emerging the
+  # 600+ livecd packages takes hours and stage2 only consumes the tarball.
+  # --only stage1 and --rebuild-stage1 still force it.
+  local do_stage1=1
+  if [ "$ONLY" = stage2 ]; then
+    do_stage1=0
+  elif [ "$ONLY" != stage1 ] && [ -z "${REBUILD_STAGE1:-}" ] && _stage1_done; then
+    do_stage1=0
+    _ok "livecd-stage1 $DATE is already built; going straight to stage2 (--rebuild-stage1 rebuilds it)"
+  fi
+
+  if [ "$do_stage1" -eq 1 ]; then
     _fresh_sync
     _seed_snapshot_repos
+  elif [ "$SNAP_REF_EXPLICIT" -eq 0 ] && [ -d "$REPOS_DIR/gentoo/.git" ]; then
+    # No sync either, so the treeish still matches the snapshot stage1 used.
+    SNAP_REF="$(_git -C "$REPOS_DIR/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
   fi
-  _adopt_resume_date
   _write_specs
 
-  if [ "$ONLY" != stage2 ]; then
+  if [ "$do_stage1" -eq 1 ]; then
     _ensure_stage3
     _write_catalyst_conf
     _bump_glibc
