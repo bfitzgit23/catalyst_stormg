@@ -57,12 +57,13 @@ RDEPEND="
 	media-libs/freetype
 	media-libs/harfbuzz
 	media-libs/libjpeg-turbo
+	media-libs/libpulse
 	media-libs/libva
 	media-libs/libwebp
 	media-libs/mesa
 	media-libs/openh264
 	media-libs/opus
-	media-video/pipewire
+	media-video/pipewire[sound-server]
 	net-print/cups
 	sys-apps/dbus
 	sys-apps/pciutils
