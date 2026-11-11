@@ -240,6 +240,7 @@ livecd/packages:
 	sys-process/iotop
 	sys-process/procps
 	sys-process/psmisc
+	www-client/chromium-bin
 	www-client/firefox-bin
 	net-print/epson-inkjet-printer-escpr
 	xfce-base/xfce4-meta

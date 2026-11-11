@@ -413,6 +413,35 @@ _ensure_host_tree(){
   _ok "portage tree synced via webrsync"
 }
 
+# chromium-bin/ lives at the repo root and is copied into the synced Gentoo
+# tree so the Catalyst snapshot includes it.
+_seed_chromium_package(){
+  local name=www-client/chromium-bin
+  local src="$REPO_DIR/chromium-bin"
+  local dst="$REPOS_DIR/gentoo/$name"
+
+  [ -d "$src" ] || return 0
+  if [ "$DRY" -eq 1 ]; then
+    _info "[dry-run] copy chromium-bin package into $REPOS_DIR/gentoo/$name"
+    return 0
+  fi
+
+  _info "Copying chromium-bin package into the gentoo snapshot"
+  rm -rf "$dst"
+  mkdir -p "$(dirname "$dst")"
+  cp -a "$src" "$dst" || _die "could not copy $src to $dst"
+  _git -C "$REPOS_DIR/gentoo" add -A -f "$name" \
+    || _die "could not stage $name in $REPOS_DIR/gentoo"
+  if _git -C "$REPOS_DIR/gentoo" diff --cached --quiet 2>/dev/null; then
+    _ok "chromium-bin package is already in the gentoo snapshot"
+  else
+    _git -C "$REPOS_DIR/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
+        commit -qm "add chromium-bin package $name" \
+      || _die "could not commit $name into the gentoo snapshot"
+    _ok "added chromium-bin package to the gentoo snapshot"
+  fi
+}
+
 _fresh_sync(){
   _info "Fresh-syncing the gentoo tree + overlay repos"
   mkdir -p "$REPOS_DIR"
@@ -420,7 +449,11 @@ _fresh_sync(){
   if [ -d "$REPOS_DIR/gentoo/.git" ] && \
      _git -C "$REPOS_DIR/gentoo" remote get-url origin >/dev/null 2>&1; then
     _ok "gentoo clone present; pulling"
-    _run _git -C "$REPOS_DIR/gentoo" pull --ff-only
+    # The local chromium-bin package is committed on top of origin.  A
+    # fast-forward-only pull would fail on the next run, so rebase that local
+    # commit onto the freshly fetched upstream instead.
+    _run _git -C "$REPOS_DIR/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
+      pull --rebase --autostash
   elif [ -d /var/db/repos/gentoo/profiles ]; then
     _info "Importing synced portage tree from /var/db/repos/gentoo"
     mkdir -p "$REPOS_DIR/gentoo"
@@ -430,6 +463,7 @@ _fresh_sync(){
       # finds its chroots instead of restarting from stage1.
       if [ "$DRY" -eq 0 ]; then
         if ! { _have rsync && rsync -a --delete --exclude=.git \
+                 --exclude=www-client/chromium-bin \
                  /var/db/repos/gentoo/ "$REPOS_DIR/gentoo/"; }; then
           _warn "rsync import failed; falling back to a full copy"
           ( cd "$REPOS_DIR/gentoo" && \
@@ -474,7 +508,8 @@ _fresh_sync(){
     fi
   done
 
-if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
+  _seed_chromium_package
+  if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
     SNAP_REF="$(_git -C "$REPOS_DIR/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
   fi
   _ok "snapshot will be built from gentoo treeish ${SNAP_REF}"
