@@ -6,4 +6,4 @@
 # glibc the seed stage3 carries (see _prepare_portage_confdir). Masking the
 # installed glibc makes portage install an older one over it, which the ebuild
 # aborts with "Downgrading glibc is not supported".
->=sys-libs/glibc-2.43
+>=sys-libs/glibc-2.45

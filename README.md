@@ -157,7 +157,7 @@ of `File shrank by N bytes` errors and a corrupt tarball). The replacement is wr
 chroot is kept — the next run reuses it and skips the glibc rebuild.
 
 A bumped stage3 carries a glibc that is *newer* than `config/stages/package.mask/releng/glibc`
-allows (it masks `>=sys-libs/glibc-2.43`). With that mask, portage ignores the installed glibc and
+allows (it masks `>=sys-libs/glibc-2.45`). With that mask, portage ignores the installed glibc and
 picks the newest *allowed* one — `2.42-r7` — then refuses to install it over the newer version:
 `Downgrading glibc is not supported and a sure way to destruction`. So the script gives catalyst a
 staged copy of the confdir in `$WORKDIR/portage-conf` whose glibc mask is raised just above the

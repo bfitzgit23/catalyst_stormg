@@ -675,7 +675,7 @@ _glibc_mask_above(){
   printf '%s.%s' "$maj" "$((min+1))"
 }
 
-# The committed portage confdir masks >=sys-libs/glibc-2.43 ("new glibc tends
+# The committed portage confdir masks >=sys-libs/glibc-2.45 ("new glibc tends
 # to lead to trouble with sandbox"). Once a stage3 ships that glibc or newer,
 # the mask makes portage fall back to the newest ALLOWED glibc - 2.42-r7 - and
 # install it OVER the newer installed one, which the ebuild aborts with
@@ -704,6 +704,13 @@ _prepare_portage_confdir(){
   if ! thr="$(_glibc_mask_above "$pv")"; then
     _warn "unexpected glibc PV '$pv'; leaving the glibc mask as committed"
     return 0
+  fi
+  # Never generate a mask that covers 2.44: the current stage3 needs
+  # glibc-2.44-r5. The committed exception in package.unmask/glibc still
+  # covers older/stale confdirs, but this keeps the generated mask from
+  # reintroducing the 2.44 block.
+  if ! _ver_ge "$thr" "2.45"; then
+    thr="2.45"
   fi
   f="$dst/package.mask/releng/glibc"
   mkdir -p "$(dirname "$f")"

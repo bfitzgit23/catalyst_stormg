@@ -1,4 +1,3 @@
-# The current snapshot requires glibc-2.44-r5; the blanket
-# >=sys-libs/glibc-2.43 mask in package.mask/releng/glibc would otherwise
-# make catalyst stop with "masked by: package.mask".
+# The current snapshot requires glibc-2.44-r5. Keep an explicit exception
+# even when an older cached/generated confdir still carries the old 2.44 mask.
 =sys-libs/glibc-2.44-r5
