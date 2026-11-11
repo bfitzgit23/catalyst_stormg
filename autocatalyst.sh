@@ -808,6 +808,16 @@ _bump_glibc(){
   cb="$(grep -Es '^(CHOST|CBUILD)=' /etc/portage/make.conf 2>/dev/null | head -1)" || cb=""
   case "$cb" in *aarch64*|*arm64*) arch="arm64" ;; *x86_64*|*amd64*) arch="amd64" ;; *) arch="amd64" ;; esac
   grep -q '^ACCEPT_KEYWORDS=' "$mkconf" 2>/dev/null || echo "ACCEPT_KEYWORDS=\"$arch ~$arch\"" >> "$mkconf"
+  # The bump chroot uses the stage3's own /etc/portage, not the project's
+  # portage_confdir. Make the exact target visible even when a snapshot
+  # profile masks it, and accept its testing keyword regardless of any
+  # ACCEPT_KEYWORDS already present in the stage3 make.conf.
+  mkdir -p "$root/etc/portage/package.unmask" \
+           "$root/etc/portage/package.accept_keywords"
+  printf '=sys-libs/glibc-%s\n' "$target" \
+    > "$root/etc/portage/package.unmask/glibc"
+  printf '=sys-libs/glibc-%s ~%s\n' "$target" "$arch" \
+    > "$root/etc/portage/package.accept_keywords/glibc"
   rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$GLIBC_MIN\" \">=sys-libs/glibc-$target\""
   rc=0
   if [ "$need_emerge" = 1 ]; then
