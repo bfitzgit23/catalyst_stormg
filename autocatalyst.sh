@@ -449,9 +449,7 @@ _fresh_sync(){
   if [ -d "$REPOS_DIR/gentoo/.git" ] && \
      _git -C "$REPOS_DIR/gentoo" remote get-url origin >/dev/null 2>&1; then
     _ok "gentoo clone present; pulling"
-    # The local chromium-bin package is committed on top of origin.  A
-    # fast-forward-only pull would fail on the next run, so rebase that local
-    # commit onto the freshly fetched upstream instead.
+    # Rebase any local tree commits onto the freshly fetched upstream.
     _run _git -C "$REPOS_DIR/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
       pull --rebase --autostash
   elif [ -d /var/db/repos/gentoo/profiles ]; then
@@ -463,8 +461,6 @@ _fresh_sync(){
       # finds its chroots instead of restarting from stage1.
       if [ "$DRY" -eq 0 ]; then
         if ! { _have rsync && rsync -a --delete --exclude=.git \
-                 --exclude=www-client/chromium-bin \
-                 --exclude=dev-cpp/simdutf \
                  /var/db/repos/gentoo/ "$REPOS_DIR/gentoo/"; }; then
           _warn "rsync import failed; falling back to a full copy"
           ( cd "$REPOS_DIR/gentoo" && \
@@ -508,9 +504,6 @@ _fresh_sync(){
       _run _git -C "$REPOS_DIR/$name" pull --ff-only
     fi
   done
-
-  _seed_local_package "www-client/chromium-bin" "$REPO_DIR/chromium-bin"
-  _seed_local_package "dev-cpp/simdutf" "$REPO_DIR/dev-cpp/simdutf"
   if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
     SNAP_REF="$(_git -C "$REPOS_DIR/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
   fi
