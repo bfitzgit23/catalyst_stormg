@@ -34,7 +34,7 @@ RDEPEND="
 	dev-libs/double-conversion
 	dev-libs/expat
 	dev-libs/glib:2
-	dev-libs/highway
+	dev-cpp/highway
 	dev-libs/libffi
 	dev-libs/libgcrypt:0
 	dev-libs/libxml2
