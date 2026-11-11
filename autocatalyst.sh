@@ -413,32 +413,32 @@ _ensure_host_tree(){
   _ok "portage tree synced via webrsync"
 }
 
-# chromium-bin/ lives at the repo root and is copied into the synced Gentoo
-# tree so the Catalyst snapshot includes it.
-_seed_chromium_package(){
-  local name=www-client/chromium-bin
-  local src="$REPO_DIR/chromium-bin"
+# Local packages live at the repo root and are copied into the synced
+# Gentoo tree so the Catalyst snapshot includes them.
+_seed_local_package(){
+  local name="$1"
+  local src="$2"
   local dst="$REPOS_DIR/gentoo/$name"
 
   [ -d "$src" ] || return 0
   if [ "$DRY" -eq 1 ]; then
-    _info "[dry-run] copy chromium-bin package into $REPOS_DIR/gentoo/$name"
+    _info "[dry-run] copy $name package into $dst"
     return 0
   fi
 
-  _info "Copying chromium-bin package into the gentoo snapshot"
+  _info "Copying $name package into the gentoo snapshot"
   rm -rf "$dst"
   mkdir -p "$(dirname "$dst")"
   cp -a "$src" "$dst" || _die "could not copy $src to $dst"
   _git -C "$REPOS_DIR/gentoo" add -A -f "$name" \
     || _die "could not stage $name in $REPOS_DIR/gentoo"
   if _git -C "$REPOS_DIR/gentoo" diff --cached --quiet 2>/dev/null; then
-    _ok "chromium-bin package is already in the gentoo snapshot"
+    _ok "$name package is already in the gentoo snapshot"
   else
     _git -C "$REPOS_DIR/gentoo" -c user.name=catalyst -c user.email=catalyst@localhost \
-        commit -qm "add chromium-bin package $name" \
+        commit -qm "add local package $name" \
       || _die "could not commit $name into the gentoo snapshot"
-    _ok "added chromium-bin package to the gentoo snapshot"
+    _ok "added $name package to the gentoo snapshot"
   fi
 }
 
@@ -464,6 +464,7 @@ _fresh_sync(){
       if [ "$DRY" -eq 0 ]; then
         if ! { _have rsync && rsync -a --delete --exclude=.git \
                  --exclude=www-client/chromium-bin \
+                 --exclude=dev-cpp/simdutf \
                  /var/db/repos/gentoo/ "$REPOS_DIR/gentoo/"; }; then
           _warn "rsync import failed; falling back to a full copy"
           ( cd "$REPOS_DIR/gentoo" && \
@@ -508,7 +509,8 @@ _fresh_sync(){
     fi
   done
 
-  _seed_chromium_package
+  _seed_local_package "www-client/chromium-bin" "$REPO_DIR/chromium-bin"
+  _seed_local_package "dev-cpp/simdutf" "$REPO_DIR/dev-cpp/simdutf"
   if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
     SNAP_REF="$(_git -C "$REPOS_DIR/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
   fi
