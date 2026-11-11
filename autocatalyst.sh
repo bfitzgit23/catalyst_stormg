@@ -696,6 +696,13 @@ _prepare_portage_confdir(){
   [ -d "$src" ] || { _warn "no portage confdir at $src; using catalyst defaults"; return 0; }
   rm -rf "$dst"
   cp -a "$src" "$dst" || _die "could not copy $src to $dst"
+  # Keep the current stage3 exception explicit.  A cached/stale confdir must
+  # not leave glibc-2.44-r5 masked just because its package.unmask copy is old.
+  mkdir -p "$dst/package.unmask" "$dst/package.accept_keywords"
+  printf '=sys-libs/glibc-2.44-r5\n' \
+    > "$dst/package.unmask/glibc-2.44-r5"
+  printf '=sys-libs/glibc-2.44-r5 ~%s\n' "$GLIBC_ACCEPT_ARCH" \
+    > "$dst/package.accept_keywords/glibc-2.44-r5"
   pv="$(_stage3_glibc_installed "$tar")" || pv=""
   if [ -z "$pv" ]; then
     _warn "could not read the stage3's glibc PV; leaving the glibc mask as committed"
@@ -823,8 +830,12 @@ _bump_glibc(){
            "$root/etc/portage/package.accept_keywords"
   printf '=sys-libs/glibc-%s\n' "$target" \
     > "$root/etc/portage/package.unmask/glibc"
+  printf '=sys-libs/glibc-2.44-r5\n' \
+    >> "$root/etc/portage/package.unmask/glibc"
   printf '=sys-libs/glibc-%s ~%s\n' "$target" "$arch" \
     > "$root/etc/portage/package.accept_keywords/glibc"
+  printf '=sys-libs/glibc-2.44-r5 ~%s\n' "$arch" \
+    >> "$root/etc/portage/package.accept_keywords/glibc"
   rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$GLIBC_MIN\" \">=sys-libs/glibc-$target\""
   rc=0
   if [ "$need_emerge" = 1 ]; then
