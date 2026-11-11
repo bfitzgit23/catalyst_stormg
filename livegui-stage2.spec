@@ -26,7 +26,8 @@ livecd/motd: "Welcome to StormG"
 livecd/users: gentoo
 livecd/root_overlay: /home/bennji/Desktop/catalyst_stormg/root_overlay
 livecd/overlay: /home/bennji/Desktop/catalyst_stormg/overlay
-livecd/cdtar: /usr/share/catalyst/livecd/cdtar/grub-theme-gentoo_frosted.tar.bz2
+livecd/cdtar: @REPO_DIR@/cdtar/grub-theme-natural-gentoo-remastered.tar.bz2
+livecd/grub_theme: /boot/grub/themes/natural-gentoo-remastered/theme.txt
 
 livecd/fsscript: /build-stormg/livecd_fsscript.sh
 livecd/rcadd: udev|sysinit udev-mount|sysinit acpid|default dbus|default gpm|default NetworkManager|default elogind|boot syslog-ng|default display-manager|default cupsd|default chronyd|default sshd|default

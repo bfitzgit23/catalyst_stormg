@@ -125,7 +125,11 @@ rsync -a --exclude='calamares' /tmp/stormg-resources/root_overlay/usr/share/ /us
 # GRUB theme
 mkdir -p /boot/grub/themes
 cp -r /tmp/stormg-resources/root_overlay/boot/grub/themes/* /boot/grub/themes/
-echo 'GRUB_THEME="/boot/grub/themes/natural-gentoo-remastered/theme.txt"' >> /etc/default/grub
+if grep -q '^GRUB_THEME=' /etc/default/grub; then
+  sed -i 's#^GRUB_THEME=.*#GRUB_THEME="/boot/grub/themes/natural-gentoo-remastered/theme.txt"#' /etc/default/grub
+else
+  echo 'GRUB_THEME="/boot/grub/themes/natural-gentoo-remastered/theme.txt"' >> /etc/default/grub
+fi
 sed -i 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="splash /' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 

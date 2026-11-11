@@ -317,8 +317,9 @@ of starting over (a cache save over GitHub's 10 GB limit only warns; the build s
   and `autocatalyst.sh` rewrites the line to the synced gentoo tree HEAD (or `--snapshot <ref>`)
   before building. Note: `profile: default/linux/amd64/23.0/desktop` must still exist in that tree
   (23.0 profiles are still shipped, but this is the thing to re-check on a future sync).
-- The `grub-theme-gentoo` cdtar referenced by `livegui-stage2.spec` comes from an installed Gentoo
-  system; ensure `sys-boot/grub-themes-gentoo` (or the build host cdtar) is present on the build host.
+- The ISO boot theme is the repository-local `cdtar/grub-theme-natural-gentoo-remastered.tar.bz2`.
+  It is referenced with `@REPO_DIR@` and rewritten by `autocatalyst.sh` for the build checkout;
+  `livecd/grub_theme` makes Catalyst write the matching theme path into the ISO `grub.cfg`.
 - Pre-existing modified `overlay/var/db/repos/gentoo/dev-python/*/Manifest` files are from the stale
   bundled snapshot — not our edits; leave them alone.
 - The committed `*.spec` still contain the hardcoded `/home/bennji/...` prefix by design; the
