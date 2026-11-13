@@ -16,7 +16,7 @@ LICENSE="LGPL-2.1 freedist MSttfEULA LGPL-3 libpng UoI-NCSA"
 
 IUSE="+X aqua cuda cudnn davix debug +examples fits fftw fortran +gdml graphviz
 	+gsl +http jupyter libcxx +minuit mpi +opengl pythia8 +python qt6 R +roofit
-	+root7 shadow sqlite +ssl +tbb test +tmva +unuran uring vc +xml xrootd"
+	+root7 shadow sqlite +ssl +tbb test +tmva +unuran uring +xml xrootd"
 
 if [[ ${PV} =~ "9999" ]] ; then
 	inherit git-r3
@@ -60,6 +60,8 @@ CDEPEND="
 	media-fonts/dejavu
 	media-libs/freetype:2
 	media-libs/libpng:0=
+	media-libs/giflib:=
+	media-libs/libjpeg-turbo:=
 	virtual/libcrypt:=
 	sys-libs/ncurses:=
 	virtual/zlib:=
@@ -104,7 +106,6 @@ CDEPEND="
 		')
 	)
 	uring? ( sys-libs/liburing:= )
-	vc? ( >=dev-libs/vc-1.4.4:= )
 	xml? ( dev-libs/libxml2:2= )
 	xrootd? ( net-libs/xrootd:0= )
 "
@@ -130,7 +131,7 @@ PATCHES=(
 
 pkg_setup() {
 	use fortran && fortran-2_pkg_setup
-	python-single-r1_pkg_setup
+	use python && python-single-r1_pkg_setup
 
 	elog "There are extra options on packages not available in Gentoo."
 	elog "You can use the environment variable MYCMAKEARGS to enable"
@@ -144,9 +145,6 @@ src_prepare() {
 	cmake_src_prepare
 
 	sed -i "/CLING_BUILD_PLUGINS/d" interpreter/CMakeLists.txt || die
-
-	# CSS should use local images
-	sed -i -e 's,http://.*/,,' etc/html/ROOT.css || die "html sed failed"
 
 	eapply_user
 }
@@ -217,7 +215,6 @@ src_configure() {
 		-Dbuiltin_pcre=OFF
 		-Dbuiltin_tbb=OFF
 		-Dbuiltin_unuran=OFF
-		-Dbuiltin_vc=OFF
 		-Dbuiltin_vdt=OFF
 		-Dbuiltin_veccore=OFF
 		-Dbuiltin_xrootd=OFF
@@ -231,7 +228,6 @@ src_configure() {
 		-Dclad=OFF
 		-Dcocoa=$(usex aqua)
 		-Dcuda=$(usex cuda)
-		-Dcudnn=$(usex cudnn)
 		-Ddaos=OFF # not in gentoo
 		-Ddataframe=ON
 		-Ddavix=$(usex davix)
@@ -260,7 +256,6 @@ src_configure() {
 		-Droot7=$(usex root7)
 		-Drootbench=OFF
 		-Droottest=$(usex test)
-		-Drpath=OFF
 		-Druntime_cxxmodules=ON
 		-Dshadowpw=$(usex shadow)
 		-Dspectrum=ON
@@ -271,13 +266,14 @@ src_configure() {
 		-Dtesting=$(usex test)
 		-Dtmva=$(usex tmva)
 		-Dtmva-cpu=$(usex tmva)
+		-Dtmva-cudnn=$(usex cudnn)
 		-Dtmva-gpu=$(usex cuda)
 		-Dtmva-pymva=$(usex tmva)
 		-Dtmva-rmva=$(usex R)
 		-Dtmva-sofie=OFF
+		-Dtpython=$(usex python)
 		-Dunuran=$(usex unuran)
 		-During=$(usex uring)
-		-Dvc=$(usex vc)
 		-Dvdt=OFF
 		-Dveccore=OFF
 		-Dvecgeom=OFF
@@ -289,6 +285,20 @@ src_configure() {
 
 	# Needs to be here, otherwise gets overriden by cmake.eclass
 	CMAKE_BUILD_TYPE=$(usex debug RelWithDebInfo Release) cmake_src_configure
+}
+
+src_test() {
+	CMAKE_SKIP_TESTS=(
+		tutorial-machine_learning-TMVA_CNN_Classification # cuda broken
+		tutorial-machine_learning-TMVA_RNN_Classification # cuda broken
+	)
+
+	if use cuda; then
+		cuda_add_sandbox -w
+		nvidia-smi > /dev/null || die GPU access seems to have failed
+	fi
+
+	cmake_src_test
 }
 
 src_install() {

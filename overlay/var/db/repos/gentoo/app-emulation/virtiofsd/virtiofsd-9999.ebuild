@@ -1,4 +1,4 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -53,7 +53,7 @@ CRATES="
 	humantime@2.1.0
 	is-terminal@0.4.9
 	itoa@1.0.2
-	libc@0.2.155
+	libc@0.2.177
 	libseccomp-sys@0.2.1
 	linux-raw-sys@0.4.5
 	lock_api@0.4.10
@@ -134,13 +134,13 @@ if [[ ${PV} == *9999* ]]; then
 else
 	SRC_URI="https://gitlab.com/virtio-fs/virtiofsd/-/archive/v${PV}/virtiofsd-v${PV}.tar.bz2"
 	SRC_URI+=" ${CARGO_CRATE_URIS}"
-	KEYWORDS="~amd64 ~ppc64"
+	KEYWORDS="~amd64 ~arm64 ~ppc64"
 	S="${WORKDIR}/${PN}-v${PV}"
 fi
 
 LICENSE="Apache-2.0 BSD"
 # Dependent crate licenses
-LICENSE+=" Apache-2.0-with-LLVM-exceptions MIT Unicode-DFS-2016 Unlicense"
+LICENSE+=" Apache-2.0 BSD MIT Unicode-DFS-2016"
 SLOT="0"
 
 DEPEND="

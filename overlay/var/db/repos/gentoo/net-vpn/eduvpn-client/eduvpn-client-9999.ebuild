@@ -1,16 +1,12 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-DOCS_BUILDER="mkdocs"
-DOCS_DEPEND="dev-python/mkdocs-material"
-DOCS_DIR="doc"
-
-PYTHON_COMPAT=( python3_{11..13} )
+PYTHON_COMPAT=( python3_{11..14} )
 
 DISTUTILS_USE_PEP517=setuptools
-inherit distutils-r1 docs xdg
+inherit distutils-r1 xdg
 
 if [[ ${PV} == "9999" ]] ; then
 	inherit git-r3
@@ -47,8 +43,8 @@ RDEPEND="
 	dev-python/requests[${PYTHON_USEDEP}]
 	dev-python/pygobject:3[${PYTHON_USEDEP}]
 	net-misc/networkmanager
-	>=net-vpn/eduvpn-common-4[${PYTHON_USEDEP}]
-	<net-vpn/eduvpn-common-5[${PYTHON_USEDEP}]
+	>=net-vpn/eduvpn-common-5[${PYTHON_USEDEP}]
+	<net-vpn/eduvpn-common-6[${PYTHON_USEDEP}]
 	x11-libs/libnotify
 "
 

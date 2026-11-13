@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -7,7 +7,7 @@ LUA_COMPAT=( lua5-1 luajit )
 
 inherit cmake lua-single optfeature virtualx
 
-DESCRIPTION="An open-source Zelda-like 2D game engine"
+DESCRIPTION="Open-source Zelda-like 2D game engine"
 HOMEPAGE="https://www.solarus-games.org/"
 
 if [[ ${PV} == 9999 ]]; then
@@ -15,7 +15,8 @@ if [[ ${PV} == 9999 ]]; then
 	EGIT_BRANCH="dev"
 	inherit git-r3
 else
-	SRC_URI="https://gitlab.com/solarus-games/solarus/-/archive/v${PV}/solarus-v${PV}.tar.gz"
+	SRC_URI="https://gitlab.com/solarus-games/solarus/-/archive/v${PV}/solarus-v${PV}.tar.bz2"
+	S="${WORKDIR}/solarus-v${PV}"
 	KEYWORDS="~amd64 ~x86"
 fi
 
@@ -28,9 +29,7 @@ REQUIRED_USE="${LUA_REQUIRED_USE}"
 RDEPEND="
 	${LUA_DEPS}
 	dev-games/physfs
-	dev-qt/qtcore:5
-	dev-qt/qtgui:5
-	dev-qt/qtwidgets:5
+	dev-qt/qtbase[gui,widgets]
 	media-libs/libmodplug
 	>=media-libs/libsdl2-2.0.1[X,joystick,video]
 	media-libs/libvorbis
@@ -38,18 +37,12 @@ RDEPEND="
 	media-libs/sdl2-image[png]
 	>=media-libs/sdl2-ttf-2.0.12
 "
-
-DEPEND="
-	${RDEPEND}
+DEPEND="${RDEPEND}
+	media-libs/glm
 "
-
 BDEPEND="
 	doc? ( app-text/doxygen )
 "
-
-if ! [[ ${PV} == 9999 ]]; then
-	S="${WORKDIR}/solarus-v${PV}"
-fi
 
 src_configure() {
 	local mycmakeargs=( -DSOLARUS_USE_LUAJIT="$(usex lua_single_target_luajit)" )
@@ -75,5 +68,5 @@ src_install() {
 }
 
 pkg_postinst() {
-	 optfeature "the Solarus Quest Editor" games-misc/solarus-quest-editor
+	optfeature "the Solarus Quest Editor" games-misc/solarus-quest-editor
 }

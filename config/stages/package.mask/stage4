@@ -7,4 +7,5 @@ dev-lang/rust
 #    the installer (drop this line to allow a newer version on purpose).
 =app-admin/calamares-3.3.14-r1
 >=app-admin/calamares-3.4.3
+sys-libs/glibc
 #

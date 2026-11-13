@@ -1,12 +1,16 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-LLVM_COMPAT=( {18..20} )
+# Bumping notes:
+# * Update DOLPHIN_TAG_COMMIT to match commit used in tag.
+# * Update *_COMMIT for the vendored packages based on their submodules in Externals/.
+
+LLVM_COMPAT=( {18..23} )
 LLVM_OPTIONAL=1
 
-inherit cmake llvm-r1 pax-utils xdg-utils
+inherit branding cmake llvm-r2 pax-utils toolchain-funcs xdg
 
 if [[ ${PV} == *9999 ]]; then
 	inherit git-r3
@@ -14,20 +18,23 @@ if [[ ${PV} == *9999 ]]; then
 	EGIT_SUBMODULES=(
 		Externals/cpp-ipc/cpp-ipc
 		Externals/cpp-optparse/cpp-optparse
-		Externals/mGBA/mgba
 		Externals/imgui/imgui
 		Externals/implot/implot
+		Externals/rcheevos/rcheevos
 		Externals/tinygltf/tinygltf
 		Externals/Vulkan-Headers
 		Externals/VulkanMemoryAllocator
 		Externals/watcher/watcher
 	)
 else
-	CPPIPC_COMMIT=a0c7725a1441d18bc768d748a93e512a0fa7ab52
+	# bug #979791
+	DOLPHIN_TAG_COMMIT=6094cfcf7b8fba733b3116fdf3414d51c1c0e4a4
+
+	CPPIPC_COMMIT=ce0773b3e6d5abaa8d104100c5704321113853ca
 	CPPOPTPARSE_COMMIT=2265d647232249a53a03b411099863ceca35f0d3
-	MGBA_COMMIT=8739b22fbc90fdf0b4f6612ef9c0520f0ba44a51
 	IMGUI_COMMIT=45acd5e0e82f4c954432533ae9985ff0e1aad6d5
 	IMPLOT_COMMIT=3da8bd34299965d3b0ab124df743fe3e076fa222
+	RCHEEVOS_COMMIT=926e4608f8dca7989267c787bbefb3ab1c835ac5
 	TINYGLTF_COMMIT=c5641f2c22d117da7971504591a8f6a41ece488b
 	VULKAN_HEADERS_COMMIT=39f924b810e561fd86b2558b6711ca68d4363f68
 	VULKANMEMORYALLOCATOR_COMMIT=3bab6924988e5f19bf36586a496156cf72f70d9f
@@ -35,7 +42,7 @@ else
 	SRC_URI="
 		https://github.com/dolphin-emu/dolphin/archive/${PV}.tar.gz
 			-> ${P}.tar.gz
-		https://github.com/mutouyun/cpp-ipc/tree/${CPPIPC_COMMIT}.tar.gz
+		https://github.com/mutouyun/cpp-ipc/archive/${CPPIPC_COMMIT}.tar.gz
 			-> cpp-ipc-${CPPIPC_COMMIT}.tar.gz
 		https://github.com/weisslj/cpp-optparse/archive/${CPPOPTPARSE_COMMIT}.tar.gz
 			-> cpp-optparse-${CPPOPTPARSE_COMMIT}.tar.gz
@@ -51,9 +58,9 @@ else
 			-> VulkanMemoryAllocator-${VULKANMEMORYALLOCATOR_COMMIT}.tar.gz
 		https://github.com/e-dant/watcher/archive/${WATCHER_COMMIT}.tar.gz
 			-> watcher-${WATCHER_COMMIT}.tar.gz
-		mgba? (
-			https://github.com/mgba-emu/mgba/archive/${MGBA_COMMIT}.tar.gz
-				-> mgba-${MGBA_COMMIT}.tar.gz
+		retro-achievements? (
+			https://github.com/RetroAchievements/rcheevos/archive/${RCHEEVOS_COMMIT}.tar.gz
+				-> rcheevos-${RCHEEVOS_COMMIT}.tar.gz
 		)
 	"
 	KEYWORDS="~amd64 ~arm64"
@@ -65,8 +72,8 @@ HOMEPAGE="https://dolphin-emu.org/"
 LICENSE="GPL-2+ BSD BSD-2 LGPL-2.1+ MIT ZLIB"
 SLOT="0"
 IUSE="
-	alsa bluetooth discord-presence doc egl +evdev ffmpeg +gui llvm log mgba
-	pulseaudio sdl systemd telemetry test upnp vulkan
+	alsa bluetooth discord doc egl +evdev ffmpeg +gui llvm log mgba
+	pulseaudio retro-achievements sdl systemd telemetry test upnp vulkan
 "
 REQUIRED_USE="
 	mgba? ( gui )
@@ -74,6 +81,7 @@ REQUIRED_USE="
 "
 RESTRICT="!test? ( test )"
 
+# slot op: Uses Qt::GuiPrivate for qplatformnativeinterface.h
 RDEPEND="
 	app-arch/bzip2:=
 	>=app-arch/lz4-1.8:=
@@ -106,10 +114,11 @@ RDEPEND="
 	)
 	ffmpeg? ( media-video/ffmpeg:= )
 	gui? (
-		dev-qt/qtbase:6[X,gui,widgets]
+		dev-qt/qtbase:6=[X,gui,widgets]
 		dev-qt/qtsvg:6
 	)
 	llvm? ( $(llvm_gen_dep 'llvm-core/llvm:${LLVM_SLOT}=') )
+	mgba? ( >=games-emulation/mgba-0.11:= )
 	pulseaudio? ( media-libs/libpulse )
 	sdl? ( >=media-libs/libsdl3-3.2.20 )
 	systemd? ( sys-apps/systemd:0= )
@@ -148,20 +157,15 @@ declare -A KEEP_BUNDLED=(
 	# FIXME: discord-rpc not packaged
 	[discord-rpc]=MIT
 
-	[mGBA]=MPL-2.0
-
 	[picojson]=BSD-2
 	[expr]=MIT
 	[rangeset]=ZLIB
 	[FatFs]=FatFs
+	[rcheevos]=MIT
 	[Vulkan-Headers]="|| ( Apache-2.0 MIT )"
 	[VulkanMemoryAllocator]=MIT
 	[watcher]=MIT
 	[cpp-ipc]=MIT
-)
-
-PATCHES=(
-	"${FILESDIR}"/dolphin-2509-retroachievents-test.patch
 )
 
 add_bundled_licenses() {
@@ -171,12 +175,68 @@ add_bundled_licenses() {
 }
 add_bundled_licenses
 
+# TODO: use eclass function when it exists, bug #892331
+tc-check-cxx-min_ver() {
+	do_check() {
+		debug-print "C++ library version check for ${1}"
+		debug-print "Detected: ${2}"
+		debug-print "Required: ${3}"
+		if ver_test ${2} -lt ${3}; then
+			eerror "Your current C++ library is too old for this package!"
+			die "Active C++ library is too old for this package (found ${1} ${2})."
+		fi
+	}
+
+	get_cxx_version() {
+		$(tc-getCXX) -x c++ -E -P ${CXXFLAGS} ${CPPFLAGS} - <<-EOF | sed -n 's/^GENTOO_CXX_VERSION \(.*\)$/\1/p'
+		#if __cplusplus >= 202002L
+		#include <version>
+		#else
+		#include <ciso646>
+		#endif
+		GENTOO_CXX_VERSION ${1}
+		EOF
+	}
+
+	case ${1} in
+		libc++)
+			[[ $(tc-get-cxx-stdlib) == libc++ ]] || return
+			do_check libc++ $(get_cxx_version _LIBCPP_VERSION) ${2}
+			;;
+		libstdc++)
+			[[ $(tc-get-cxx-stdlib) == libstdc++ ]] || return
+			do_check libstdc++ $(get_cxx_version _GLIBCXX_RELEASE) ${2}
+			;;
+		*)
+			eerror "Unknown first parameter for ${FUNCNAME} - must be libc++ or libstdc++"
+			die "${FUNCNAME}: Parameter ${1} unknown"
+			;;
+	esac
+}
+
+is_toolchain_new_enough() {
+	# See libstdc++_min_version and libc++_min_version in CMakeLists.txt
+	tc-check-cxx-min_ver libstdc++ 12
+	tc-check-cxx-min_ver libc++ 180000
+}
+
+pkg_pretend() {
+	[[ ${MERGE_TYPE} != binary ]] && is_toolchain_new_enough
+}
+
 pkg_setup() {
-	use llvm && llvm-r1_pkg_setup
+	[[ ${MERGE_TYPE} != binary ]] && is_toolchain_new_enough
+
+	use llvm && llvm-r2_pkg_setup
 }
 
 src_prepare() {
 	if [[ ${PV} != *9999 ]]; then
+		# Set tag commit to fix netplay against builds on other platforms, bug #979791
+		eapply "${FILESDIR}"/dolphin-2606-git-rev.patch
+		sed -e "s|@@GENTOO_DOLPHIN_COMMIT@@|${DOLPHIN_TAG_COMMIT}|" \
+			-i CMake/ScmRevGen.cmake || die
+
 		mv -T "${WORKDIR}/cpp-ipc-${CPPIPC_COMMIT}" Externals/cpp-ipc/cpp-ipc || die
 		mv -T "${WORKDIR}/cpp-optparse-${CPPOPTPARSE_COMMIT}" Externals/cpp-optparse/cpp-optparse || die
 		mv -T "${WORKDIR}/imgui-${IMGUI_COMMIT}" Externals/imgui/imgui || die
@@ -185,8 +245,8 @@ src_prepare() {
 		mv -T "${WORKDIR}/Vulkan-Headers-${VULKAN_HEADERS_COMMIT}" Externals/Vulkan-Headers || die
 		mv -T "${WORKDIR}/VulkanMemoryAllocator-${VULKANMEMORYALLOCATOR_COMMIT}" Externals/VulkanMemoryAllocator || die
 		mv -T "${WORKDIR}/watcher-${WATCHER_COMMIT}" Externals/watcher/watcher || die
-		if use mgba; then
-			mv -T "${WORKDIR}/mgba-${MGBA_COMMIT}" Externals/mGBA/mgba || die
+		if use retro-achievements; then
+			mv -T "${WORKDIR}/rcheevos-${RCHEEVOS_COMMIT}" Externals/rcheevos/rcheevos || die
 		fi
 	fi
 
@@ -229,9 +289,9 @@ src_configure() {
 		-DENABLE_VULKAN=$(usex vulkan)
 		-DENCODE_FRAMEDUMPS=$(usex ffmpeg)
 		-DFASTLOG=$(usex log)
-		-DUSE_DISCORD_PRESENCE=$(usex discord-presence)
+		-DUSE_DISCORD_PRESENCE=$(usex discord)
 		-DUSE_MGBA=$(usex mgba)
-		-DUSE_RETRO_ACHIEVEMENTS=OFF
+		-DUSE_RETRO_ACHIEVEMENTS=$(usex retro-achievements)
 		-DUSE_UPNP=$(usex upnp)
 
 		-DCMAKE_DISABLE_FIND_PACKAGE_SYSTEMD=$(usex !systemd)
@@ -258,9 +318,10 @@ src_configure() {
 		-DUSE_SYSTEM_ICONV=ON
 		-DUSE_SYSTEM_HIDAPI=ON
 
+		-DDISTRIBUTOR="${BRANDING_OS_NAME}"
+
 		# Use ccache only when user did set FEATURES=ccache (or similar)
-		# not when ccache binary is present in system (automagic).
-		-DCCACHE_BIN=CCACHE_BIN-NOTFOUND
+		-DENABLE_CCACHE=OFF
 
 		# Undo cmake.eclass's defaults.
 		# All dolphin's libraries are private
@@ -275,7 +336,7 @@ src_configure() {
 	[[ ${PV} != *9999 ]] && mycmakeargs+=( -DCMAKE_DISABLE_FIND_PACKAGE_Git=ON )
 
 	use test && mycmakeargs+=( -DUSE_SYSTEM_GTEST=ON )
-	use mgba && mycmakeargs+=( -DUSE_SYSTEM_LIBMGBA=OFF )
+	use mgba && mycmakeargs+=( -DUSE_SYSTEM_LIBMGBA=ON )
 	use sdl && mycmakeargs+=( -DUSE_SYSTEM_SDL3=ON )
 	use upnp && mycmakeargs+=( -DUSE_SYSTEM_MINIUPNPC=ON )
 
@@ -296,14 +357,4 @@ src_install() {
 
 	# Add pax markings for hardened systems
 	pax-mark -m "${ED}"/usr/bin/"${PN}"{-emu{,-nogui},-tool}
-}
-
-pkg_postinst() {
-	xdg_desktop_database_update
-	xdg_icon_cache_update
-}
-
-pkg_postrm() {
-	xdg_desktop_database_update
-	xdg_icon_cache_update
 }

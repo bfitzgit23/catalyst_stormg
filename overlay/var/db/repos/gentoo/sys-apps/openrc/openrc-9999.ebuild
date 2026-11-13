@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit eapi9-ver meson pam
+inherit branding eapi9-ver meson pam
 
 DESCRIPTION="OpenRC manages the services, startup and shutdown of a host"
 HOMEPAGE="https://github.com/openrc/openrc/"
@@ -21,7 +21,7 @@ SLOT="0"
 IUSE="audit bash debug pam newnet +netifrc selinux s6 +sysvinit sysv-utils unicode"
 
 COMMON_DEPEND="
-	sys-libs/libcap
+	kernel_linux? ( sys-libs/libcap )
 	sys-process/psmisc
 	pam? ( sys-libs/pam )
 	audit? ( sys-process/audit )
@@ -34,7 +34,7 @@ DEPEND="${COMMON_DEPEND}
 RDEPEND="${COMMON_DEPEND}
 	bash? ( app-shells/bash )
 	sysv-utils? (
-		!sys-apps/systemd[sysv-utils(-)]
+		!sys-apps/systemd[sysv-utils(+)]
 		!sys-apps/sysvinit
 	)
 	!sysv-utils? (
@@ -55,7 +55,7 @@ src_configure() {
 		--bindir="${EPREFIX}/bin"
 		--sbindir="${EPREFIX}/sbin"
 		$(meson_feature audit)
-		"-Dbranding=\"Gentoo Linux\""
+		-Dbranding="\"${BRANDING_OS_PRETTY_NAME}\""
 		$(meson_use newnet)
 		$(meson_use pam)
 		-Dpam_libdir="${EPREFIX}$(getpam_mod_dir)"
@@ -63,6 +63,15 @@ src_configure() {
 		-Dshell=$(usex bash "${EPREFIX}/bin/bash" "${EPREFIX}/bin/sh")
 		$(meson_use sysv-utils sysvinit)
 	)
+
+	# XXX: hurd hack
+	if use kernel_Hurd ; then
+		# Avoid collision with sys-kernel/hurd's own /usr/libexec/rc
+		emesonargs+=(
+			-Dlibexecdir="${EPREFIX}/usr/libexec/openrc"
+		)
+	fi
+
 	# export DEBUG=$(usev debug)
 	meson_src_configure
 }
@@ -135,7 +144,7 @@ pkg_postinst() {
 	fi
 
 	if ! use newnet && ! use netifrc; then
-		ewarn "You have emerged OpenRc without network support. This"
+		ewarn "You have emerged OpenRC without network support. This"
 		ewarn "means you need to SET UP a network manager such as"
 		ewarn "	net-misc/netifrc, net-misc/dhcpcd, net-misc/connman,"
 		ewarn " net-misc/NetworkManager, or net-vpn/badvpn."

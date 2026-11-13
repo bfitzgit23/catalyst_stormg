@@ -5,8 +5,8 @@
 		<email>base-system@gentoo.org</email>
 		<name>Gentoo Base System</name>
 	</maintainer>
-	<maintainer type="person">
-		<email>vimproved@inventati.org</email>
+	<maintainer type="person" proxied="yes">
+		<email>vi@vimproved.dev</email>
 		<name>Violet Purcell</name>
 	</maintainer>
 	<use>

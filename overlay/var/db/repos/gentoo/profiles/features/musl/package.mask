@@ -1,20 +1,13 @@
 # Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
+# Maciej Barć <xgqt@gentoo.org> (2026-06-22)
+# Binary compiled against glibc
+dev-lang/unison-lang-bin
+
 # Sam James <sam@gentoo.org> (2026-02-11)
 # Fails to build on musl (bug #968134, https://sourceware.org/PR33747)
 ~dev-debug/gdb-17.1
-
-# Mike Gilbert <floppym@gentoo.org> (2026-02-07)
-# Waiting for >=sys-apps/systemd-259 to be stable.
-dev-python/python-systemd
-gnome-extra/office-runner
-gnome-extra/gnome-logs
-sys-apps/dbus-broker
-sys-apps/systemd-readahead
-sys-block/wait-for-dri-devices-rules
-sys-process/systemd-cron
->=www-misc/profile-sync-daemon-6
 
 # Andreas K. Hüttel <dilfridge@gentoo.org> (2026-02-04)
 # New systemd now has experimental support for musl
@@ -92,10 +85,6 @@ sys-auth/libnss-pgsql
 sys-auth/libnss-mysql
 sys-auth/nss_ldap
 net-nds/nsscache
-
-# Sam James <sam@gentoo.org> (2024-09-30)
-# Needs porting to musl (bug #940130)
-~sys-auth/elogind-255.17
 
 # Sam James <sam@gentoo.org> (2024-08-31)
 # sys-devel/binutils[gprofng] is masked on musl
@@ -186,10 +175,6 @@ app-arch/lrzip-next
 # Uses glibc function getsourcefilter(),
 # which are not available on musl.
 net-misc/mcproxy
-
-# Florian Schmaus <flow@gentoo.org> (2023-11-22)
-# Requires systemd which is not supported on musl.
-sys-power/sandmann-bin
 
 # Brahmajit Das <brahmajit.xyz@gmail.com> (2023-06-15)
 # The package uses innetgr which is not available in musl, bug 898556
@@ -350,19 +335,15 @@ games-fps/legends
 games-fps/soldieroffortune
 games-fps/transfusion-bin
 games-fps/tribes2
-games-fps/ut2003
-games-fps/ut2003-bonuspack-cm
-games-fps/ut2003-bonuspack-de
-games-fps/ut2003-bonuspack-epic
-games-fps/ut2003-data
-games-fps/ut2003-demo
+games-fps/unreal
+games-fps/unreal-gold-data
+games-fps/unreal-tournament
+games-fps/unreal-tournament-data
 games-fps/ut2004
 games-fps/ut2004-bonuspack-cbp1
 games-fps/ut2004-bonuspack-cbp2
-games-fps/ut2004-bonuspack-ece
-games-fps/ut2004-bonuspack-mega
+games-fps/ut2004-bonuspack-xp
 games-fps/ut2004-data
-games-fps/ut2004-demo
 games-puzzle/world-of-goo-demo
 games-puzzle/world-of-goo-gog
 games-puzzle/world-of-goo-hb
@@ -373,7 +354,6 @@ games-server/bedrock-server
 games-server/etqw-ded
 games-server/mtavc
 games-server/steamcmd
-games-server/ut2004-ded
 games-simulation/slime-rancher
 games-strategy/darwinia
 games-strategy/knights-demo
@@ -443,6 +423,7 @@ www-client/microsoft-edge-dev
 www-client/opera
 www-client/opera-beta
 www-client/opera-developer
+www-client/opera-gx
 www-client/vivaldi
 www-client/vivaldi-snapshot
 www-plugins/chrome-binary-plugins

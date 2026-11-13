@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -6,7 +6,7 @@ EAPI=8
 VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/libuv.asc
 inherit autotools verify-sig
 
-DESCRIPTION="Cross-platform asychronous I/O"
+DESCRIPTION="Cross-platform asynchronous I/O"
 HOMEPAGE="https://github.com/libuv/libuv"
 
 if [[ ${PV} = 9999* ]]; then
@@ -27,11 +27,13 @@ SLOT="0/1"
 BDEPEND="
 	dev-build/libtool
 	virtual/pkgconfig
-	verify-sig? ( sec-keys/openpgp-keys-libuv )
+	verify-sig? ( >=sec-keys/openpgp-keys-libuv-20260323 )
 "
 
 PATCHES=(
-	"${FILESDIR}"/${PN}-1.48.0-test-thread-priority-portage.patch
+	"${FILESDIR}"/${PN}-1.52.1-test-thread-priority-portage.patch
+	"${FILESDIR}"/${PN}-1.51.0-ppc32-uring.patch
+	"${FILESDIR}"/${PN}-1.52.1-hurd.patch
 )
 
 src_prepare() {

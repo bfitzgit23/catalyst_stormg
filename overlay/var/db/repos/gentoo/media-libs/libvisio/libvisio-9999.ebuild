@@ -1,12 +1,10 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=8
-
-inherit flag-o-matic
+EAPI=9
 
 if [[ ${PV} == *9999* ]]; then
-	EGIT_REPO_URI="https://anongit.freedesktop.org/git/libreoffice/libvisio.git"
+	EGIT_REPO_URI="https://git.libreoffice.org/libvisio.git"
 	inherit autotools git-r3
 else
 	SRC_URI="https://dev-www.libreoffice.org/src/libvisio/${P}.tar.xz"
@@ -45,9 +43,6 @@ src_prepare() {
 }
 
 src_configure() {
-	# bug 619688, 932496
-	append-cxxflags -std=c++17
-
 	local myeconfargs=(
 		$(use_with doc docs)
 		$(use_enable test tests)

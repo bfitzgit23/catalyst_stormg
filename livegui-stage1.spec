@@ -1,12 +1,12 @@
 subarch: amd64
 # version_stamp date is rewritten to the current date (MM-DD-YYYY) by autocatalyst.sh
-version_stamp: stormg-08-06-2026
+version_stamp: stormg-11-11-2026
 target: livecd-stage1
 rel_type: 23.0-default
 profile: default/linux/amd64/23.0/desktop
 # snapshot_treeish is autodetected: autocatalyst.sh rewrites this to the
 # fresh-synced gentoo tree HEAD (or --snapshot <ref>) before building
-snapshot_treeish: HEAD
+snapshot_treeish: 2fbea8550875c91189ab75b8ac5f3128bf5971a1
 source_subpath: 23.0-default/stage3-amd64-desktop-openrc-latest.tar.xz
 compression_mode: pixz
 portage_confdir: /home/bennji/Desktop/catalyst_stormg/config/stages
@@ -241,6 +241,7 @@ livecd/packages:
 	sys-process/procps
 	sys-process/psmisc
 	www-client/firefox-bin
+	www-client/chromium-bin
 	net-print/epson-inkjet-printer-escpr
 	xfce-base/xfce4-meta
 	xfce-extra/xfce4-docklike-plugin

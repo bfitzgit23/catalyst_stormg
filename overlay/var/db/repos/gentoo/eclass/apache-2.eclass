@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: apache-2.eclass
@@ -13,7 +13,9 @@
 # and inter-module dependency checking.
 
 LUA_COMPAT=( lua5-{1..4} )
+VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/apache-httpd.asc
 inherit autotools fcaps flag-o-matic lua-single multilib ssl-cert toolchain-funcs
+inherit verify-sig
 
 [[ ${CATEGORY}/${PN} != www-servers/apache ]] \
 	&& die "Do not use this eclass with anything else than www-servers/apache ebuilds!"
@@ -69,8 +71,11 @@ esac
 # Defaults to the name of the patchset, with a datestamp.
 [[ -n "${GENTOO_PATCH_A}" ]] || GENTOO_PATCH_A="${GENTOO_PATCHNAME}-${GENTOO_PATCHSTAMP}.tar.bz2"
 
-SRC_URI="mirror://apache/httpd/httpd-${PV}.tar.bz2
-	https://dev.gentoo.org/~${GENTOO_DEVELOPER}/dist/apache/${GENTOO_PATCH_A}"
+SRC_URI="
+	mirror://apache/httpd/httpd-${PV}.tar.bz2
+	https://dev.gentoo.org/~${GENTOO_DEVELOPER}/dist/apache/${GENTOO_PATCH_A}
+	verify-sig? ( mirror://apache/httpd/httpd-${PV}.tar.bz2.asc )
+"
 
 # @VARIABLE: IUSE_MPMS_FORK
 # @DESCRIPTION:
@@ -174,6 +179,7 @@ DEPEND="${RDEPEND}"
 BDEPEND="
 	virtual/pkgconfig
 	suexec? ( suexec-caps? ( sys-libs/libcap ) )
+	verify-sig? ( sec-keys/openpgp-keys-apache-httpd )
 "
 PDEPEND="~app-admin/apache-tools-${PV}"
 
@@ -437,6 +443,17 @@ apache-2_pkg_setup() {
 	fi
 }
 
+# @FUNCTION: apache-2_src_unpack
+# @DESCRIPTION:
+# Standard unpack to support verify-sig.
+apache-2_src_unpack() {
+	if use verify-sig ; then
+		verify-sig_verify_detached "${DISTDIR}"/httpd-${PV}.tar.bz2{,.asc}
+	fi
+
+	default
+}
+
 # @FUNCTION: apache-2_src_prepare
 # @DESCRIPTION:
 # This function applies patches, configures a custom file-system layout and
@@ -500,6 +517,7 @@ apache-2_src_prepare() {
 	chmod g-w "${T}" || die
 
 	# This package really should upgrade to using pcre's .pc file.
+	tc-export PKG_CONFIG
 	cat <<-\EOF > "${T}"/pcre2-config
 	#!/usr/bin/env bash
 	flags=()
@@ -520,7 +538,6 @@ apache-2_src_prepare() {
 # This function adds compiler flags and runs econf and emake based on MY_MPM and
 # MY_CONF
 apache-2_src_configure() {
-	tc-export PKG_CONFIG
 	export ac_cv_path_PKGCONFIG="${PKG_CONFIG}"
 
 	# Sanity check in case people have bad mounts/TPE settings. #500928
@@ -692,4 +709,4 @@ apache-2_pkg_postinst() {
 
 }
 
-EXPORT_FUNCTIONS pkg_setup src_prepare src_configure src_install pkg_postinst
+EXPORT_FUNCTIONS pkg_setup src_unpack src_prepare src_configure src_install pkg_postinst

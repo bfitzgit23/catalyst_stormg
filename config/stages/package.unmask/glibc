@@ -1,3 +1,0 @@
-# The current snapshot requires glibc-2.44-r5. Keep an explicit exception
-# even when an older cached/generated confdir still carries the old 2.44 mask.
-=sys-libs/glibc-2.44-r5

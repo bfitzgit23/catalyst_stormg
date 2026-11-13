@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -1339,7 +1339,7 @@ run_locale_gen() {
 	# number of processors saved in the environment of a binary package may
 	# differ strongly from the number of processes available during postinst
 	if [[ ${EMERGE_FROM} != binary ]]; then
-		localegen_args+=( --jobs "$(makeopts_jobs)" )
+		localegen_args+=( --jobs "$(get_makeopts_jobs)" )
 	fi
 
 	printf 'Executing: locale-gen %s\n' "${localegen_args[*]@Q}" >&2
@@ -1555,7 +1555,7 @@ glibc_do_src_install() {
 	# creation of the "factory" symlink in pkg_postinst().
 	rm -f "${ED}"/etc/localtime
 
-	# Generate all locales if this is a native build as locale generation
+	# Compile all locales when requested, but only for native builds.
 	if use compile-locales && ! is_crosscompile && ! run_locale_gen "${ED}"; then
 		die "locale-gen(8) unexpectedly failed during the ${EBUILD_PHASE_FUNC} phase"
 	fi

@@ -13,11 +13,10 @@
   values, arrays or ranges of type double.  
   </longdescription>
   <use>
-    <flag name="designer">Installs <pkg>dev-qt/designer</pkg> plugin.</flag>
+    <flag name="designer">Installs <pkg>dev-qt/qttools</pkg>[designer] plugin.</flag>
     <flag name="polar">Install the QwtPolar headers</flag>
   </use>
   <upstream>
     <remote-id type="sourceforge">qwt</remote-id>
-    <remote-id type="github">SciDAVis/qwt5-qt5</remote-id>
   </upstream>
 </pkgmetadata>

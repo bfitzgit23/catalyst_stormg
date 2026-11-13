@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -11,10 +11,10 @@ PYTHON_COMPAT=( python3_{11..14} )
 
 inherit cmake flag-o-matic lua-single optfeature python-single-r1 xdg
 
-CEF_AMD64="cef_binary_6533_linux_x86_64_v6"
-CEF_ARM64="cef_binary_6533_linux_aarch64_v6"
-OBS_BROWSER_COMMIT="a776dd6a1a0ded4a8a723f2f572f3f8a9707f5a8"
-OBS_WEBSOCKET_COMMIT="1c9306b1e200704ebe192e06c893dfc06b097c43"
+CEF_AMD64="cef_binary_7871_linux_x86_64"
+CEF_ARM64="cef_binary_7871_linux_aarch64"
+OBS_BROWSER_COMMIT="3f0a2cdf378939ebe3c6f9ab36d4ea100c25aac2"
+OBS_WEBSOCKET_COMMIT="1ef34bf48110c2a18184e50e41cd0b1a855e2147"
 
 DESCRIPTION="Software for Recording and Streaming Live Video Content"
 HOMEPAGE="https://obsproject.com"
@@ -48,8 +48,8 @@ SRC_URI+="
 LICENSE="Boost-1.0 GPL-2+ MIT Unlicense"
 SLOT="0"
 IUSE="
-	+alsa browser decklink fdk jack lua mpegts nvenc pipewire pulseaudio
-	python qsv sndio speex test-input truetype v4l vlc wayland websocket
+	+alsa browser decklink fdk jack lua mpegts nvenc pulseaudio python
+	qsv screencast sndio speex test-input truetype v4l vlc wayland websocket
 "
 REQUIRED_USE="
 	browser? ( || ( alsa pulseaudio ) )
@@ -63,15 +63,13 @@ BDEPEND="
 	python? ( dev-lang/swig )
 "
 # media-video/ffmpeg[opus] required due to bug 909566
-# The websocket plug-in fails to build with 'dev-cpp/asio-1.34.0':
-#   https://github.com/obsproject/obs-websocket/issues/1291
 DEPEND="
 	dev-cpp/nlohmann_json
 	dev-libs/glib:2
 	dev-libs/jansson:=
 	dev-libs/simde
 	dev-libs/uthash
-	dev-qt/qtbase:6[network,widgets,X,xml(+)]
+	dev-qt/qtbase:6=[dbus,network,widgets,X,xml(+)]
 	dev-qt/qtsvg:6
 	media-libs/libglvnd[X]
 	media-libs/libva
@@ -122,10 +120,10 @@ DEPEND="
 		net-libs/srt
 	)
 	nvenc? ( >=media-libs/nv-codec-headers-12 )
-	pipewire? ( media-video/pipewire:= )
 	pulseaudio? ( media-libs/libpulse )
 	python? ( ${PYTHON_DEPS} )
 	qsv? ( media-libs/libvpl )
+	screencast? ( media-video/pipewire:= )
 	sndio? ( media-sound/sndio )
 	speex? ( media-libs/speexdsp )
 	truetype? (
@@ -136,13 +134,14 @@ DEPEND="
 		media-libs/libv4l
 		virtual/udev
 	)
-	vlc? ( media-video/vlc:= )
+	vlc? ( <media-video/vlc-4.0:= )
 	wayland? (
 		dev-libs/wayland
+		dev-qt/qtbase:6[wayland]
 		x11-libs/libxkbcommon
 	)
 	websocket? (
-		<dev-cpp/asio-1.34.0
+		dev-cpp/asio
 		dev-cpp/websocketpp
 		dev-libs/qr-code-generator
 	)
@@ -206,7 +205,7 @@ src_configure() {
 		-DENABLE_LIBFDK=$(usex fdk)
 		-DENABLE_NEW_MPEGTS_OUTPUT=$(usex mpegts)
 		-DENABLE_NVENC=$(usex nvenc)
-		-DENABLE_PIPEWIRE=$(usex pipewire)
+		-DENABLE_PIPEWIRE=$(usex screencast)
 		-DENABLE_PULSEAUDIO=$(usex pulseaudio)
 		-DENABLE_QSV11=$(usex qsv)
 		-DENABLE_RNNOISE=ON
@@ -238,8 +237,8 @@ src_configure() {
 	fi
 
 	if use browser; then
-		use amd64 && mycmakeargs+=( -DCEF_ROOT_DIR=../cef_binary_6533_linux_x86_64 )
-		use arm64 && mycmakeargs+=( -DCEF_ROOT_DIR=../cef_binary_6533_linux_aarch64 )
+		use amd64 && mycmakeargs+=( -DCEF_ROOT_DIR="${WORKDIR}/${CEF_AMD64%_v*}" )
+		use arm64 && mycmakeargs+=( -DCEF_ROOT_DIR="${WORKDIR}/${CEF_ARM64%_v*}" )
 		mycmakeargs+=( -DENABLE_WHATSNEW=ON )
 	else
 		mycmakeargs+=( -DENABLE_WHATSNEW=OFF )
@@ -275,6 +274,7 @@ pkg_postinst() {
 		elog
 	fi
 
+	optfeature "PipeWire audio capture" media-plugins/obs-pipewire-audio-capture
 	optfeature "VA-API hardware encoding" media-video/ffmpeg[vaapi]
 	optfeature "virtual camera support" media-video/v4l2loopback
 }

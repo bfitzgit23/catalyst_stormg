@@ -1,10 +1,10 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 DISTUTILS_USE_PEP517=hatchling
-PYTHON_COMPAT=( python3_{11..14} )
+PYTHON_COMPAT=( python3_{12..15} )
 
 inherit distutils-r1 pypi
 
@@ -16,7 +16,7 @@ HOMEPAGE="
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="amd64 arm arm64 ppc ppc64 ~riscv x86"
+KEYWORDS="amd64 arm arm64 ~hppa ppc ppc64 ~riscv ~sparc x86"
 
 RDEPEND="
 	>=dev-python/pytest-3.5.0[${PYTHON_USEDEP}]
@@ -24,23 +24,16 @@ RDEPEND="
 "
 BDEPEND="
 	test? (
-		dev-python/pytest-httpbin[${PYTHON_USEDEP}]
-		dev-python/pytest-mock[${PYTHON_USEDEP}]
 		dev-python/requests[${PYTHON_USEDEP}]
 	)
 "
 
+EPYTEST_PLUGINS=( "${PN}" pytest-{httpbin,mock} )
+EPYTEST_PLUGIN_LOAD_VIA_ENV=1
 distutils_enable_tests pytest
 
-python_test () {
-	local EPYTEST_DESELECT=(
-		# Internet
-		# https://github.com/kiwicom/pytest-recording/issues/131
-		tests/test_blocking_network.py::test_block_network_with_allowed_hosts
-	)
-
-	local -x PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
-	local -x PYTEST_PLUGINS=pytest_recording.plugin
-	PYTEST_PLUGINS+=,pytest_httpbin.plugin,pytest_mock
-	epytest
-}
+EPYTEST_DESELECT=(
+	# Internet
+	# https://github.com/kiwicom/pytest-recording/issues/131
+	tests/test_blocking_network.py::test_block_network_with_allowed_hosts
+)
