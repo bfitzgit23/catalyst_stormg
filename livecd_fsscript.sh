@@ -87,10 +87,4 @@ fi
 # Executed by trust-launch.desktop, 0644 in the repo.
 chmod 0755 /usr/local/bin/trust.sh
 
-# Squall session binaries, also 0644 in the repo.
-chmod 0755 /usr/bin/squall /usr/bin/squall-session /usr/bin/squall-key
-
-# Post-install hook: Calamares runs it from the target chroot (shellprocess@squall).
-chmod 0755 /usr/local/bin/stormg-squall-default
-
 exit 0

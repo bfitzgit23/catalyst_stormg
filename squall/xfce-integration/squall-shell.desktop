@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Squall Shell
-Comment=StormG shell inside an existing Xfce session
-Exec=squall
-Icon=squall-shell
-Terminal=false
-Categories=System;
-X-GNOME-Autostart-enabled=true
