@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StormG Shell — Windows mockup</title>
+<style>
+:root{--teal:#00d1b2;--ink:#e6f1ff;--muted:#8892b0;--glass:rgba(2,12,27,.8)}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;font:14px/1.4 Inter,system-ui,sans-serif;color:var(--ink);user-select:none}
+body{background:radial-gradient(1000px 500px at 20% 10%,#164e63 0%,transparent 60%),radial-gradient(900px 500px at 85% 20%,#4c1d95 0%,transparent 55%),radial-gradient(800px 600px at 50% 100%,#0e7490 0%,transparent 60%),linear-gradient(160deg,#020c1b,#0a192f 55%,#111c33)}
+#bar{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(1100px,94vw);display:flex;justify-content:space-between;align-items:center;background:var(--glass);border:1px solid rgba(100,255,218,.22);border-radius:14px;padding:6px 12px;backdrop-filter:blur(18px);z-index:50}
+#bar button{background:transparent;border:1px solid transparent;color:var(--ink);border-radius:9px;padding:5px 10px;cursor:pointer;font-size:15px}
+#bar button:hover{border-color:var(--teal);color:var(--teal)}
+#bar button.on{border-color:var(--teal);color:var(--teal)}
+#clock{color:var(--muted);margin-left:8px;font-variant-numeric:tabular-nums}
+.bar-center{color:var(--muted);font-size:12px}
+#stage{position:fixed;inset:0;overflow:hidden}
+.win{position:absolute;width:520px;background:rgba(10,25,47,.92);border:1px solid rgba(100,255,218,.25);border-radius:14px;backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+.win .titlebar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(100,255,218,.06);cursor:grab;font-weight:600}
+.win .titlebar:active{cursor:grabbing}
+.win .dots{display:flex;gap:6px}.dot{width:11px;height:11px;border-radius:50%;background:#334155;cursor:pointer}.dot.c{background:#ff5f57}.dot.m{background:#febc2e}.dot.x{background:#28c840}
+.win .body{padding:0;min-height:200px}
+.term{background:#020c1b;font-family:Consolas,monospace;font-size:12.5px;padding:12px;color:#a7f3d0;min-height:220px;white-space:pre-wrap}
+.files{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px}
+.folder{background:rgba(100,255,218,.06);border-radius:10px;padding:14px 6px;text-align:center;font-size:12px}
+#dock{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;background:var(--glass);padding:8px 12px;border-radius:16px;border:1px solid rgba(100,255,218,.22);z-index:50}
+#dock button{width:52px;height:52px;border-radius:12px;border:1px solid transparent;background:rgba(100,255,218,.07);color:var(--ink);cursor:pointer;font-size:11px}
+#dock button:hover,#dock button.active{border-color:var(--teal);transform:translateY(-2px)}
+#launcher{position:fixed;top:70px;left:50%;transform:translateX(-50%);width:min(760px,92vw);max-height:62vh;overflow:auto;background:var(--glass);border-radius:18px;padding:18px;border:1px solid rgba(100,255,218,.25);z-index:60}
+#launcher.hidden,#cc.hidden{display:none}
+#search{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(100,255,218,.3);background:rgba(2,12,27,.7);color:var(--ink)}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:14px}
+.app{padding:14px 8px;text-align:center;border-radius:12px;cursor:pointer;background:rgba(100,255,218,.06);border:1px solid transparent}
+.app:hover{border-color:var(--teal);background:rgba(100,255,218,.13)}.app small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+#cc{position:fixed;top:66px;right:3vw;width:300px;background:var(--glass);border:1px solid rgba(100,255,218,.25);border-radius:16px;padding:16px;z-index:60}
+#cc h2{margin:0 0 10px;font-size:15px;color:var(--teal)}
+.row{display:flex;justify-content:space-between;align-items:center;margin:10px 0;color:var(--muted)}
+.row code{color:var(--ink)}
+.toggles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.tog{padding:10px;border-radius:10px;border:1px solid rgba(100,255,218,.25);background:rgba(100,255,218,.06);text-align:center;cursor:pointer}
+.tog.off{opacity:.45}.tog:not(.off){border-color:var(--teal)}
+input[type=range]{width:100%;accent-color:var(--teal)}
+.btnrow{display:flex;gap:8px;margin-top:12px}.btnrow button{flex:1;padding:8px;border-radius:10px;cursor:pointer;background:rgba(100,255,218,.08);color:var(--ink);border:1px solid rgba(100,255,218,.25)}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(2,12,27,.9);border:1px solid var(--teal);padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:.3s;z-index:99}
+body.light{--ink:#1f2933;--muted:#5f6b7a;--glass:rgba(255,255,255,.85)}
+body.light{background:linear-gradient(160deg,#dbeafe,#f0fdfa 60%,#e0e7ff)}
+body.light .win{background:rgba(255,255,255,.94)}body.light .term{background:#0f172a}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="win" id="win-term" style="left:8%;top:16%">
+    <div class="titlebar" data-drag="win-term"><span class="dots"><span class="dot c"></span><span class="dot m"></span><span class="dot x"></span></span> Terminal — gentoo@stormg</div>
+    <div class="term">gentoo@stormg ~ $ neofetch
+  ██████  OS: StormG x86_64
+  ██████  DE: Squall Shell (over Xfce 4.20)
+  ██████  WM: xfwm4 (themed)
+  ██████  Shell: squall-shell 0.1.0
+gentoo@stormg ~ $ emerge -avuDN @world
+>>> Syncing repository … done ✓
+gentoo@stormg ~ $ <span style="animation:blink 1s infinite">▊</span></div>
+  </div>
+  <div class="win" id="win-files" style="left:46%;top:26%;width:440px">
+    <div class="titlebar" data-drag="win-files"><span class="dots"><span class="dot c"></span><span class="dot m"></span><span class="dot x"></span></span> Thunar — Home</div>
+    <div class="files"><div class="folder">📁<br>Documents</div><div class="folder">📁<br>Downloads</div><div class="folder">🎵<br>Music</div><div class="folder">🖼<br>Pictures</div><div class="folder">📁<br>Projects</div><div class="folder">⚙<br>.config</div><div class="folder">📦<br>ISO</div><div class="folder">🌩<br>Squall</div></div>
+  </div>
+</div>
+<header id="bar">
+  <div><button id="logo" title="Squall menu">⛈</button><span id="clock">--:--</span></div>
+  <div class="bar-center" id="sysline">load 0.42 0.38 · free 212.4 GB · StormG</div>
+  <div><button id="b-launch" title="Launcher">▦</button><button id="b-cc" title="Control center">⚙</button><button id="b-theme" title="Toggle light/dark">◐</button><button id="b-power" title="Power">⏻</button></div>
+</header>
+<div id="launcher" class="hidden"><input id="search" placeholder="Type to search apps…"><div id="grid"></div></div>
+<aside id="cc" class="hidden"><h2>Control</h2>
+<div class="row"><span>GTK theme</span><code id="cc-gtk">Arc-BLACK-ICE</code></div>
+<div class="row"><span>Icons</span><code>Qogir</code></div>
+<div class="row"><span>Wi-Fi</span><code>SquallNet-5G</code></div>
+<div class="toggles"><div class="tog" id="t-wifi">📶 Wi-Fi</div><div class="tog" id="t-bt">🔵 BT</div><div class="tog" id="t-night">🌙 Night</div><div class="tog off" id="t-dnd">🔕 DND</div></div>
+<label style="font-size:12px;color:var(--muted)">Volume</label><input type="range" id="vol" value="65">
+<label style="font-size:12px;color:var(--muted)">Brightness</label><input type="range" id="bri" value="80">
+<div class="btnrow"><button onclick="toast('Logging out… (mock)')">Log out</button><button onclick="toast('Rebooting… (mock)')">Reboot</button><button onclick="toast('Power off… (mock)')">Power</button></div>
+</aside>
+<nav id="dock"></nav>
+<div id="toast"></div>
+<script>
+const APPS=[{n:'Firefox',e:'firefox',i:'🦊'},{n:'Files',e:'thunar',i:'📁'},{n:'Terminal',e:'xfce4-terminal',i:'💻'},{n:'Editor',e:'mousepad',i:'📝'},{n:'Calculator',e:'galculator',i:'🔢'},{n:'Steam',e:'steam',i:'🎮'},{n:'VLC',e:'vlc',i:'🎬'},{n:'Settings',e:'xfce4-settings-manager',i:'⚙️'},{n:'Software',e:'pamac-manager',i:'📦'}];
+const grid=document.getElementById('grid'),dock=document.getElementById('dock');
+function renderGrid(q=''){grid.innerHTML='';APPS.filter(a=>a.n.toLowerCase().includes(q.toLowerCase())).forEach(a=>{const d=document.createElement('div');d.className='app';d.innerHTML=`<div style="font-size:26px">${a.i}</div><div>${a.n}</div><small>${a.e}</small>`;d.onclick=()=>{toast('Launching '+a.n+'… (mock)');toggle('launcher',false)};grid.appendChild(d)})}
+APPS.slice(0,6).forEach(a=>{const b=document.createElement('button');b.innerHTML=`<div style="font-size:20px">${a.i}</div>${a.n.slice(0,4)}`;b.title=a.n;b.onclick=()=>toast('Launching '+a.n+'… (mock)');dock.appendChild(b)});
+const termB=document.createElement('button');termB.innerHTML='<div style="font-size:20px">⛈</div>menu';termB.onclick=()=>toggle('launcher');dock.prepend(termB);
+renderGrid();document.getElementById('search').oninput=e=>renderGrid(e.target.value);
+function toggle(id,force){const el=document.getElementById(id);const show=force!==undefined?force:el.classList.contains('hidden');el.classList.toggle('hidden',!show);if(id==='launcher'&&show){renderGrid();setTimeout(()=>document.getElementById('search').focus(),50)}}
+document.getElementById('logo').onclick=()=>toggle('launcher');document.getElementById('b-launch').onclick=()=>toggle('launcher');
+document.getElementById('b-cc').onclick=e=>{document.getElementById('cc').classList.toggle('hidden');e.target.classList.toggle('on')};
+document.getElementById('b-theme').onclick=()=>{document.body.classList.toggle('light');document.getElementById('cc-gtk').textContent=document.body.classList.contains('light')?'Storm-Light':'Arc-BLACK-ICE';toast(document.body.classList.contains('light')?'Light theme':'Dark glass theme')};
+document.getElementById('b-power').onclick=()=>toggle('cc',true);
+['t-wifi','t-bt','t-night','t-dnd'].forEach(id=>document.getElementById(id).onclick=e=>e.target.classList.toggle('off'));
+document.getElementById('vol').oninput=e=>toast('Volume '+e.target.value+'%');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){toggle('launcher',false);toggle('cc',false)}});
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}tick();setInterval(tick,5000);
+let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>t.style.opacity=0,1600)}
+document.querySelectorAll('[data-drag]').forEach(bar=>{bar.onmousedown=e=>{if(e.target.classList.contains('dot'))return;const w=document.getElementById(bar.dataset.drag);const ox=e.clientX-w.offsetLeft,oy=e.clientY-w.offsetTop;const mv=ev=>{w.style.left=(ev.clientX-ox)+'px';w.style.top=(ev.clientY-oy)+'px'};const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up)};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up)}});
+document.querySelectorAll('.dot.c').forEach(d=>d.onclick=e=>{e.target.closest('.win').style.display='none';toast('Window closed — reopen from dock (mock)');setTimeout(()=>e.target.closest('.win').style.display='',2500)});
+</script>
+<style>@keyframes blink{50%{opacity:0}}</style>
+</body></html>

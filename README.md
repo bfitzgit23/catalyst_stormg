@@ -1,6 +1,28 @@
 # catalyst_stormg
 Gentoo spec files for making stormg XFCE
 
+## Desktop shell (Squall)
+
+The image ships **Squall**, a web-tech shell over a four-package Xfce
+substrate (`xfwm4`, `xfce4-settings`, `xfconf`, `xfce4-notifyd`). Freedesktop
+pieces are unchanged; the bar, dock, launcher, control center, file manager and
+settings app are Squall, and the Python bridge (`squalld`) does the hardware
+work. StormG has no Electron in `::gentoo`, so the shell runs fullscreen in
+Firefox on the live image; Electron is preferred automatically wherever it is
+installed.
+
+| Path | What |
+|---|---|
+| `squall/` | shell source, docs, Gentoo installer (`gentoo/install-gentoo.sh`) |
+| `root_overlay/usr/lib/squall/` | payload packed into the live image |
+| `root_overlay/usr/bin/squall*` | launcher, session, hardware-key bridge |
+| `root_overlay/usr/share/xsessions/squall.desktop` | greeter entry |
+| `root_overlay/etc/lightdm/lightdm.conf` | `user-session=squall`, autologin into it |
+
+`autocatalyst.sh` refreshes the overlay payload from `squall/` before building,
+and `livecd_fsscript.sh` marks the binaries executable inside the chroot.
+Start with [`squall/gentoo/README.md`](squall/gentoo/README.md).
+
 ## Calamares troubleshooting
 
 (This repo's configs target **calamares 3.4.2** - pinned in the portage configs, see

@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""squall-key — hardware key bridge for the Storm session.
+
+`session/squall-session` binds the XF86 brightness and volume keys to this
+script, so a physical key and a Control Center slider take exactly the same
+path through squalld (including permission handling and fallbacks).
+"""
+import json
+import sys
+import urllib.error
+import urllib.request
+
+API = "http://127.0.0.1:9876/api"
+ACTIONS = {
+    "brightness-up": ("/brightness", {"step": 10}),
+    "brightness-down": ("/brightness", {"step": -10}),
+    "kbdlight-up": ("/kbdlight", {"step": 20}),
+    "kbdlight-down": ("/kbdlight", {"step": -20}),
+    "volume-up": ("/audio", {"step": 5}),
+    "volume-down": ("/audio", {"step": -5}),
+    "volume-mute": ("/audio", {"muted": "toggle"}),
+}
+
+
+def post(path, payload):
+    req = urllib.request.Request(
+        API + path,
+        data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=4) as res:
+        return json.loads(res.read() or b"{}")
+
+
+def main(argv):
+    if len(argv) != 2 or argv[1] in ("-h", "--help"):
+        print("usage: squall-key " + "|".join(ACTIONS), file=sys.stderr)
+        return 2
+    action = ACTIONS.get(argv[1])
+    if not action:
+        print(f"squall-key: unknown action {argv[1]!r}", file=sys.stderr)
+        return 2
+    try:
+        post(*action)
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"squall-key: squalld unreachable ({exc})", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-accent="cyan" data-density="comfortable" data-motion="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Squall</title>
+<style>
+/* ---------------------------------------------------------------------------
+   Squall — design system v2
+   Tokens drive everything: theme (dark/glass/light), accent, density, scale.
+   LCARS is a vocabulary, not a skin: one rail, one numbered header, lilac
+   section labels, pill caps.
+--------------------------------------------------------------------------- */
+:root{
+  /* accent is the only saturated colour in normal use */
+  --accent:#5fd3e8;
+  --accent-2:#9de8f5;
+  --accent-dim:rgba(95,211,232,.16);
+  --cyan:var(--accent);
+  --cyan-dim:var(--accent-dim);
+
+  /* surfaces */
+  --void:#060a12;
+  --panel:rgba(9,15,26,.86);
+  --panel-2:rgba(14,23,40,.94);
+  --raise:rgba(255,255,255,.02);
+  --hover:rgba(255,255,255,.06);
+  --line:rgba(140,190,240,.12);
+  --line-strong:rgba(140,190,240,.22);
+
+  /* text */
+  --text:#e9f1fb;
+  --muted:#8ba0bd;
+  --dim:#5b6f8c;
+
+  /* fixed LCARS foils */
+  --amber:#f0a35e;
+  --lilac:#b6a0e8;
+  --salmon:#e98a80;
+  --ok:#5fd39a;
+
+  --r-sm:8px; --r:12px; --r-lg:18px;
+  --shadow:0 24px 64px rgba(0,0,0,.6);
+  --ease:cubic-bezier(.2,.7,.3,1);
+  --scale:1;
+  --mono:"JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  --ui:Inter, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+
+  --desk-bg:
+    radial-gradient(1100px 520px at 12% -8%, rgba(28,120,148,.5), transparent 62%),
+    radial-gradient(900px 520px at 88% 4%, rgba(104,52,178,.42), transparent 60%),
+    radial-gradient(1000px 640px at 50% 116%, rgba(16,116,144,.42), transparent 62%),
+    linear-gradient(165deg,#03070e 0%,#071528 45%,#0a1a2f 72%,#040b16 100%);
+}
+
+/* accents */
+[data-accent="amber"]{--accent:#f0a35e;--accent-2:#f8cfa6;--accent-dim:rgba(240,163,94,.16)}
+[data-accent="lilac"]{--accent:#b6a0e8;--accent-2:#d9cdf6;--accent-dim:rgba(182,160,232,.18)}
+[data-accent="salmon"]{--accent:#e98a80;--accent-2:#f7c1ba;--accent-dim:rgba(233,138,128,.16)}
+[data-accent="mint"]{--accent:#5fd39a;--accent-2:#a9eccb;--accent-dim:rgba(95,211,154,.16)}
+
+/* themes */
+[data-theme="glass"]{
+  --panel:rgba(9,15,26,.6);
+  --panel-2:rgba(14,23,40,.72);
+  --shadow:0 28px 80px rgba(0,0,0,.5);
+}
+[data-theme="light"]{
+  --void:#eef3f9;
+  --panel:rgba(255,255,255,.88);
+  --panel-2:rgba(255,255,255,.97);
+  --raise:rgba(16,38,64,.03);
+  --hover:rgba(16,38,64,.07);
+  --line:rgba(16,38,64,.12);
+  --line-strong:rgba(16,38,64,.24);
+  --text:#0f1a26;
+  --muted:#51637a;
+  --dim:#7b8ca3;
+  --shadow:0 18px 44px rgba(16,38,64,.18);
+  --desk-bg:
+    radial-gradient(1000px 520px at 10% -10%, rgba(120,190,215,.55), transparent 62%),
+    radial-gradient(900px 520px at 90% 0%, rgba(180,160,235,.5), transparent 60%),
+    radial-gradient(900px 600px at 50% 118%, rgba(150,215,225,.5), transparent 62%),
+    linear-gradient(165deg,#e8f1fb 0%,#f6f9fe 46%,#eef4fb 72%,#e4edf8 100%);
+}
+[data-theme="light"] .desk-ws{color:rgba(16,38,64,.35)}
+[data-theme="light"] .desk-mark b{color:rgba(16,38,64,.08)}
+[data-theme="light"] .desk-mark span{color:rgba(16,38,64,.3)}
+[data-theme="light"] #desktop::after{background:radial-gradient(120% 80% at 50% 50%, transparent 55%, rgba(16,38,64,.14))}
+
+/* density + motion */
+[data-density="compact"]{--r:10px;--r-lg:15px}
+[data-density="compact"] .cc-section{padding:10px 13px}
+[data-density="compact"] .row{padding:3px 0}
+[data-density="compact"] .dock-app{width:42px;height:44px}
+[data-density="compact"] #bar{height:40px}
+[data-motion="off"] *{animation:none !important;transition:none !important}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:transparent !important;
+  color:var(--text);
+  font:calc(14px * var(--scale))/1.45 var(--ui);
+  -webkit-font-smoothing:antialiased;
+  pointer-events:none;
+}
+#bar,#dock,#launcher,#cc,#toasts{pointer-events:auto}
+
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---------- desktop layer (replaces xfdesktop) ---------- */
+#desktop{
+  position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+  background:var(--desk-bg);
+}
+#desktop::after{
+  content:""; position:absolute; inset:0;
+  background:radial-gradient(120% 80% at 50% 50%, transparent 52%, rgba(0,0,0,.55));
+}
+body.wallpaper-off #desktop{display:none}
+.desk-ws{
+  position:absolute; left:22px; top:64px;
+  font:600 10px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase;
+  color:rgba(230,241,255,.22);
+}
+.desk-mark{
+  position:absolute; right:34px; bottom:88px;
+  display:flex; flex-direction:column; align-items:flex-end; gap:8px;
+}
+.desk-mark b{font:700 52px/1 var(--ui); color:rgba(230,241,255,.07); letter-spacing:-.04em}
+.desk-mark span{
+  font:600 9.5px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase;
+  color:rgba(230,241,255,.18);
+}
+
+/* ---------- LCARS vocabulary ---------- */
+.eyebrow{
+  font:600 9.5px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase;
+  color:var(--muted);
+}
+.num{font:600 26px/1 var(--mono); color:var(--amber); letter-spacing:-.02em}
+.rail{
+  width:6px; align-self:stretch; border-radius:99px;
+  background:linear-gradient(180deg,var(--amber),var(--salmon)); opacity:.85;
+}
+
+/* ---------- top bar ---------- */
+#bar{
+  position:fixed; top:10px; left:50%; transform:translateX(-50%);
+  width:min(1180px,96vw); height:44px;
+  display:flex; align-items:center; gap:10px; padding:0 10px 0 8px;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+  backdrop-filter:blur(22px) saturate(140%);
+  box-shadow:0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
+  z-index:60;
+}
+#menuBtn{
+  display:flex; align-items:center; gap:9px; height:30px; padding:0 13px 0 10px;
+  border-radius:99px 8px 8px 99px;
+  background:color-mix(in srgb, var(--amber) 16%, transparent);
+  border:1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+}
+#menuBtn:hover{background:color-mix(in srgb, var(--amber) 26%, transparent)}
+#menuBtn .mark{font-size:15px;color:var(--amber);line-height:1}
+#menuBtn .label{
+  font:700 10.5px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase;
+}
+.workspaces{display:flex; gap:3px; padding:2px; border-radius:8px; background:var(--raise)}
+.ws{
+  min-width:26px; height:24px; display:grid; place-items:center; border-radius:6px;
+  font:600 10.5px/1 var(--mono); color:var(--dim);
+}
+.ws:hover{color:var(--text);background:var(--hover)}
+.ws[aria-current="true"]{color:#04121c;background:var(--accent);font-weight:700}
+
+.bar-status{
+  flex:1; min-width:0; display:flex; align-items:center; gap:8px;
+  color:var(--dim); font:500 10.5px/1 var(--mono); letter-spacing:.12em;
+  text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.bar-status b{color:var(--muted);font-weight:600}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);flex:none}
+.dot.warn{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+
+.tray{display:flex; align-items:center; gap:2px}
+.tray-btn{
+  display:flex; align-items:center; gap:6px; height:28px; padding:0 8px;
+  border-radius:7px; color:var(--muted); font:600 10.5px/1 var(--mono);
+}
+.tray-btn:hover{background:var(--hover);color:var(--text)}
+.tray-btn[aria-pressed="true"]{background:var(--accent-dim);color:var(--accent)}
+.tray-btn svg{width:15px;height:15px;flex:none}
+#clock{
+  font:600 11px/1 var(--mono); color:var(--text); letter-spacing:.06em;
+  padding:0 6px 0 10px; border-left:1px solid var(--line); margin-left:4px;
+  height:22px; display:flex; align-items:center;
+}
+
+/* ---------- dock ---------- */
+#dock{
+  position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:6px; padding:8px 10px 8px 8px;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg);
+  backdrop-filter:blur(22px) saturate(140%); box-shadow:var(--shadow);
+  z-index:55;
+}
+.dock-app{
+  width:46px; height:48px; border-radius:11px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  color:var(--muted); position:relative; border:1px solid transparent;
+  transition:transform .12s var(--ease), background .12s var(--ease), color .12s var(--ease);
+}
+.dock-app svg{width:19px;height:19px}
+.dock-app .name{font:600 8px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase}
+.dock-app:hover{transform:translateY(-3px);background:var(--accent-dim);color:var(--text);border-color:var(--line-strong)}
+.dock-app.run::after{
+  content:""; position:absolute; bottom:-3px; width:4px; height:4px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 6px var(--accent);
+}
+.dock-sep{width:1px; height:28px; background:var(--line); margin:0 3px}
+
+/* ---------- launcher ---------- */
+#launcher{
+  position:fixed; inset:64px 0 0 0; z-index:70;
+  display:flex; flex-direction:column; align-items:center; padding:28px 20px 90px;
+  background:radial-gradient(900px 420px at 50% -10%, var(--accent-dim), transparent 70%),
+             color-mix(in srgb, var(--void) 78%, transparent);
+  backdrop-filter:blur(26px) saturate(120%);
+  overflow:auto;
+}
+#launcher[hidden]{display:none}
+.launcher-head{display:flex; align-items:flex-end; gap:14px; width:min(860px,94vw); margin-bottom:14px}
+#appSearch{
+  flex:1; height:46px; padding:0 16px; border-radius:var(--r);
+  background:var(--panel-2); border:1px solid var(--line-strong); color:var(--text);
+  font:500 14px/1 var(--ui);
+}
+#appSearch::placeholder{color:var(--dim)}
+#appSearch:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.cats{display:flex; gap:6px; flex-wrap:wrap; width:min(860px,94vw); margin:4px 0 18px}
+.cat{
+  padding:6px 12px; border-radius:99px; border:1px solid var(--line);
+  font:600 10px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+}
+.cat:hover{border-color:var(--line-strong);color:var(--text)}
+.cat.on{background:color-mix(in srgb, var(--lilac) 20%, transparent);border-color:color-mix(in srgb, var(--lilac) 45%, transparent);color:var(--text)}
+#grid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(126px,1fr)); gap:10px;
+  width:min(860px,94vw);
+}
+.app{
+  display:flex; flex-direction:column; gap:9px; padding:13px;
+  border-radius:var(--r); border:1px solid var(--line); background:var(--raise);
+  text-align:left; transition:border-color .12s var(--ease), background .12s var(--ease), transform .12s var(--ease);
+}
+.app:hover,.app:focus-visible{border-color:var(--line-strong);background:var(--accent-dim);transform:translateY(-2px)}
+.app .glyph{width:30px;height:30px;color:var(--accent)}
+.app .glyph svg{width:100%;height:100%}
+.app .nm{font:600 12px/1.25 var(--ui);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app .sub{font:500 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.launcher-foot{
+  position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+  display:flex; gap:14px; font:500 10px/1 var(--mono); color:var(--dim); letter-spacing:.1em;
+}
+kbd{
+  font:600 9.5px/1 var(--mono); padding:3px 6px; border-radius:5px;
+  border:1px solid var(--line-strong); color:var(--muted); background:var(--raise);
+}
+
+/* ---------- control center ---------- */
+#cc{
+  position:fixed; top:64px; right:14px; width:352px; max-height:calc(100vh - 96px);
+  display:flex; flex-direction:column;
+  background:var(--panel-2); border:1px solid var(--line); border-radius:var(--r-lg);
+  box-shadow:var(--shadow); backdrop-filter:blur(26px) saturate(140%);
+  z-index:75; overflow:auto; scroll-behavior:smooth;
+}
+#cc[hidden]{display:none}
+.cc-head{
+  display:flex; align-items:center; gap:12px; padding:14px 14px 12px 16px;
+  border-bottom:1px solid var(--line); position:relative; flex:none;
+}
+.cc-head::before{
+  content:""; position:absolute; left:0; top:14px; bottom:12px; width:3px;
+  background:linear-gradient(180deg,var(--amber),var(--salmon)); border-radius:0 3px 3px 0;
+}
+.cc-head h2{margin:2px 0 0; font:600 16px/1.1 var(--ui); letter-spacing:-.01em}
+.cc-head .spacer{flex:1}
+.icon-btn{
+  width:26px;height:26px;border-radius:7px;display:grid;place-items:center;
+  color:var(--muted);border:1px solid transparent;
+}
+.icon-btn:hover{background:var(--hover);color:var(--text);border-color:var(--line)}
+
+.cc-section{padding:13px 16px; border-bottom:1px solid var(--line)}
+.cc-section:last-of-type{border-bottom:none}
+.cc-section.flash{animation:flash 1.1s var(--ease)}
+@keyframes flash{0%{background:var(--accent-dim)}100%{background:transparent}}
+.sec-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sec-head .eyebrow{color:var(--lilac)}
+.sec-head .count{margin-left:auto;color:var(--dim);font:600 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+
+.row{display:flex;align-items:center;gap:10px;padding:5px 0}
+.row .grow{flex:1;min-width:0}
+.row .title{font:600 12.5px/1.2 var(--ui)}
+.row .sub{font:500 10px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .value{font:600 11px/1 var(--mono);color:var(--muted);min-width:34px;text-align:right}
+
+.switch{
+  width:38px;height:21px;border-radius:99px;flex:none;position:relative;
+  background:var(--hover);border:1px solid var(--line-strong);
+  transition:background .15s var(--ease), border-color .15s var(--ease);
+}
+.switch::after{
+  content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;
+  background:var(--muted);transition:transform .15s var(--ease), background .15s var(--ease);
+}
+.switch[aria-checked="true"]{background:var(--accent-dim);border-color:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(17px);background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.switch:disabled{opacity:.4;cursor:not-allowed}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{
+  height:4px;border-radius:99px;
+  background:linear-gradient(90deg,var(--accent) var(--fill,60%), var(--line-strong) var(--fill,60%));
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--text);margin-top:-4.5px;box-shadow:0 0 0 3px var(--accent-dim);cursor:pointer;
+}
+input[type=range]:disabled{opacity:.35}
+input[type=range]:disabled::-webkit-slider-thumb{box-shadow:none;background:var(--muted)}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.tile{padding:10px 11px;border-radius:10px;border:1px solid var(--line);background:var(--raise);text-align:left}
+.tile:hover{border-color:var(--line-strong)}
+.tile b{display:block;font:600 15px/1.1 var(--mono);color:var(--text)}
+.tile span{display:block;margin-top:3px;font:500 9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+
+/* appearance controls */
+.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+.theme-card{
+  display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:10px;
+  border:1px solid var(--line);background:var(--raise);text-align:left;
+}
+.theme-card:hover{border-color:var(--line-strong)}
+.theme-card.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.theme-card .sw{display:block;width:100%;flex:none;height:26px;border-radius:6px;border:1px solid var(--line-strong);position:relative;overflow:hidden}
+.theme-card .sw::after{
+  content:""; position:absolute; left:6px; top:6px; width:44%; height:4px; border-radius:2px;
+  background:var(--accent); opacity:.9;
+}
+.theme-card .sw::before{
+  content:""; position:absolute; left:6px; bottom:6px; width:26%; height:3px; border-radius:2px;
+  background:currentColor; opacity:.28;
+}
+.theme-card .sw-light::after{background:#0f1a26;opacity:.45}
+.theme-card .sw-dark{background:linear-gradient(150deg,#0a1424,#02060c)}
+.theme-card .sw-glass{background:linear-gradient(150deg,rgba(40,90,110,.9),rgba(10,18,30,.9));backdrop-filter:blur(2px)}
+.theme-card .sw-light{background:linear-gradient(150deg,#f7fafd,#dbe6f2)}
+.theme-card .lbl{font:600 9px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.theme-card.on .lbl{color:var(--text)}
+
+.opt-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.opt-label{flex:none;width:64px;font:500 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.accents{display:flex;gap:7px}
+.accent-dot{
+  width:17px;height:17px;border-radius:50%;background:var(--dot);
+  border:2px solid transparent;box-shadow:0 0 0 1px var(--line-strong) inset;
+}
+.accent-dot.on{border-color:var(--text)}
+.seg{display:flex;gap:3px;padding:2px;border-radius:8px;background:var(--raise);border:1px solid var(--line)}
+.seg button{
+  padding:5px 9px;border-radius:6px;font:600 9.5px/1 var(--mono);
+  letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--accent-dim);color:var(--accent);font-weight:700}
+.seg button:disabled{opacity:.38;cursor:not-allowed}
+
+.session-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:2px}
+.session-row button{
+  padding:9px 0;border-radius:9px;border:1px solid var(--line);
+  font:600 9.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  background:var(--raise);
+}
+.session-row button:hover{color:var(--text);border-color:var(--line-strong);background:var(--hover)}
+.session-row button.danger:hover{color:#b3402f;border-color:var(--salmon);background:color-mix(in srgb, var(--salmon) 16%, transparent)}
+
+/* ---------- toasts ---------- */
+#toasts{
+  position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:8px;
+  z-index:90; align-items:flex-end;
+}
+.toast{
+  display:flex;align-items:center;gap:9px; max-width:320px;
+  padding:10px 14px; border-radius:10px; border:1px solid var(--line-strong);
+  background:var(--panel-2); color:var(--text); font:500 12px/1.4 var(--ui);
+  box-shadow:var(--shadow); animation:toastIn .18s var(--ease);
+}
+.toast .bar{width:3px;align-self:stretch;border-radius:99px;background:var(--accent)}
+.toast.warn .bar{background:var(--amber)}
+.toast.err .bar{background:var(--salmon)}
+@keyframes toastIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.unavailable{color:var(--dim);font:500 10.5px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .bar-status{display:none}
+  .tray-btn .txt{display:none}
+  .tray-btn{padding:0 6px}
+}
+@media (max-width:620px){
+  #bar{top:8px;width:calc(100vw - 16px);height:40px;padding:0 8px;gap:6px}
+  #menuBtn{padding:0 10px 0 8px}
+  #menuBtn .label{display:none}
+  .workspaces{display:none}
+  #clock{font-size:10.5px;padding-left:8px}
+  #dock{bottom:10px;padding:6px 8px 6px 6px;gap:3px}
+  .dock-app{width:40px;height:44px}
+  .dock-app .name{display:none}
+  #cc{left:8px;right:8px;width:auto;top:56px;max-height:calc(100vh - 76px)}
+  .cc-head{padding:12px 12px 10px 14px}
+  .cc-section{padding:12px 14px}
+  .launcher-head{flex-direction:column;align-items:stretch;gap:10px}
+  #grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+  .session-row{grid-template-columns:repeat(2,1fr)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+
+/* options added with the hardware panel */
+.hint{font-size:11.5px;line-height:1.45;color:var(--text-dim);margin-top:7px}
+.cat .n{margin-left:5px;font-size:10px;letter-spacing:0;opacity:.55;font-weight:600}
+.cat.on .n{opacity:.85}
+.new-chip{
+  position:absolute;top:7px;right:7px;font-size:9px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent);background:var(--accent-dim);
+  border-radius:3px;padding:2px 5px;line-height:1;
+}
+
+</style>
+</head>
+<body>
+
+<div id="desktop" aria-hidden="true">
+  <div class="desk-ws">Workspace 1 · StormG 1.0</div>
+  <div class="desk-mark"><b>⛈</b><span>StormG</span></div>
+</div>
+
+<header id="bar" role="toolbar" aria-label="Squall system bar">
+  <button id="menuBtn" aria-label="Open launcher" aria-expanded="false">
+    <span class="mark" aria-hidden="true">⛈</span>
+    <span class="label">Squall</span>
+  </button>
+
+  <div class="workspaces" role="group" aria-label="Workspaces">
+    <button class="ws" aria-current="true">1</button>
+    <button class="ws">2</button>
+    <button class="ws">3</button>
+    <button class="ws">4</button>
+  </div>
+
+  <div class="bar-status">
+    <span class="dot" id="stateDot" aria-hidden="true"></span>
+    <b id="barState">Starting</b>
+    <span id="barPath">StormG</span>
+  </div>
+
+  <div class="tray">
+    <button class="tray-btn" id="trayNet" data-open-cc data-cc-section="network" aria-label="Network status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M2.5 8.5a15 15 0 0 1 19 0"/><path d="M5.5 12a10.5 10.5 0 0 1 13 0"/>
+        <path d="M8.8 15.4a6 6 0 0 1 6.4 0"/><circle cx="12" cy="19" r="1.1" fill="currentColor" stroke="none"/>
+      </svg>
+      <span class="txt" id="netLabel">—</span>
+    </button>
+
+    <button class="tray-btn" id="trayVol" data-open-cc data-cc-section="output" aria-label="Volume">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 9.5h3L12 6v12l-5-3.5H4z"/><path d="M16 9a4 4 0 0 1 0 6"/>
+      </svg>
+      <span class="txt" id="volLabel">—</span>
+    </button>
+
+    <button class="tray-btn" id="trayBt" data-open-cc data-cc-section="bluetooth" aria-label="Bluetooth">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 6.5 16 17l-4 3V4l4 3-8 10.5"/>
+      </svg>
+    </button>
+
+    <button class="tray-btn" id="ccBtn" aria-pressed="false" aria-label="Control center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/>
+      </svg>
+    </button>
+
+    <span id="clock">--:--</span>
+  </div>
+</header>
+
+<div id="launcher" hidden>
+  <div class="launcher-head">
+    <div style="flex:1;min-width:0">
+      <div class="eyebrow" style="margin-bottom:7px">Squall launcher</div>
+      <input id="appSearch" type="search" placeholder="Search apps, files and settings"
+             autocomplete="off" spellcheck="false" aria-label="Search applications">
+    </div>
+  </div>
+  <div class="cats" id="cats" role="group" aria-label="Categories"></div>
+  <div id="grid" role="listbox" aria-label="Applications"></div>
+  <div class="launcher-foot">
+    <span><kbd>↑↓</kbd> move</span><span><kbd>↵</kbd> launch</span><span><kbd>esc</kbd> close</span>
+  </div>
+</div>
+
+<aside id="cc" hidden aria-label="Control center">
+  <div class="cc-head">
+    <span class="num" aria-hidden="true">47</span>
+    <div>
+      <div class="eyebrow">Squall control</div>
+      <h2>System</h2>
+    </div>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="ccClose" aria-label="Close control center">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+  </div>
+
+  <section class="cc-section" id="sec-output">
+    <div class="sec-head"><span class="eyebrow">Output</span><span class="count" id="sinkName">—</span></div>
+    <div class="row">
+      <div class="grow">
+        <div class="title">Volume</div>
+        <div class="sub" id="volSub">pactl · default sink</div>
+      </div>
+      <span class="value" id="volValue">—</span>
+    </div>
+    <input type="range" id="volRange" min="0" max="150" value="60" aria-label="Volume">
+    <div class="row" style="padding-top:2px">
+      <div class="grow"><div class="title">Mute</div></div>
+      <button class="switch" id="muteSwitch" role="switch" aria-checked="false" aria-label="Mute"></button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-network">
+    <div class="sec-head"><span class="eyebrow">Network</span><span class="count" id="netBadge">—</span></div>
+    <div class="row">
+      <div class="grow">
+        <div class="title">Wi-Fi</div>
+        <div class="sub" id="ssidLabel">scanning…</div>
+      </div>
+      <button class="switch" id="wifiSwitch" role="switch" aria-checked="true" aria-label="Wi-Fi"></button>
+    </div>
+    <div class="row" id="netUnavailable" hidden>
+      <span class="unavailable">nmcli not available on this system</span>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-bluetooth">
+    <div class="sec-head"><span class="eyebrow">Bluetooth</span><span class="count" id="btBadge">—</span></div>
+    <div class="row">
+      <div class="grow">
+        <div class="title">Radio</div>
+        <div class="sub" id="btLabel">checking…</div>
+      </div>
+      <button class="switch" id="btSwitch" role="switch" aria-checked="false" aria-label="Bluetooth"></button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-power">
+    <div class="sec-head"><span class="eyebrow">Power</span><span class="count" id="powerBadge">—</span></div>
+    <div class="row">
+      <div class="grow"><div class="title">Brightness</div><div class="sub">brightnessctl</div></div>
+      <span class="value" id="brightValue">—</span>
+    </div>
+    <input type="range" id="brightRange" min="1" max="100" value="70" aria-label="Brightness">
+    <div class="row" style="margin-top:4px">
+      <div class="grow"><div class="title">Keyboard backlight</div><div class="sub" id="kbdSub">kbd_backlight</div></div>
+      <span class="value" id="kbdValue">—</span>
+    </div>
+    <input type="range" id="kbdRange" min="0" max="100" value="0" aria-label="Keyboard backlight">
+    <div class="row" style="margin-top:4px">
+      <div class="grow"><div class="title">Profile</div><div class="sub" id="profileSub">powerprofilesctl</div></div>
+    </div>
+    <div class="seg" id="profileSeg" role="radiogroup" aria-label="Power profile">
+      <button data-profile="power-saver">Saver</button>
+      <button data-profile="balanced" class="on">Balanced</button>
+      <button data-profile="performance">Performance</button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-gpu">
+    <div class="sec-head"><span class="eyebrow">Graphics</span><span class="count" id="gpuBadge">—</span></div>
+    <div class="row">
+      <div class="grow">
+        <div class="title">GPU mode</div>
+        <div class="sub" id="gpuSub">envycontrol unavailable</div>
+      </div>
+    </div>
+    <div class="seg" id="gpuSeg" role="radiogroup" aria-label="GPU mode">
+      <button data-gpu="integrated">Integrated</button>
+      <button data-gpu="hybrid">Hybrid</button>
+      <button data-gpu="nvidia">Nvidia</button>
+    </div>
+    <div class="hint" id="gpuHint" hidden>Switching logs you out and needs administrator approval.</div>
+  </section>
+
+  <section class="cc-section" id="sec-cpu">
+    <div class="sec-head"><span class="eyebrow">Processor</span><span class="count" id="cpuBadge">—</span></div>
+    <div class="row">
+      <div class="grow"><div class="title">Governor</div><div class="sub" id="cpuSub">cpufreq unavailable</div></div>
+      <span class="value" id="cpuFreq">—</span>
+    </div>
+    <div class="seg" id="cpuSeg" role="radiogroup" aria-label="CPU governor"></div>
+    <div class="row">
+      <div class="grow"><div class="title">Turbo boost</div><div class="sub">intel_pstate / cpufreq boost</div></div>
+      <button class="switch" id="turboSwitch" role="switch" aria-checked="true" aria-label="Turbo boost"></button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-appearance">
+    <div class="sec-head"><span class="eyebrow">Appearance</span><span class="count" id="themeName">dark</span></div>
+
+    <div class="theme-grid" role="radiogroup" aria-label="Theme">
+      <button class="theme-card" data-theme-choice="dark" role="radio" aria-checked="true">
+        <span class="sw sw-dark"></span><span class="lbl">Dark</span>
+      </button>
+      <button class="theme-card" data-theme-choice="glass" role="radio" aria-checked="false">
+        <span class="sw sw-glass"></span><span class="lbl">Glass</span>
+      </button>
+      <button class="theme-card" data-theme-choice="light" role="radio" aria-checked="false">
+        <span class="sw sw-light"></span><span class="lbl">Light</span>
+      </button>
+    </div>
+
+    <div class="opt-row">
+      <span class="opt-label">Accent</span>
+      <div class="accents" role="radiogroup" aria-label="Accent colour">
+        <button class="accent-dot on" data-accent-choice="cyan" style="--dot:#5fd3e8" aria-label="Cyan" aria-checked="true" role="radio"></button>
+        <button class="accent-dot" data-accent-choice="amber" style="--dot:#f0a35e" aria-label="Amber" aria-checked="false" role="radio"></button>
+        <button class="accent-dot" data-accent-choice="lilac" style="--dot:#b6a0e8" aria-label="Lilac" aria-checked="false" role="radio"></button>
+        <button class="accent-dot" data-accent-choice="salmon" style="--dot:#e98a80" aria-label="Salmon" aria-checked="false" role="radio"></button>
+        <button class="accent-dot" data-accent-choice="mint" style="--dot:#5fd39a" aria-label="Mint" aria-checked="false" role="radio"></button>
+      </div>
+    </div>
+
+    <div class="opt-row">
+      <span class="opt-label">Density</span>
+      <div class="seg" role="radiogroup" aria-label="Density">
+        <button data-density-choice="comfortable" class="on">Comfortable</button>
+        <button data-density-choice="compact">Compact</button>
+      </div>
+    </div>
+
+    <div class="opt-row">
+      <span class="opt-label">Text size</span>
+      <div class="seg" role="radiogroup" aria-label="Text size">
+        <button data-scale="90">S</button>
+        <button data-scale="100" class="on">M</button>
+        <button data-scale="110">L</button>
+        <button data-scale="120">XL</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="grow"><div class="title">Animations</div><div class="sub">honours reduced-motion</div></div>
+      <button class="switch" id="motionSwitch" role="switch" aria-checked="true" aria-label="Animations"></button>
+    </div>
+    <div class="row">
+      <div class="grow"><div class="title">Desktop wallpaper</div><div class="sub">shell draws the desktop</div></div>
+      <button class="switch" id="wallpaperSwitch" role="switch" aria-checked="true" aria-label="Desktop wallpaper"></button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-system">
+    <div class="sec-head"><span class="eyebrow">System</span><span class="count" id="uptime">—</span></div>
+    <div class="tiles">
+      <div class="tile"><b id="memValue">—</b><span>Memory free</span></div>
+      <div class="tile"><b id="diskValue">—</b><span>Disk free</span></div>
+      <div class="tile"><b id="loadValue">—</b><span>Load 1m</span></div>
+      <div class="tile"><b id="batteryValue">—</b><span id="batterySub">Battery</span></div>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-session">
+    <div class="sec-head"><span class="eyebrow">Session</span></div>
+    <div class="session-row">
+      <button data-command="lock">Lock</button>
+      <button data-command="logout">Log out</button>
+      <button data-command="reboot" class="danger">Reboot</button>
+      <button data-command="poweroff" class="danger">Power</button>
+    </div>
+  </section>
+</aside>
+
+<nav id="dock" aria-label="Dock"></nav>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+/* Squall renderer — vanilla ES2020, no build step.
+   Settings are persisted by squalld (~/.config/squall/settings.json) and cached in
+   localStorage so the shell paints correctly before the daemon answers. */
+'use strict';
+
+const API = 'http://127.0.0.1:9876/api';
+const STORAGE_KEY = 'squall.settings';
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+const DEFAULTS = {
+  theme: 'dark', accent: 'cyan', density: 'comfortable',
+  motion: true, fontScale: 100, wallpaper: true
+};
+
+const state = {
+  apps: [], filter: 'all', query: '',
+  settings: { ...DEFAULTS }, audio: null, net: null, bt: null, power: null, profile: null,
+  volumeTimer: null, brightTimer: null, ccReturnFocus: null
+};
+
+const ICON = {
+  files: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3 7.5A2 2 0 0 1 5 5.5h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  terminal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>',
+  browser: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 3.2 2.6 14.8 0 18M12 3c-2.6 3.2-2.6 14.8 0 18"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 8h8M16 8h4M4 16h4M12 16h8"/><circle cx="14" cy="8" r="2.2"/><circle cx="10" cy="16" r="2.2"/></svg>',
+  software: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>',
+  app: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg>'
+};
+
+const SQUALL_APPS = [
+  { name: 'Files', sub: 'squall', icon: 'files', cmd: 'squall --app files' },
+  { name: 'Terminal', sub: 'xfce4', icon: 'terminal', cmd: 'xfce4-terminal' }
+];
+
+/* ── plumbing ─────────────────────────────────────────────────────────── */
+async function api(path, options) {
+  const res = await fetch(API + path, options);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+  return body;
+}
+const post = (path, body) => api(path, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body || {})
+});
+
+function toast(message, kind = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind === 'info' ? '' : ' ' + kind);
+  el.innerHTML = '<span class="bar"></span><span></span>';
+  el.lastElementChild.textContent = message;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3600);
+}
+
+function setSwitch(el, on, { disabled = false, label = null } = {}) {
+  el.setAttribute('aria-checked', String(!!on));
+  el.disabled = disabled;
+  if (label) el.setAttribute('aria-label', label);
+}
+
+/* ── settings / theme engine ──────────────────────────────────────────── */
+function applySettings(next) {
+  const s = { ...DEFAULTS, ...next };
+  state.settings = s;
+  const root = document.documentElement;
+  root.dataset.theme = s.theme;
+  root.dataset.accent = s.accent;
+  root.dataset.density = s.density;
+  root.dataset.motion = s.motion ? 'on' : 'off';
+  root.style.setProperty('--scale', (s.fontScale / 100).toFixed(2));
+  document.body.classList.toggle('wallpaper-off', s.wallpaper === false);
+
+  $('#themeName').textContent = s.theme;
+  $$('[data-theme-choice]').forEach((b) => {
+    const on = b.dataset.themeChoice === s.theme;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-checked', String(on));
+  });
+  $$('[data-accent-choice]').forEach((b) => {
+    const on = b.dataset.accentChoice === s.accent;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-checked', String(on));
+  });
+  $$('[data-density-choice]').forEach((b) => b.classList.toggle('on', b.dataset.densityChoice === s.density));
+  $$('[data-scale]').forEach((b) => b.classList.toggle('on', Number(b.dataset.scale) === s.fontScale));
+  setSwitch($('#motionSwitch'), s.motion);
+  setSwitch($('#wallpaperSwitch'), s.wallpaper);
+}
+
+async function saveSettings(patch) {
+  const previous = { ...state.settings };
+  applySettings({ ...previous, ...patch });   // optimistic
+  try {
+    const res = await post('/settings', patch);
+    if (res.settings) applySettings(res.settings);
+    if (Array.isArray(res.rejected) && res.rejected.length) {
+      toast(`Not supported: ${res.rejected.join(', ')}`, 'warn');
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings));
+  } catch (err) {
+    applySettings(previous);
+    toast(`Settings: ${err.message}`, 'err');
+  }
+}
+
+async function loadSettings() {
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { stored = null; }
+  applySettings(stored || DEFAULTS);
+  try {
+    const remote = await api('/settings');
+    applySettings(remote);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings));
+  } catch { /* daemon down: cached values stand */ }
+}
+
+/* ── clock + workspaces ───────────────────────────────────────────────── */
+function tick() {
+  $('#clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+tick();
+setInterval(tick, 5000);
+
+$$('.ws').forEach((ws) => ws.addEventListener('click', () => {
+  $$('.ws').forEach((w) => w.setAttribute('aria-current', 'false'));
+  ws.setAttribute('aria-current', 'true');
+  toast(`Workspace ${ws.textContent}`);
+}));
+
+/* ── launcher ─────────────────────────────────────────────────────────── */
+function appCategory(app) {
+  const cats = (app.categories || []).join(';').toLowerCase();
+  if (/game/.test(cats)) return 'games';
+  if (/network|internet|webbrowser|email|chat|video|audio|graphics/.test(cats)) return 'internet';
+  if (/settings|system|utility|filesystem|terminal|development|office/.test(cats)) return 'system';
+  return 'apps';
+}
+
+function allApps() {
+  return [
+    ...SQUALL_APPS.map((a) => ({ ...a, category: 'system', categories: [], new: false })),
+    ...state.apps.map((a) => ({
+      id: a.id || a.name,
+      name: a.name,
+      sub: a.generic || a.comment || (a.exec || '').split(/\s+/)[0],
+      icon: 'app',
+      cmd: a.exec,
+      category: appCategory(a),
+      categories: a.categories || [],
+      keywords: a.keywords || [],
+      new: !!a.new
+    }))
+  ];
+}
+
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const escapeAttr = escapeHtml;
+
+let appsFetchedAt = 0;
+async function loadApps(force = false) {
+  if (!force && Date.now() - appsFetchedAt < 30000) return;
+  try {
+    const result = await api('/apps');
+    state.apps = Array.isArray(result) ? result : (result.apps || []);
+    appsFetchedAt = Date.now();
+    renderCats();
+    renderGrid();
+  } catch { /* keep the previous index rather than emptying the menu */ }
+}
+
+function renderGrid() {
+  const q = state.query.trim().toLowerCase();
+  const rows = allApps().filter((a) => {
+    const byCat = state.filter === 'all'
+      || (state.filter === 'new' ? a.new : a.category === state.filter);
+    if (!byCat) return false;
+    if (!q) return true;
+    return [a.name, a.sub, a.cmd, ...(a.keywords || []), ...(a.categories || [])]
+      .join(' ').toLowerCase().includes(q);
+  });
+
+  $('#grid').innerHTML = rows.map((a) => `
+    <button class="app" role="option" data-cmd="${escapeAttr(a.cmd)}" tabindex="0" title="${escapeAttr(a.name)}">
+      <span class="glyph">${ICON[a.icon] || ICON.app}</span>
+      <span class="nm">${escapeHtml(a.name)}</span>
+      <span class="sub">${escapeHtml(a.sub || 'application')}</span>
+      ${a.new ? '<span class="new-chip">New</span>' : ''}
+    </button>`).join('') || '<div class="unavailable">No matches</div>';
+
+  $$('#grid .app').forEach((el) => el.addEventListener('click', () => {
+    launch(el.dataset.cmd);
+    toggleLauncher(false);
+  }));
+}
+
+function renderCats() {
+  const apps = allApps();
+  const counts = { all: apps.length, new: apps.filter((a) => a.new).length };
+  apps.forEach((a) => { counts[a.category] = (counts[a.category] || 0) + 1; });
+  const cats = [['all', 'All'], ['new', 'New'], ['apps', 'Apps'], ['system', 'System'], ['internet', 'Internet'], ['games', 'Games']]
+    .filter(([id]) => id === 'all' || counts[id]);
+  if (state.filter !== 'all' && !counts[state.filter]) state.filter = 'all';
+  $('#cats').innerHTML = cats.map(([id, label]) =>
+    `<button class="cat${state.filter === id ? ' on' : ''}" data-cat="${id}">${label}<span class="n">${counts[id] || 0}</span></button>`).join('');
+  $$('#cats .cat').forEach((el) => el.addEventListener('click', () => {
+    state.filter = el.dataset.cat;
+    renderCats();
+    renderGrid();
+  }));
+}
+
+function toggleLauncher(open) {
+  const el = $('#launcher');
+  const next = open === undefined ? el.hidden : open;
+  el.hidden = !next;
+  $('#menuBtn').setAttribute('aria-expanded', String(next));
+  if (next) {
+    $('#appSearch').value = state.query;
+    $('#appSearch').focus();
+    loadApps();
+  }
+}
+
+async function launch(cmd) {
+  if (!cmd) return;
+  try { await post('/launch', { cmd }); }
+  catch (err) { toast(`Could not launch: ${err.message}`, 'err'); }
+}
+
+$('#menuBtn').addEventListener('click', () => toggleLauncher());
+$('#appSearch').addEventListener('input', (e) => { state.query = e.target.value; renderGrid(); });
+$('#appSearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { const first = $('#grid .app'); if (first) first.click(); }
+  if (e.key === 'ArrowDown') { e.preventDefault(); $('#grid .app')?.focus(); }
+});
+$('#grid').addEventListener('keydown', (e) => {
+  const items = $$('#grid .app');
+  const i = items.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); items[Math.min(items.length - 1, i + 1)]?.focus(); }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); items[Math.max(0, i - 1)]?.focus(); }
+});
+
+/* ── dock ─────────────────────────────────────────────────────────────── */
+const DOCK = [
+  { name: 'Files', icon: 'files', cmd: 'squall --app files' },
+  { name: 'Terminal', icon: 'terminal', cmd: 'xfce4-terminal' },
+  { name: 'Browser', icon: 'browser', cmd: 'firefox' },
+  { name: 'Settings', icon: 'settings', cmd: 'squall --app settings' },
+  { name: 'Software', icon: 'software', cmd: 'squall --app software' }
+];
+
+function renderDock() {
+  $('#dock').innerHTML = '<span class="rail" aria-hidden="true"></span>' +
+    DOCK.map((a, i) => `
+      <button class="dock-app${i < 2 ? ' run' : ''}" data-cmd="${escapeAttr(a.cmd)}"
+              title="${escapeAttr(a.name)}" aria-label="${escapeAttr(a.name)}">
+        ${ICON[a.icon]}<span class="name">${a.name}</span>
+      </button>`).join('') + '<span class="dock-sep" aria-hidden="true"></span>' +
+    `<button class="dock-app" data-launcher="true" aria-label="All applications">${ICON.software}<span class="name">Apps</span></button>`;
+
+  $$('#dock .dock-app').forEach((el) => el.addEventListener('click', () => {
+    if (el.dataset.launcher) return toggleLauncher(true);
+    launch(el.dataset.cmd);
+  }));
+}
+
+/* ── control center + deep links ──────────────────────────────────────── */
+function openCC(section) {
+  const cc = $('#cc');
+  if (cc.hidden) state.ccReturnFocus = document.activeElement;
+  cc.hidden = false;
+  $('#ccBtn').setAttribute('aria-pressed', 'true');
+  if (section) {
+    const target = $('#sec-' + section);
+    if (target) {
+      target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      target.classList.remove('flash');
+      void target.offsetWidth;
+      target.classList.add('flash');
+    }
+  }
+}
+function closeCC() {
+  $('#cc').hidden = true;
+  $('#ccBtn').setAttribute('aria-pressed', 'false');
+  if (state.ccReturnFocus && state.ccReturnFocus.focus) state.ccReturnFocus.focus();
+}
+function toggleCC(open) { (open === undefined ? $('#cc').hidden : open) ? openCC() : closeCC(); }
+
+$('#ccBtn').addEventListener('click', () => toggleCC());
+$('#ccClose').addEventListener('click', () => closeCC());
+$$('[data-open-cc]').forEach((el) =>
+  el.addEventListener('click', () => openCC(el.dataset.ccSection)));
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { toggleLauncher(false); closeCC(); }
+  if (e.key === ' ' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); toggleLauncher(); }
+});
+
+/* ── audio ────────────────────────────────────────────────────────────── */
+function renderAudio(a) {
+  const supported = !!(a && a.supported);
+  const vol = a?.volume ?? null;
+  $('#volValue').textContent = supported && vol !== null ? `${vol}%` : '—';
+  $('#volSub').textContent = supported ? 'pactl · default sink' : 'pactl unavailable';
+  $('#volRange').disabled = !supported;
+  $('#volRange').style.opacity = supported ? '1' : '.35';
+  if (supported && vol !== null) {
+    $('#volRange').value = vol;
+    $('#volRange').style.setProperty('--fill', `${Math.min(100, (vol / 150) * 100)}%`);
+    $('#volLabel').textContent = `${vol}%`;
+  } else {
+    $('#volLabel').textContent = '—';
+  }
+  setSwitch($('#muteSwitch'), supported ? a.muted : false, { disabled: !supported, label: 'Mute' });
+}
+
+$('#volRange').addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  $('#volValue').textContent = `${v}%`;
+  $('#volLabel').textContent = `${v}%`;
+  e.target.style.setProperty('--fill', `${Math.min(100, (v / 150) * 100)}%`);
+  clearTimeout(state.volumeTimer);
+  state.volumeTimer = setTimeout(async () => {
+    try { renderAudio(await post('/audio', { volume: v })); }
+    catch (err) { toast(`Volume: ${err.message}`, 'err'); }
+  }, 120);
+});
+
+$('#muteSwitch').addEventListener('click', async (e) => {
+  const next = e.currentTarget.getAttribute('aria-checked') !== 'true';
+  setSwitch(e.currentTarget, next);
+  try { renderAudio(await post('/audio', { muted: next })); }
+  catch (err) { setSwitch(e.currentTarget, !next); toast(`Mute: ${err.message}`, 'err'); }
+});
+
+/* ── network ──────────────────────────────────────────────────────────── */
+function renderNetwork(n) {
+  const supported = !!(n && n.supported);
+  $('#netUnavailable').hidden = supported;
+  setSwitch($('#wifiSwitch'), supported ? n.wifi : false, { disabled: !supported, label: 'Wi-Fi' });
+  $('#netLabel').textContent = supported ? (n.ssid || (n.wifi ? 'On' : 'Off')) : 'Off';
+  $('#netBadge').textContent = supported ? (n.ssid ? 'Linked' : 'Idle') : 'N/A';
+  $('#ssidLabel').textContent = supported
+    ? (n.ssid || (n.wifi ? 'No active link' : 'Radio disabled'))
+    : 'nmcli unavailable';
+}
+
+$('#wifiSwitch').addEventListener('click', async (e) => {
+  const next = e.currentTarget.getAttribute('aria-checked') !== 'true';
+  setSwitch(e.currentTarget, next);
+  try { renderNetwork(await post('/network', { wifi: next })); }
+  catch (err) { setSwitch(e.currentTarget, !next); toast(`Wi-Fi: ${err.message}`, 'err'); }
+});
+
+/* ── bluetooth ────────────────────────────────────────────────────────── */
+function renderBluetooth(b) {
+  const supported = !!(b && b.supported);
+  setSwitch($('#btSwitch'), supported ? b.powered : false, { disabled: !supported, label: 'Bluetooth' });
+  $('#btLabel').textContent = supported ? (b.name || (b.powered ? 'Powered' : 'Off')) : 'bluetoothctl unavailable';
+  $('#btBadge').textContent = supported ? (b.powered ? 'On' : 'Off') : 'N/A';
+}
+
+$('#btSwitch').addEventListener('click', async (e) => {
+  const next = e.currentTarget.getAttribute('aria-checked') !== 'true';
+  setSwitch(e.currentTarget, next);
+  try { renderBluetooth(await post('/bluetooth', { powered: next })); }
+  catch (err) { setSwitch(e.currentTarget, !next); toast(`Bluetooth: ${err.message}`, 'err'); }
+});
+
+/* ── power ────────────────────────────────────────────────────────────── */
+function renderPower(p) {
+  const battery = p?.battery;
+  $('#batteryValue').textContent = battery == null ? '—' : `${battery}%`;
+  $('#powerBadge').textContent = p?.charging ? 'Charging' : (battery != null ? 'Battery' : 'N/A');
+  const bits = [];
+  if (p?.battery_health != null) bits.push(`health ${p.battery_health}%`);
+  if (p?.time_left_min != null && !p.charging) bits.push(`${Math.floor(p.time_left_min / 60)}h ${p.time_left_min % 60}m left`);
+  if (p?.power_draw_w != null) bits.push(`${p.power_draw_w} W`);
+  $('#batterySub').textContent = bits.join(' · ') || 'Battery';
+  const bright = p?.brightness;
+  $('#brightValue').textContent = bright == null ? '—' : `${bright}%`;
+  $('#brightRange').disabled = bright == null;
+  if (bright != null) {
+    $('#brightRange').value = bright;
+    $('#brightRange').style.setProperty('--fill', `${bright}%`);
+  }
+}
+
+$('#brightRange').addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  $('#brightValue').textContent = `${v}%`;
+  e.target.style.setProperty('--fill', `${v}%`);
+  clearTimeout(state.brightTimer);
+  state.brightTimer = setTimeout(async () => {
+    try { renderPower(await post('/brightness', { value: v })); }
+    catch (err) { toast(`Brightness: ${err.message}`, 'err'); }
+  }, 140);
+});
+
+function renderPowerProfile(p) {
+  const supported = !!(p && p.supported);
+  state.profile = p;
+  $('#profileSub').textContent = supported ? `powerprofilesctl · ${p.profile}` : 'powerprofilesctl unavailable';
+  $$('#profileSeg button').forEach((b) => {
+    b.disabled = !supported;
+    b.classList.toggle('on', supported && b.dataset.profile === p.profile);
+  });
+}
+
+$$('#profileSeg button').forEach((b) => b.addEventListener('click', async () => {
+  const profile = b.dataset.profile;
+  $$('#profileSeg button').forEach((x) => x.classList.toggle('on', x === b));
+  try { renderPowerProfile(await post('/powerprofile', { profile })); }
+  catch (err) { toast(`Power profile: ${err.message}`, 'err'); }
+}));
+
+/* ── graphics / cpu / keyboard backlight ─────────────────────────────── */
+function renderGpu(g) {
+  const supported = !!(g && g.supported);
+  $$('#gpuSeg button').forEach((b) => {
+    b.disabled = !supported;
+    b.classList.toggle('on', supported && b.dataset.gpu === g.mode);
+  });
+  $('#gpuBadge').textContent = supported ? (g.mode || 'unknown') : 'N/A';
+  $('#gpuSub').textContent = supported
+    ? (g.gpus && g.gpus.length ? g.gpus.join(' · ') : 'no GPU reported by lspci')
+    : 'envycontrol unavailable';
+  $('#gpuHint').hidden = !supported;
+  $('#gpuHint').textContent = g && g.needs_root
+    ? 'Switching logs you out and asks for administrator approval.'
+    : 'Switching logs you out; run envycontrol with root to change it.';
+}
+
+$('#gpuSeg').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-gpu]');
+  if (!btn || btn.disabled) return;
+  const mode = btn.dataset.gpu;
+  if (!window.confirm(`Switch GPU to ${mode}? The session must log out to apply.`)) return;
+  try {
+    renderGpu(await post('/gpu', { mode }));
+    toast(`GPU mode: ${mode} — log out to apply`);
+  } catch (err) { toast(`GPU: ${err.message}`, 'err'); }
+});
+
+const pretty = (s) => String(s).replace(/[_-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+function renderCpu(c) {
+  const supported = !!(c && c.supported);
+  const governors = c?.governors || [];
+  const seg = $('#cpuSeg');
+  seg.hidden = !supported || !governors.length;
+  if (seg.dataset.key !== governors.join(',')) {
+    seg.dataset.key = governors.join(',');
+    seg.innerHTML = governors.map((g) =>
+      `<button data-governor="${escapeAttr(g)}">${pretty(g)}</button>`).join('');
+  }
+  $$('#cpuSeg button').forEach((b) => {
+    b.disabled = !supported;
+    b.classList.toggle('on', supported && b.dataset.governor === c.governor);
+  });
+  $('#cpuBadge').textContent = supported ? `${c.cores ?? '—'} cores` : 'N/A';
+  $('#cpuSub').textContent = supported
+    ? (c.max_mhz ? `max ${c.max_mhz} MHz` : 'scaling governor')
+    : 'cpufreq unavailable';
+  $('#cpuFreq').textContent = c?.freq_mhz ? `${c.freq_mhz} MHz` : '—';
+  setSwitch($('#turboSwitch'), supported ? !!c.turbo : false,
+    { disabled: !supported || c.turbo_supported === false, label: 'Turbo boost' });
+}
+
+$('#cpuSeg').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-governor]');
+  if (!btn || btn.disabled) return;
+  try { renderCpu(await post('/cpu', { governor: btn.dataset.governor })); }
+  catch (err) { toast(`Governor: ${err.message}`, 'err'); }
+});
+
+$('#turboSwitch').addEventListener('click', async (e) => {
+  const next = e.currentTarget.getAttribute('aria-checked') !== 'true';
+  setSwitch(e.currentTarget, next);
+  try {
+    const res = await post('/cpu', { turbo: next });
+    renderCpu(res);
+    if (res.error) toast(res.error, 'warn');
+  } catch (err) { setSwitch(e.currentTarget, !next); toast(`Turbo: ${err.message}`, 'err'); }
+});
+
+function renderKbd(k) {
+  const supported = !!(k && k.supported);
+  $('#kbdValue').textContent = supported ? `${k.value}%` : '—';
+  $('#kbdSub').textContent = supported ? k.device : 'no backlight device';
+  const range = $('#kbdRange');
+  range.disabled = !supported;
+  range.style.opacity = supported ? '1' : '.35';
+  if (supported) {
+    range.value = k.value;
+    range.style.setProperty('--fill', `${k.value}%`);
+  }
+}
+
+let kbdTimer = null;
+$('#kbdRange').addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  $('#kbdValue').textContent = `${v}%`;
+  e.target.style.setProperty('--fill', `${v}%`);
+  clearTimeout(kbdTimer);
+  kbdTimer = setTimeout(async () => {
+    try { renderKbd(await post('/kbdlight', { value: v })); }
+    catch (err) { toast(`Keyboard light: ${err.message}`, 'err'); }
+  }, 140);
+});
+
+/* ── system ───────────────────────────────────────────────────────────── */
+function renderSystem(s) {
+  $('#barState').textContent = s.load ? s.load.split(' ')[0] : 'Ready';
+  $('#barPath').textContent = `StormG · load ${s.load || '—'}`;
+  $('#memValue').textContent = s.mem_avail ? `${Math.round(parseInt(s.mem_avail, 10) / 1048576)} GB` : '—';
+  $('#diskValue').textContent = `${s.disk_free_gb ?? '—'} GB`;
+  $('#loadValue').textContent = s.load ? s.load.split(' ')[0] : '—';
+  if (s.uptime_s) $('#uptime').textContent = `Up ${Math.floor(Number(s.uptime_s) / 3600)}h`;
+}
+
+/* ── appearance wiring ────────────────────────────────────────────────── */
+$$('[data-theme-choice]').forEach((b) => b.addEventListener('click', () => {
+  saveSettings({ theme: b.dataset.themeChoice });
+  toast(`Theme: ${b.dataset.themeChoice}`);
+}));
+$$('[data-accent-choice]').forEach((b) => b.addEventListener('click', () => {
+  saveSettings({ accent: b.dataset.accentChoice });
+}));
+$$('[data-density-choice]').forEach((b) => b.addEventListener('click', () => {
+  saveSettings({ density: b.dataset.densityChoice });
+}));
+$$('[data-scale]').forEach((b) => b.addEventListener('click', () => {
+  saveSettings({ fontScale: Number(b.dataset.scale) });
+}));
+$('#motionSwitch').addEventListener('click', (e) => {
+  saveSettings({ motion: e.currentTarget.getAttribute('aria-checked') !== 'true' });
+});
+$('#wallpaperSwitch').addEventListener('click', (e) => {
+  saveSettings({ wallpaper: e.currentTarget.getAttribute('aria-checked') !== 'true' });
+});
+
+/* ── session ──────────────────────────────────────────────────────────── */
+$$('[data-command]').forEach((el) => el.addEventListener('click', async () => {
+  const action = el.dataset.command;
+  if ((action === 'reboot' || action === 'poweroff') &&
+      !window.confirm(`${action === 'reboot' ? 'Reboot' : 'Shut down'} now?`)) return;
+  try { await post('/command', { action }); toast(`${action} requested`); }
+  catch (err) { toast(`${action}: ${err.message}`, 'err'); }
+}));
+
+/* ── refresh loop ─────────────────────────────────────────────────────── */
+let lastFailure = 0;
+async function refreshAll() {
+  if (document.hidden) return;
+  const [audio, net, bt, power, system, profile, gpu, cpu, kbd] = await Promise.allSettled([
+    api('/audio'), api('/network'), api('/bluetooth'), api('/power'),
+    api('/system'), api('/powerprofile'), api('/gpu'), api('/cpu'), api('/kbdlight')
+  ]);
+
+  if (audio.status === 'fulfilled') { state.audio = audio.value; renderAudio(audio.value); }
+  else renderAudio({ supported: false });
+
+  if (net.status === 'fulfilled') { state.net = net.value; renderNetwork(net.value); }
+  else renderNetwork({ supported: false });
+
+  if (bt.status === 'fulfilled') { state.bt = bt.value; renderBluetooth(bt.value); }
+  else renderBluetooth({ supported: false });
+
+  if (power.status === 'fulfilled') renderPower(power.value); else renderPower({});
+  if (system.status === 'fulfilled') renderSystem(system.value);
+  if (profile.status === 'fulfilled') renderPowerProfile(profile.value);
+  if (gpu.status === 'fulfilled') renderGpu(gpu.value); else renderGpu({ supported: false });
+  if (cpu.status === 'fulfilled') renderCpu(cpu.value); else renderCpu({ supported: false });
+  if (kbd.status === 'fulfilled') renderKbd(kbd.value); else renderKbd({ supported: false });
+
+  const offline = system.status !== 'fulfilled';
+  $('#stateDot').classList.toggle('warn', offline);
+  if (offline && Date.now() - lastFailure > 30000) {
+    lastFailure = Date.now();
+    toast('squalld is not responding — retrying', 'warn');
+  }
+}
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAll(); });
+
+/* ── boot ─────────────────────────────────────────────────────────────── */
+(async function boot() {
+  renderDock();
+  renderCats();
+  renderGrid();
+  await loadSettings();
+  await refreshAll();
+  setInterval(refreshAll, 15000);
+  await loadApps(true);
+})();
+
+</script>
+</body>
+</html>

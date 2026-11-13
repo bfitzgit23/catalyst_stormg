@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-accent="cyan" data-density="comfortable" data-motion="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Squall</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="desktop" aria-hidden="true">
+  <div class="desk-ws">Workspace 1 · StormG 1.0</div>
+  <div class="desk-mark"><b>⛈</b><span>StormG</span></div>
+</div>
+
+<header id="bar" role="toolbar" aria-label="Squall system bar">
+  <button id="menuBtn" aria-label="Open launcher" aria-expanded="false">
+    <span class="mark" aria-hidden="true">⛈</span>
+    <span class="label">Squall</span>
+  </button>
+
+  <div class="workspaces" role="group" aria-label="Workspaces">
+    <button class="ws" aria-current="true">1</button>
+    <button class="ws">2</button>
+    <button class="ws">3</button>
+    <button class="ws">4</button>
+  </div>
+
+  <div class="bar-status">
+    <span class="dot" id="stateDot" aria-hidden="true"></span>
+    <b id="barState">Starting</b>
+    <span id="barPath">StormG</span>
+  </div>
+
+  <div class="tray">
+    <button class="tray-btn" id="trayNet" data-open-cc data-cc-section="network" aria-label="Network status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M2.5 8.5a15 15 0 0 1 19 0"/><path d="M5.5 12a10.5 10.5 0 0 1 13 0"/>
+        <path d="M8.8 15.4a6 6 0 0 1 6.4 0"/><circle cx="12" cy="19" r="1.1" fill="currentColor" stroke="none"/>
+      </svg>
+      <span class="txt" id="netLabel">—</span>
+    </button>
+
+    <button class="tray-btn" id="trayVol" data-open-cc data-cc-section="output" aria-label="Volume">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 9.5h3L12 6v12l-5-3.5H4z"/><path d="M16 9a4 4 0 0 1 0 6"/>
+      </svg>
+      <span class="txt" id="volLabel">—</span>
+    </button>
+
+    <button class="tray-btn" id="trayBt" data-open-cc data-cc-section="bluetooth" aria-label="Bluetooth">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 6.5 16 17l-4 3V4l4 3-8 10.5"/>
+      </svg>
+    </button>
+
+    <button class="tray-btn" id="ccBtn" aria-pressed="false" aria-label="Control center">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/>
+      </svg>
+    </button>
+
+    <span id="clock">--:--</span>
+  </div>
+</header>
+
+<div id="launcher" hidden>
+  <div class="launcher-head">
+    <div style="flex:1;min-width:0">
+      <div class="eyebrow" style="margin-bottom:7px">Squall launcher</div>
+      <input id="appSearch" type="search" placeholder="Search apps, files and settings"
+             autocomplete="off" spellcheck="false" aria-label="Search applications">
+    </div>
+  </div>
+  <div class="cats" id="cats" role="group" aria-label="Categories"></div>
+  <div id="grid" role="listbox" aria-label="Applications"></div>
+  <div class="launcher-foot">
+    <span><kbd>↑↓</kbd> move</span><span><kbd>↵</kbd> launch</span><span><kbd>esc</kbd> close</span>
+  </div>
+</div>
+
+<aside id="cc" hidden aria-label="Control center">
+  <div class="cc-head">
+    <span class="num" aria-hidden="true">47</span>
+    <div>
+      <div class="eyebrow">Squall control</div>
+      <h2>System</h2>
+    </div>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="ccClose" aria-label="Close control center">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+  </div>
+
+  <section class="cc-section" id="sec-output">
+    <div class="sec-head"><span class="eyebrow">Output</span><span class="count" id="sinkName">—</span></div>
+    <div class="row">
+      <div class="grow">
+        <div class="title">Volume</div>
+        <div class="sub" id="volSub">pactl · default sink</div>
+      </div>
+      <span class="value" id="volValue">—</span>
+    </div>
+    <input type="range" id="volRange" min="0" max="150" value="60" aria-label="Volume">
+    <div class="row" style="padding-top:2px">
+      <div class="grow"><div class="title">Mute</div></div>
+      <button class="switch" id="muteSwitch" role="switch" aria-checked="false" aria-label="Mute"></button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-network">
+    <div class="sec-head"><span class="eyebrow">Network</span><span class="count" id="netBadge">—</span></div>
+    <div class="row">
+      <div class="grow">
+        <div class="title">Wi-Fi</div>
+        <div class="sub" id="ssidLabel">scanning…</div>
+      </div>
+      <button class="switch" id="wifiSwitch" role="switch" aria-checked="true" aria-label="Wi-Fi"></button>
+    </div>
+    <div class="row" id="netUnavailable" hidden>
+      <span class="unavailable">nmcli not available on this system</span>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-bluetooth">
+    <div class="sec-head"><span class="eyebrow">Bluetooth</span><span class="count" id="btBadge">—</span></div>
+    <div class="row">
+      <div class="grow">
+        <div class="title">Radio</div>
+        <div class="sub" id="btLabel">checking…</div>
+      </div>
+      <button class="switch" id="btSwitch" role="switch" aria-checked="false" aria-label="Bluetooth"></button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-power">
+    <div class="sec-head"><span class="eyebrow">Power</span><span class="count" id="powerBadge">—</span></div>
+    <div class="row">
+      <div class="grow"><div class="title">Brightness</div><div class="sub">brightnessctl</div></div>
+      <span class="value" id="brightValue">—</span>
+    </div>
+    <input type="range" id="brightRange" min="1" max="100" value="70" aria-label="Brightness">
+    <div class="row" style="margin-top:4px">
+      <div class="grow"><div class="title">Keyboard backlight</div><div class="sub" id="kbdSub">kbd_backlight</div></div>
+      <span class="value" id="kbdValue">—</span>
+    </div>
+    <input type="range" id="kbdRange" min="0" max="100" value="0" aria-label="Keyboard backlight">
+    <div class="row" style="margin-top:4px">
+      <div class="grow"><div class="title">Profile</div><div class="sub" id="profileSub">powerprofilesctl</div></div>
+    </div>
+    <div class="seg" id="profileSeg" role="radiogroup" aria-label="Power profile">
+      <button data-profile="power-saver">Saver</button>
+      <button data-profile="balanced" class="on">Balanced</button>
+      <button data-profile="performance">Performance</button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-gpu">
+    <div class="sec-head"><span class="eyebrow">Graphics</span><span class="count" id="gpuBadge">—</span></div>
+    <div class="row">
+      <div class="grow">
+        <div class="title">GPU mode</div>
+        <div class="sub" id="gpuSub">envycontrol unavailable</div>
+      </div>
+    </div>
+    <div class="seg" id="gpuSeg" role="radiogroup" aria-label="GPU mode">
+      <button data-gpu="integrated">Integrated</button>
+      <button data-gpu="hybrid">Hybrid</button>
+      <button data-gpu="nvidia">Nvidia</button>
+    </div>
+    <div class="hint" id="gpuHint" hidden>Switching logs you out and needs administrator approval.</div>
+  </section>
+
+  <section class="cc-section" id="sec-cpu">
+    <div class="sec-head"><span class="eyebrow">Processor</span><span class="count" id="cpuBadge">—</span></div>
+    <div class="row">
+      <div class="grow"><div class="title">Governor</div><div class="sub" id="cpuSub">cpufreq unavailable</div></div>
+      <span class="value" id="cpuFreq">—</span>
+    </div>
+    <div class="seg" id="cpuSeg" role="radiogroup" aria-label="CPU governor"></div>
+    <div class="row">
+      <div class="grow"><div class="title">Turbo boost</div><div class="sub">intel_pstate / cpufreq boost</div></div>
+      <button class="switch" id="turboSwitch" role="switch" aria-checked="true" aria-label="Turbo boost"></button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-appearance">
+    <div class="sec-head"><span class="eyebrow">Appearance</span><span class="count" id="themeName">dark</span></div>
+
+    <div class="theme-grid" role="radiogroup" aria-label="Theme">
+      <button class="theme-card" data-theme-choice="dark" role="radio" aria-checked="true">
+        <span class="sw sw-dark"></span><span class="lbl">Dark</span>
+      </button>
+      <button class="theme-card" data-theme-choice="glass" role="radio" aria-checked="false">
+        <span class="sw sw-glass"></span><span class="lbl">Glass</span>
+      </button>
+      <button class="theme-card" data-theme-choice="light" role="radio" aria-checked="false">
+        <span class="sw sw-light"></span><span class="lbl">Light</span>
+      </button>
+    </div>
+
+    <div class="opt-row">
+      <span class="opt-label">Accent</span>
+      <div class="accents" role="radiogroup" aria-label="Accent colour">
+        <button class="accent-dot on" data-accent-choice="cyan" style="--dot:#5fd3e8" aria-label="Cyan" aria-checked="true" role="radio"></button>
+        <button class="accent-dot" data-accent-choice="amber" style="--dot:#f0a35e" aria-label="Amber" aria-checked="false" role="radio"></button>
+        <button class="accent-dot" data-accent-choice="lilac" style="--dot:#b6a0e8" aria-label="Lilac" aria-checked="false" role="radio"></button>
+        <button class="accent-dot" data-accent-choice="salmon" style="--dot:#e98a80" aria-label="Salmon" aria-checked="false" role="radio"></button>
+        <button class="accent-dot" data-accent-choice="mint" style="--dot:#5fd39a" aria-label="Mint" aria-checked="false" role="radio"></button>
+      </div>
+    </div>
+
+    <div class="opt-row">
+      <span class="opt-label">Density</span>
+      <div class="seg" role="radiogroup" aria-label="Density">
+        <button data-density-choice="comfortable" class="on">Comfortable</button>
+        <button data-density-choice="compact">Compact</button>
+      </div>
+    </div>
+
+    <div class="opt-row">
+      <span class="opt-label">Text size</span>
+      <div class="seg" role="radiogroup" aria-label="Text size">
+        <button data-scale="90">S</button>
+        <button data-scale="100" class="on">M</button>
+        <button data-scale="110">L</button>
+        <button data-scale="120">XL</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="grow"><div class="title">Animations</div><div class="sub">honours reduced-motion</div></div>
+      <button class="switch" id="motionSwitch" role="switch" aria-checked="true" aria-label="Animations"></button>
+    </div>
+    <div class="row">
+      <div class="grow"><div class="title">Desktop wallpaper</div><div class="sub">shell draws the desktop</div></div>
+      <button class="switch" id="wallpaperSwitch" role="switch" aria-checked="true" aria-label="Desktop wallpaper"></button>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-system">
+    <div class="sec-head"><span class="eyebrow">System</span><span class="count" id="uptime">—</span></div>
+    <div class="tiles">
+      <div class="tile"><b id="memValue">—</b><span>Memory free</span></div>
+      <div class="tile"><b id="diskValue">—</b><span>Disk free</span></div>
+      <div class="tile"><b id="loadValue">—</b><span>Load 1m</span></div>
+      <div class="tile"><b id="batteryValue">—</b><span id="batterySub">Battery</span></div>
+    </div>
+  </section>
+
+  <section class="cc-section" id="sec-session">
+    <div class="sec-head"><span class="eyebrow">Session</span></div>
+    <div class="session-row">
+      <button data-command="lock">Lock</button>
+      <button data-command="logout">Log out</button>
+      <button data-command="reboot" class="danger">Reboot</button>
+      <button data-command="poweroff" class="danger">Power</button>
+    </div>
+  </section>
+</aside>
+
+<nav id="dock" aria-label="Dock"></nav>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script src="renderer.js"></script>
+</body>
+</html>

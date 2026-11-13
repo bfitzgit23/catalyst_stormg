@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Squall Files</title>
+<style>
+:root{--teal:#00d1b2;--purple:#a742f5;--ink:#e6f1ff;--muted:#8892b0;--navy:#0a192f;
+  --glass:rgba(6,19,36,.94);--line:rgba(100,255,218,.16);--hover:rgba(100,255,218,.1)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:radial-gradient(900px 500px at 20% 0%,#123b4a,transparent 60%),
+  radial-gradient(800px 500px at 90% 10%,#2a1a4d,transparent 55%),linear-gradient(160deg,#020c1b,#0b1c33);
+  color:var(--ink);font:13px/1.45 Inter,"Segoe UI",system-ui,sans-serif;overflow:hidden}
+button{font:inherit}
+#app{display:flex;height:100vh}
+
+/* sidebar */
+aside{width:196px;flex:none;background:rgba(2,12,27,.72);border-right:1px solid var(--line);
+  padding:14px 10px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;padding:0 8px 6px}
+.brand .m{font-size:17px}
+.grp b{display:block;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#5b6b86;margin:0 0 6px 8px}
+.pl{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;color:var(--muted);
+  cursor:pointer;font-size:12.5px}
+.pl:hover{background:var(--hover);color:var(--ink)}
+.pl.on{background:rgba(0,209,178,.15);color:var(--teal);font-weight:600}
+.pl .i{width:16px;text-align:center}
+#trashBtn{margin-top:auto;border:1px solid var(--line);background:rgba(100,255,218,.05)}
+
+/* main */
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);
+  background:rgba(2,12,27,.55)}
+.nav{display:flex;gap:4px}
+.nav button,.act{background:rgba(100,255,218,.07);border:1px solid var(--line);color:var(--ink);
+  border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12.5px;white-space:nowrap}
+.nav button:hover,.act:hover{border-color:var(--teal);color:var(--teal)}
+.nav button:disabled{opacity:.35;cursor:default}
+#crumbs{flex:1;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap;
+  font-size:12px;color:var(--muted);min-width:0}
+#crumbs a{cursor:pointer;padding:3px 6px;border-radius:6px;color:var(--muted);text-decoration:none}
+#crumbs a:hover{background:var(--hover);color:var(--ink)}
+#crumbs a.last{color:var(--teal);font-weight:600}
+#crumbs span.sep{opacity:.5}
+#q{background:rgba(2,12,27,.7);border:1px solid var(--line);color:var(--ink);border-radius:9px;
+  padding:7px 11px;width:190px;font-size:12.5px}
+#q:focus{outline:none;border-color:var(--teal)}
+.acts{display:flex;gap:6px}
+
+#body{flex:1;display:flex;min-height:0}
+#listwrap{flex:1;overflow:auto;padding:12px 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.item{border:1px solid transparent;border-radius:10px;padding:11px 6px;text-align:center;cursor:pointer;
+  font-size:11.5px;overflow:hidden}
+.item:hover{background:var(--hover)}
+.item.sel{background:rgba(0,209,178,.18);border-color:rgba(0,209,178,.55)}
+.item .ic{font-size:26px;line-height:1.35}
+.item .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
+.item .mt{color:#5b6b86;font-size:10px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;padding:6px 8px;
+  border-bottom:1px solid var(--line);position:sticky;top:0;background:#071528}
+td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:340px}
+tr{cursor:pointer}tr:hover td{background:var(--hover)}
+tr.sel td{background:rgba(0,209,178,.16)}
+.size{color:var(--muted);text-align:right}
+
+#preview{width:290px;flex:none;border-left:1px solid var(--line);background:rgba(2,12,27,.6);
+  padding:14px;overflow:auto;font-size:12px}
+#preview.hide{display:none}
+#preview h3{margin:0 0 4px;font-size:13px;word-break:break-word}
+#preview .meta{color:var(--muted);font-size:11px;line-height:1.7;word-break:break-all}
+#preview img{max-width:100%;border-radius:8px;margin-top:10px;border:1px solid var(--line)}
+#preview pre{white-space:pre-wrap;color:#b8f5e4;background:#020a16;border-radius:8px;padding:10px;
+  max-height:340px;overflow:auto;font:11.5px/1.5 Consolas,monospace;margin:10px 0 0}
+#preview .empty{color:var(--muted);margin-top:30px;text-align:center;line-height:1.8}
+#preview .empty .big{font-size:32px;display:block;margin-bottom:8px;opacity:.6}
+
+footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 14px;
+  border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;background:rgba(2,12,27,.6)}
+#msg{color:var(--teal)}
+dialog{background:#071528;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:16px;
+  width:320px;box-shadow:0 20px 60px #000}
+dialog::backdrop{background:rgba(2,6,14,.6)}
+dialog input{width:100%;margin:10px 0 14px;padding:8px 10px;border-radius:8px;background:#020c1b;
+  border:1px solid var(--line);color:var(--ink)}
+dialog .row{display:flex;gap:8px;justify-content:flex-end}
+dialog button{padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:rgba(100,255,218,.08);
+  color:var(--ink);cursor:pointer}
+dialog button.primary{background:linear-gradient(135deg,#00d1b2,#5eead4);color:#02121f;font-weight:700;border:none}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(2,12,27,.95);
+  border:1px solid var(--teal);padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;
+  transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* narrow windows: keep the browser usable, preview pane is desktop-only */
+@media (max-width: 760px){
+  aside{width:132px;padding:10px 6px}
+  .brand{font-size:12px;padding:0 4px 4px}
+  .pl{font-size:11.5px;padding:6px 6px}
+  #preview{display:none}
+  #q{width:104px}
+  .act{padding:6px 7px;font-size:11.5px}
+  .item .ic{font-size:20px}
+}
+
+/* inherited from shell settings: theme + density */
+body.squall-light{background:linear-gradient(160deg,#eef3f9,#f7fafd);color:#0f1a26}
+body.squall-light aside{background:rgba(255,255,255,.9);border-color:rgba(16,38,64,.12)}
+body.squall-light header,body.squall-light footer{background:rgba(255,255,255,.78);border-color:rgba(16,38,64,.12)}
+body.squall-light #preview{background:rgba(255,255,255,.72);border-color:rgba(16,38,64,.12)}
+body.squall-light .pl{color:#51637a}
+body.squall-light .pl:hover{background:rgba(16,38,64,.06);color:#0f1a26}
+body.squall-light .item:hover,body.squall-light tr:hover td{background:rgba(16,38,64,.06)}
+body.squall-light .item.sel{background:rgba(0,209,178,.18)}
+body.squall-light th{background:#f2f7fc;color:#51637a}
+body.squall-light td{border-bottom-color:rgba(16,38,64,.08)}
+body.squall-light #q,body.squall-light .nav button,body.squall-light .act{background:#fff;border-color:rgba(16,38,64,.16);color:#0f1a26}
+body.squall-light #crumbs a,body.squall-light .size{color:#51637a}
+body.squall-compact .item{padding:8px 4px}
+body.squall-compact td{padding:4px 8px}
+body.squall-compact header{padding:7px 12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <div class="brand"><span class="m">⛈</span> Squall Files</div>
+    <div class="grp"><b>Places</b><div id="places"></div></div>
+    <div class="grp"><b>Session</b>
+      <div class="pl" id="trashBtn"><span class="i">🗑</span> Trash</div>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <div class="nav">
+        <button id="back" title="Back">←</button>
+        <button id="up" title="Up">↑</button>
+        <button id="refresh" title="Refresh (F5)">⟳</button>
+      </div>
+      <div id="crumbs"></div>
+      <input id="q" placeholder="Search here… (Enter)">
+      <div class="acts">
+        <button class="act" id="newFolder">+ Folder</button>
+        <button class="act" id="viewBtn" title="Toggle grid/list">▦</button>
+      </div>
+    </header>
+
+    <div id="body">
+      <div id="listwrap"></div>
+      <div id="preview">
+        <div class="empty"><span class="big">📄</span>Select a file to preview</div>
+      </div>
+    </div>
+
+    <footer>
+      <div id="status">Loading…</div>
+      <div id="msg"></div>
+    </footer>
+  </main>
+</div>
+
+<dialog id="prompt"><form method="dialog"><h3 id="promptTitle">New folder</h3>
+  <input id="promptInput" autocomplete="off"><div class="row">
+  <button value="cancel">Cancel</button><button class="primary" value="ok">OK</button></div></form></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:9876/api';
+const state = { path:'', home:'', parent:null, entries:[], sel:new Set(), view:'grid', q:'', hist:[] };
+
+/* ── helpers ─────────────────────────────────────────────── */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ICONS = {png:'🖼',jpg:'🖼',jpeg:'🖼',gif:'🖼',webp:'🖼',svg:'🖼',pdf:'📕',mp3:'🎵',flac:'🎵',wav:'🎵',
+  mp4:'🎬',mkv:'🎬',mov:'🎬',zip:'🗜',tar:'🗜',gz:'🗜',xz:'🗜','7z':'🗜',iso:'💿',
+  py:'🐍',js:'🧩',ts:'🧩',html:'🌐',css:'🎨',json:'🧾',md:'📝',txt:'📄',sh:'⚙',conf:'⚙',toml:'⚙',yml:'⚙'};
+const iconFor = (e) => e.dir ? '📁' : (ICONS[e.ext] || '📄');
+const fmtSize = (n) => !n ? '' : n < 1024 ? n + ' B' : n < 1048576 ? (n/1024).toFixed(1) + ' KB'
+  : n < 1073741824 ? (n/1048576).toFixed(1) + ' MB' : (n/1073741824).toFixed(2) + ' GB';
+const fmtDate = (t) => new Date(t*1000).toLocaleDateString([], {day:'2-digit',month:'short',year:'numeric'});
+
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),1800); }
+async function api(p, opts){ const r = await fetch(API+p, opts); const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error || r.status); return j; }
+
+/* ── navigation ──────────────────────────────────────────── */
+async function load(path, push=true){
+  try{
+    const data = await api('/fs/list?path=' + encodeURIComponent(path||''));
+    if(push && state.path !== data.path) state.hist.push(state.path);
+    Object.assign(state, {path:data.path, home:data.home, parent:data.parent, entries:data.entries, sel:new Set()});
+    state.q=''; $('q').value='';
+    render(); renderPreview(null);
+    $('up').disabled = !data.parent;
+    $('status').textContent = `${data.entries.length} items · ${data.path}`;
+  }catch(e){ toast('Cannot open: ' + e.message); }
+}
+
+async function search(){
+  const q = $('q').value.trim();
+  if(!q){ return load(state.path, false); }
+  try{
+    const data = await api('/fs/search?path=' + encodeURIComponent(state.path) + '&q=' + encodeURIComponent(q));
+    state.entries = data.results.map(r => ({...r, size:0, mtime:0, hidden:false}));
+    state.sel = new Set();
+    render();
+    $('status').textContent = `${data.results.length}${data.truncated?'+':''} matches for “${q}”`;
+  }catch(e){ toast('Search failed: ' + e.message); }
+}
+
+/* ── render ──────────────────────────────────────────────── */
+function render(){
+  renderCrumbs();
+  const wrap = $('listwrap');
+  const items = state.entries.filter(e => !e.hidden || $('q').value);
+  if(state.view === 'grid'){
+    wrap.innerHTML = '<div class="grid">' + items.map(e => `
+      <div class="item${state.sel.has(e.path)?' sel':''}" data-p="${esc(e.path)}" data-d="${e.dir?1:0}">
+        <div class="ic">${iconFor(e)}</div>
+        <div class="nm" title="${esc(e.name)}">${esc(e.name)}</div>
+        <div class="mt">${e.dir ? 'folder' : fmtSize(e.size)}</div>
+      </div>`).join('') + '</div>';
+  } else {
+    wrap.innerHTML = `<table><thead><tr><th>Name</th><th>Modified</th><th class="size">Size</th></tr></thead><tbody>
+      ${items.map(e => `<tr class="${state.sel.has(e.path)?'sel':''}" data-p="${esc(e.path)}" data-d="${e.dir?1:0}">
+        <td>${iconFor(e)} ${esc(e.name)}</td><td>${e.mtime?fmtDate(e.mtime):''}</td>
+        <td class="size">${e.dir?'':fmtSize(e.size)}</td></tr>`).join('')}
+      </tbody></table>`;
+  }
+  wrap.querySelectorAll('[data-p]').forEach(el => {
+    el.onclick = (ev) => {
+      const p = el.dataset.p;
+      if(ev.ctrlKey || ev.metaKey){ state.sel.has(p) ? state.sel.delete(p) : state.sel.add(p); }
+      else { state.sel = new Set([p]); }
+      render();
+      const entry = state.entries.find(e => e.path === p);
+      renderPreview(entry);
+    };
+    el.ondblclick = () => openEntry(el.dataset.p, el.dataset.d === '1');
+  });
+}
+
+function renderCrumbs(){
+  const parts = state.path.split(/[\\/]/).filter(Boolean);
+  let acc = '';
+  const html = ['<a data-p="">🏠 ' + esc((state.home||'').split(/[\\/]/).pop()) + '</a>'];
+  parts.forEach((p, i) => {
+    if(state.home && acc === state.home) { acc += (state.home.includes('\\') ? '\\' : '/') + p; return; }
+    if(!acc && /^[A-Za-z]:$/.test(p)) { acc = p + (state.path.includes('\\') ? '\\' : '/'); return; }
+    acc += (acc ? (state.path.includes('\\') ? '\\' : '/') : '') + p;
+    html.push('<span class="sep">›</span><a data-p="' + esc(acc) + '"' + (i===parts.length-1?' class="last"':'') + '>' + esc(p) + '</a>');
+  });
+  const c = $('crumbs');
+  c.innerHTML = html.join('');
+  c.querySelectorAll('a').forEach(a => a.onclick = () => load(a.dataset.p));
+}
+
+/* ── preview ─────────────────────────────────────────────── */
+const IMG = ['png','jpg','jpeg','gif','webp','svg','bmp'];
+const TEXT = ['txt','md','json','py','js','ts','html','css','conf','toml','yml','yaml','sh','log','ini'];
+
+async function renderPreview(entry){
+  const box = $('preview');
+  if(!entry){ box.innerHTML = '<div class="empty"><span class="big">📄</span>Select a file to preview</div>'; return; }
+  const meta = `<h3>${iconFor(entry)} ${esc(entry.name)}</h3>
+    <div class="meta">${entry.dir ? 'Folder' : fmtSize(entry.size)}${entry.mtime ? '<br>' + fmtDate(entry.mtime) : ''}</div>`;
+  box.innerHTML = meta;
+  if(entry.dir) return;
+  const ext = (entry.ext||'').toLowerCase();
+  if(IMG.includes(ext)){
+    const img = new Image();
+    img.src = API + '/fs/raw?path=' + encodeURIComponent(entry.path);
+    img.alt = entry.name;
+    box.appendChild(img);
+    return;
+  }
+  if(TEXT.includes(ext)){
+    try{
+      const data = await api('/fs/read?path=' + encodeURIComponent(entry.path));
+      const pre = document.createElement('pre');
+      pre.textContent = data.binary ? 'Binary file' : data.text.slice(0, 6000);
+      box.appendChild(pre);
+    }catch(e){ box.insertAdjacentHTML('beforeend', `<div class="meta">${esc(e.message)}</div>`); }
+  }
+}
+
+/* ── actions ─────────────────────────────────────────────── */
+function firstSel(){ return state.entries.find(e => state.sel.has(e.path)); }
+
+async function openEntry(path, isDir){
+  if(isDir){ return load(path); }
+  const entry = state.entries.find(e => e.path === path);
+  if(entry && (IMG.includes(entry.ext) || TEXT.includes(entry.ext))){ state.sel = new Set([path]); render(); renderPreview(entry); return; }
+  try{ await api('/fs/open', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({path})}); }
+  catch(e){ toast(e.message); }
+}
+
+function ask(title, value){
+  return new Promise(res => {
+    const d = $('prompt');
+    $('promptTitle').textContent = title;
+    $('promptInput').value = value || '';
+    d.returnValue = '';
+    d.showModal();
+    d.onclose = () => res(d.returnValue === 'ok' ? $('promptInput').value.trim() : null);
+  });
+}
+
+async function newFolder(){
+  const name = await ask('New folder', 'Untitled folder');
+  if(!name) return;
+  try{ await api('/fs/mkdir', {method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({path:state.path, name})}); toast('Created ' + name); load(state.path, false); }
+  catch(e){ toast(e.message); }
+}
+
+async function rename(){
+  const entry = firstSel();
+  if(!entry) return toast('Select something first');
+  const name = await ask('Rename', entry.name);
+  if(!name || name === entry.name) return;
+  try{ await api('/fs/rename', {method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({path:entry.path, name})}); toast('Renamed'); load(state.path, false); }
+  catch(e){ toast(e.message); }
+}
+
+async function trash(){
+  if(!state.sel.size) return toast('Select something first');
+  try{
+    await api('/fs/trash', {method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({paths:[...state.sel]})});
+    toast(`Moved ${state.sel.size} item(s) to Trash`); load(state.path, false);
+  }catch(e){ toast(e.message); }
+}
+
+/* ── wiring ──────────────────────────────────────────────── */
+$('back').onclick = () => { const prev = state.hist.pop(); if(prev !== undefined) load(prev || state.home, false); };
+$('up').onclick = () => { if(state.parent) load(state.parent); };
+$('refresh').onclick = () => load(state.path, false);
+$('newFolder').onclick = newFolder;
+$('viewBtn').onclick = () => { state.view = state.view === 'grid' ? 'list' : 'grid'; $('viewBtn').textContent = state.view === 'grid' ? '▦' : '☰'; render(); };
+$('q').onkeydown = (e) => { if(e.key === 'Enter') search(); if(e.key === 'Escape'){ $('q').value=''; load(state.path, false); } };
+$('trashBtn').onclick = () => load((state.home || '') + (state.home && state.home.includes('\\') ? '\\' : '/') + '.squall-trash');
+document.addEventListener('keydown', (e) => {
+  if(e.target.tagName === 'INPUT') return;
+  if(e.key === 'F5'){ e.preventDefault(); load(state.path, false); }
+  if(e.key === 'Delete'){ e.preventDefault(); trash(); }
+  if(e.key === 'F2'){ e.preventDefault(); rename(); }
+  if(e.key === 'Backspace'){ e.preventDefault(); $('up').click(); }
+});
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.item') && !e.target.closest('tr')){ state.sel = new Set(); render();
+    if(!e.target.closest('aside')) renderPreview(null); }
+});
+
+/* places from the home listing */
+async function boot(){
+  await load('');
+  const places = [
+    ['Home',''], ['Desktop','Desktop'], ['Documents','Documents'], ['Downloads','Downloads'],
+    ['Pictures','Pictures'], ['Music','Music'], ['Videos','Videos']
+  ];
+  const sep = state.home.includes('\\') ? '\\' : '/';
+  $('places').innerHTML = places.map(([label, sub]) =>
+    `<div class="pl" data-p="${esc(sub ? state.home + sep + sub : state.home)}"><span class="i">${
+      {Home:'🏠',Desktop:'🖥',Documents:'📄',Downloads:'⬇',Pictures:'🖼',Music:'🎵',Videos:'🎬'}[label]
+    }</span>${label}</div>`).join('');
+  $('places').querySelectorAll('.pl').forEach(el => el.onclick = () => load(el.dataset.p));
+}
+boot();
+</script>
+<script>
+/* inherit the shell's theme, accent, text size and density */
+fetch(API + '/settings').then(r => r.json()).then(s => {
+  const ACCENT = {cyan:'#00d1b2', amber:'#f0a35e', lilac:'#b6a0e8', salmon:'#e98a80', mint:'#5fd39a'};
+  const root = document.documentElement;
+  root.style.setProperty('--teal', ACCENT[s.accent] || '#00d1b2');
+  if (s.theme === 'light') document.body.classList.add('squall-light');
+  if (s.density === 'compact') document.body.classList.add('squall-compact');
+  if (s.fontScale) root.style.fontSize = (13 * s.fontScale / 100) + 'px';
+}).catch(() => {});
+</script>
+</body>
+</html>

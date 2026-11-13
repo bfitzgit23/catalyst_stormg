@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Squall
+Comment=StormG desktop environment
+Exec=/usr/bin/squall-session
+TryExec=/usr/bin/squall-session
+DesktopNames=Squall
+Keywords=squall;desktop;shell;

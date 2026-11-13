@@ -1,0 +1,90 @@
+#!/bin/sh
+# squall — launch the Squall shell.
+#
+# StormG does not ship Electron (::gentoo has no ebuild for it), so the shell
+# normally runs in a browser window pointed at a loopback server. When Electron
+# *is* installed it is preferred: it is the only host that can draw the shell as
+# a transparent desktop overlay instead of a fullscreen window.
+#
+#   squall                the whole desktop
+#   squall --app files    one Squall app (Storm Files)
+#
+# squalld is started by squall-session, not here; the renderer talks to it on
+# 127.0.0.1:9876 by absolute URL, so the page may be served from any origin.
+set -u
+
+LIB="${SQUALL_LIB:-/usr/lib/squall}"
+PORT="${SQUALL_PORT:-9875}"
+BASE="http://127.0.0.1:${PORT}"
+
+# Readiness marker for squall-session: written once a host process (Electron or
+# a browser) is being started for the shell, so the session can tell "launched"
+# apart from "painted" and fall back to XFCE if neither happens.
+READY="${SQUALL_READY:-${XDG_RUNTIME_DIR:-$HOME/.squall}/squall.ready}"
+mkdir -p "$(dirname "$READY")" 2>/dev/null || READY=/tmp/squall.ready
+rm -f "$READY" 2>/dev/null || true
+target="$BASE/frontend/index.html"
+
+if [ "${1:-}" = "--app" ] && [ -n "${2:-}" ]; then
+    case "$2" in
+        files) target="$BASE/apps/files.html" ;;
+        *)     target="$BASE/frontend/index.html" ;;
+    esac
+fi
+
+if command -v electron >/dev/null 2>&1; then
+    : > "$READY"
+    exec electron "$LIB" "$@"
+fi
+
+if [ ! -f "$LIB/frontend/index.html" ]; then
+    echo "squall: $LIB/frontend/index.html is missing" >&2
+    exit 1
+fi
+
+python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$LIB" >/dev/null 2>&1 &
+server=$!
+cleanup() {
+    kill "$server" 2>/dev/null || true
+    rm -f "$READY" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM HUP
+
+# Wait for the listener before handing the URL to a browser (a cold start can
+# take a moment on live media, and a 502 page would look like a shell crash).
+i=0
+while [ "$i" -lt 50 ]; do
+    if python3 - "$PORT" <<'PY' 2>/dev/null
+import socket, sys
+s = socket.socket()
+s.settimeout(0.2)
+try:
+    s.connect(("127.0.0.1", int(sys.argv[1])))
+except OSError:
+    raise SystemExit(1)
+PY
+    then
+        break
+    fi
+    i=$((i + 1))
+    sleep 0.1
+done
+
+# Browser hosts, best first: Firefox is what the StormG live image ships.
+run_browser() {
+    for candidate in "${SQUALL_BROWSER:-}" chromium chromium-browser \
+                       google-chrome-stable firefox-bin firefox; do
+        [ -n "$candidate" ] || continue
+        command -v "$candidate" >/dev/null 2>&1 || continue
+        case "$candidate" in
+            *chrom* | *chrome*) "$candidate" --app="$1" --start-fullscreen ;;
+            *)                  "$candidate" --kiosk "$1" ;;
+        esac
+        return
+    done
+    xdg-open "$1"
+}
+
+# The server is listening; hand the marker over as the browser is started.
+: > "$READY"
+run_browser "$target"

@@ -260,6 +260,30 @@ case "$ONLY" in all|stage1|stage2) ;; *) _die "Bad --only value: $ONLY (all|stag
 [ -f "$FSS" ]     || _die "Missing $FSS"
 
 # --------------------------------------------------------------------------
+# 0a. refresh the Squall payload in root_overlay from squall/
+# --------------------------------------------------------------------------
+# root_overlay is the only channel into the livecd chroot, so the shell has to
+# exist there as real files. Re-copy it from the source tree on every run so the
+# committed overlay copy cannot drift; skipped on a dry run, which must not
+# touch the repo.
+_sync_squall(){
+  local src="$REPO_DIR/squall" lib="$ROOT_OVL/usr/lib/squall" part
+  [ "${DRY:-0}" -eq 1 ] && return 0
+  [ -d "$src" ] || _die "Missing $src"
+  install -d -m 0755 "$lib" "$ROOT_OVL/usr/bin" "$ROOT_OVL/usr/share/xsessions"
+  install -m 0644 "$src/main.js" "$src/package.json" "$lib/"
+  for part in frontend apps backend; do
+    install -d -m 0755 "$lib/$part"
+    cp -a "$src/$part/." "$lib/$part/"
+  done
+  install -m 0755 "$src/session/squall" "$ROOT_OVL/usr/bin/squall"
+  install -m 0755 "$src/session/squall-session" "$ROOT_OVL/usr/bin/squall-session"
+  install -m 0755 "$src/session/squall-key" "$ROOT_OVL/usr/bin/squall-key"
+  install -m 0644 "$src/session/squall.desktop"       "$ROOT_OVL/usr/share/xsessions/squall.desktop"
+}
+_sync_squall
+
+# --------------------------------------------------------------------------
 # 0. keep the build stamp of an interrupted run
 # --------------------------------------------------------------------------
 # Catalyst identifies a build by version_stamp: the chroot and the autoresume

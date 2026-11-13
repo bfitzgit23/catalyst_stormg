@@ -1,0 +1,69 @@
+#!/bin/sh
+# stormg-squall-default — make an installed StormG boot into Squall.
+#
+# Runs from Calamares (shellprocess@squall) after the displaymanager module and
+# before umount, inside the target chroot. It exists because of two things the
+# installer does on its own:
+#
+#   * unpackfs copies the *live* /etc/lightdm/lightdm.conf into the target, and
+#     that one autologins the live user (gentoo) — a user removeuser deletes;
+#   * the displaymanager module rewrites user-session= from
+#     displaymanager.conf, which is only correct while it names squall.
+#
+# So: session must be Squall, and nothing may autologin the deleted live user.
+# Re-running is safe; it only touches those two keys.
+#
+#   stormg-squall-default            # in the target chroot (Calamares)
+#   stormg-squall-default /tmp/root  # test against a staged root
+set -u
+
+root="${1:-}"
+conf="$root/etc/lightdm/lightdm.conf"
+session_file="$root/usr/share/xsessions/squall.desktop"
+
+say() { echo "stormg-squall-default: $*" >&2; }
+
+if [ ! -x "$root/usr/bin/squall-session" ]; then
+    say "squall-session is not installed; leaving the display manager alone"
+    exit 0
+fi
+
+if [ ! -f "$session_file" ]; then
+    say "warning: $session_file is missing; the greeter will not offer Squall"
+fi
+
+if [ ! -f "$conf" ]; then
+    say "warning: $conf is missing; cannot set the default session"
+    exit 0
+fi
+
+tmp="$conf.stormg-tmp.$$"
+cp -a "$conf" "$tmp" || exit 1
+
+# 1. the session lightdm starts when the user has no saved choice
+if grep -q '^user-session=' "$conf"; then
+    sed -i 's/^user-session=.*/user-session=squall/' "$conf"
+elif grep -q '^\[Seat:\*\]' "$conf"; then
+    sed -i '/^\[Seat:\*\]/a user-session=squall' "$conf"
+else
+    printf '\n[Seat:*]\nuser-session=squall\n' >> "$conf"
+fi
+
+# 2. autologin must never point at the live user removeuser just deleted
+if grep -q '^autologin-user=' "$conf"; then
+    sed -i 's/^autologin-user=.*/#autologin-user=  (live user removed at install)/' "$conf"
+fi
+
+# 3. if autologin is ever enabled, it should land in Squall too
+if grep -q '^autologin-session=' "$conf"; then
+    sed -i 's/^autologin-session=.*/autologin-session=squall/' "$conf"
+fi
+
+if cmp -s "$conf" "$tmp"; then
+    say "lightdm.conf already defaults to the Squall session"
+else
+    say "lightdm.conf now defaults to user-session=squall"
+fi
+
+rm -f "$tmp"
+exit 0

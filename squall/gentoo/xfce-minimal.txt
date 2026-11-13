@@ -1,0 +1,25 @@
+# Squall substrate — the only Xfce pieces StormG keeps.
+#
+# Everything else in x11-wm/xfce4-meta is replaced by the Squall shell: the
+# panel, desktop, app finder, Thunar, session manager, power-manager UI and the
+# tray applets are all Squall code. See ../docs/xfce-replacement-matrix.md.
+
+xfce-base/xfwm4            # window manager + compositor (no replacement exists)
+xfce-base/xfce4-settings   # xfsettingsd: XSETTINGS daemon GTK apps read
+xfce-base/xfconf           # config store those two use
+xfce-extra/xfce4-notifyd   # implements org.freedesktop.Notifications
+
+# Shell runtime.
+dev-lang/python            # squalld (stdlib only) and squall-key
+sys-apps/dbus              # session bus: xfconf, notifyd, polkit agent
+
+# Interim terminal until Squall Terminal is built (the dock still launches it).
+x11-terms/xfce4-terminal
+
+# Optional hardware helpers. The Control Center answers {"supported": false}
+# for anything missing, so these are enhancements, not requirements.
+x11-misc/polkit-gnome      # pkexec prompts for GPU/CPU switching (or lxpolkit)
+sys-power/cpupower         # governor + turbo controls
+sys-apps/pciutils          # GPU identification via lspci
+sys-power/power-profiles-daemon
+app-misc/brightnessctl     # backlight + keyboard LED via *ctl devices

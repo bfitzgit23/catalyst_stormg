@@ -1,0 +1,14 @@
+{
+  "name": "squall",
+  "version": "0.2.0",
+  "description": "StormG desktop shell and apps over a minimal Xfce substrate",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "app": "electron . --app"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squall Shell — preview</title>
+<style>
+/* Squall Shell — dark glass over Xfce. Edit this file = your identity. */
+:root {
+  --navy: #0a192f; --teal: #00d1b2; --purple: #a742f5;
+  --ink: #e6f1ff; --muted: #8892b0; --glass: rgba(2, 12, 27, .78);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden;
+  font: 14px/1.4 Inter, system-ui, sans-serif; color: var(--ink); }
+/* fake Xfce wallpaper so the glass has something to blur over */
+body {
+  background:
+    radial-gradient(1000px 500px at 20% 10%, #164e63 0%, transparent 60%),
+    radial-gradient(900px 500px at 85% 20%, #4c1d95 0%, transparent 55%),
+    radial-gradient(800px 600px at 50% 100%, #0e7490 0%, transparent 60%),
+    linear-gradient(160deg, #020c1b 0%, #0a192f 55%, #111c33 100%) !important;
+}
+body { pointer-events: none; }
+#bar, #dock, #launcher, #cc { pointer-events: auto; }
+#bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+  width: min(1100px, 94vw); display: flex; justify-content: space-between; align-items: center;
+  background: var(--glass); border: 1px solid rgba(100,255,218,.22); border-radius: 14px;
+  padding: 6px 12px; backdrop-filter: blur(18px); }
+#bar button { background: transparent; border: 1px solid transparent; color: var(--ink);
+  border-radius: 9px; padding: 5px 10px; cursor: pointer; font-size: 15px; }
+#bar button:hover { border-color: var(--teal); color: var(--teal); }
+#logo { font-size: 18px !important; }
+#clock { color: var(--muted); margin-left: 8px; font-variant-numeric: tabular-nums; }
+.bar-center { color: var(--muted); font-size: 12px; }
+#dock { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px; background: var(--glass); padding: 8px 12px;
+  border-radius: 16px; border: 1px solid rgba(100,255,218,.22); backdrop-filter: blur(18px); }
+#dock button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid transparent;
+  background: rgba(100,255,218,.07); color: var(--ink); cursor: pointer; font-size: 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#dock button:hover { border-color: var(--teal); transform: translateY(-2px); }
+#launcher { position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  width: min(760px, 92vw); max-height: 62vh; overflow: auto;
+  background: var(--glass); border-radius: 18px; padding: 18px;
+  border: 1px solid rgba(100,255,218,.25); backdrop-filter: blur(22px); }
+#launcher.hidden, #cc.hidden { display: none; }
+#search { width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(100,255,218,.3); background: rgba(2,12,27,.7); color: var(--ink); }
+#grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px; margin-top: 14px; }
+.app { padding: 12px 8px; text-align: center; border-radius: 12px; cursor: pointer;
+  background: rgba(100,255,218,.06); border: 1px solid transparent; }
+.app:hover { border-color: var(--teal); background: rgba(100,255,218,.13); }
+.app small { display: block; color: var(--muted); font-size: 11px; margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#cc { position: fixed; top: 66px; right: 3vw; width: 280px; background: var(--glass);
+  border: 1px solid rgba(100,255,218,.25); border-radius: 16px; padding: 16px;
+  backdrop-filter: blur(22px); }
+#cc h2 { margin: 0 0 10px; font-size: 15px; color: var(--teal); }
+#cc .row { display: flex; justify-content: space-between; margin: 8px 0; color: var(--muted); }
+#cc code { color: var(--ink); }
+#cc .btnrow { display: flex; gap: 8px; margin-top: 12px; }
+#cc .btnrow button { flex: 1; padding: 8px; border-radius: 10px; cursor: pointer;
+  background: rgba(100,255,218,.08); color: var(--ink); border: 1px solid rgba(100,255,218,.25); }
+#cc .btnrow button:hover { border-color: var(--teal); }
+.hint { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+  color: var(--muted); font-size: 12px; background: rgba(2,12,27,.6);
+  padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(100,255,218,.15); }
+</style>
+</head>
+<body>
+<header id="bar">
+  <div class="bar-left"><button id="logo" title="Squall menu">⛈</button><span id="clock">09:41</span></div>
+  <div class="bar-center" id="sysline">load 0.42 0.38 · free 212.4 GB · StormG</div>
+  <div class="bar-right">
+    <button title="Update">⟳</button>
+    <button id="cc-toggle" title="Control center">⚙</button>
+    <button title="Log out">⏻</button>
+  </div>
+</header>
+<div id="launcher">
+  <input id="search" type="text" placeholder="Type to search apps…" autocomplete="off">
+  <div id="grid"></div>
+</div>
+<aside id="cc">
+  <h2>Control</h2>
+  <div class="row"><span>GTK theme</span><code>Arc-BLACK-ICE</code></div>
+  <div class="row"><span>Icons</span><code>Qogir</code></div>
+  <div class="row"><span>Memory</span><code>3.1 / 15.5 GB</code></div>
+  <div class="row"><span>Disk free</span><code>212.4 GB</code></div>
+  <div class="btnrow"><button>Log out</button><button>Reboot</button><button>Power off</button></div>
+</aside>
+<nav id="dock"></nav>
+<div class="hint">Squall Shell preview — ⛈ opens launcher · ⚙ toggles Control</div>
+<script>
+const APPS = [
+  { name: "Firefox", exec: "firefox" },
+  { name: "Thunar", exec: "thunar" },
+  { name: "Terminal", exec: "xfce4-terminal" },
+  { name: "Mousepad", exec: "mousepad" },
+  { name: "Calculator", exec: "galculator" },
+  { name: "Steam", exec: "steam" },
+  { name: "VLC", exec: "vlc" },
+  { name: "Settings", exec: "xfce4-settings-manager" },
+  { name: "Software", exec: "pamac-manager" },
+];
+const dock = document.getElementById('dock');
+APPS.slice(0, 6).forEach(a => {
+  const b = document.createElement('button');
+  b.title = a.name; b.textContent = a.name.slice(0, 2).toUpperCase();
+  dock.appendChild(b);
+});
+const grid = document.getElementById('grid');
+function renderGrid(q = '') {
+  grid.innerHTML = '';
+  APPS.filter(a => a.name.toLowerCase().includes(q.toLowerCase())).forEach(a => {
+    const d = document.createElement('div');
+    d.className = 'app';
+    d.innerHTML = '<div>' + a.name + '</div><small>' + a.exec + '</small>';
+    grid.appendChild(d);
+  });
+}
+renderGrid();
+document.getElementById('search').oninput = (e) => renderGrid(e.target.value);
+document.getElementById('logo').onclick = () => document.getElementById('launcher').classList.toggle('hidden');
+document.getElementById('cc-toggle').onclick = () => document.getElementById('cc').classList.toggle('hidden');
+</script>
+</body>
+</html>
