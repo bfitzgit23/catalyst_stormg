@@ -19,29 +19,23 @@
 #
 # Usage:
 #   sudo ./autocatalyst.sh [--only stage1|stage2] [--stage3 <url>] [--snapshot <ref>]
-#                          [--no-bump-glibc] [-j <jobs>] [--keep] [--dry-run]
+#                          [-j <jobs>] [--keep] [--dry-run]
 #                          [--rebuild-stage1]
 #
 #   A livecd-stage1 whose tarball already exists for the build stamp is not run
 #   again: the script goes straight to stage2. Use --rebuild-stage1 (or a new
 #   BUILD_DATE) to rebuild it anyway.
 #
-#   Before catalyst stage1, the stage3's glibc is upgraded to the newest the
-#   snapshot tree can install (>= GLIBC_MIN, default 2.43-r2) with testing
-#   KEYWORDS accepted, so catalyst never aborts with "Downgrading glibc is not
-#   supported". Disable with --no-bump-glibc.
-#
 # Env overrides:
 #   REPO_DIR       repo root   (default: directory containing this script)
 #   WORKDIR        build work  (default: $REPO_DIR/build)
 #   DATA_DIR       bulk build data: portage trees + git objects, catalyst
-#                  storedir, distfiles, glibc bump chroot
+#                  storedir, distfiles
 #                  (default: $WORKDIR, or /var/tmp/stormg-data in a container)
 #   STAGE3_URL     stage3 tarball URL (else auto-detect latest)
 #   --snapshot REF uses a specific gentoo treeish (default: fresh HEAD)
 #   CATALYST_JOBS  make jobs (default: nproc)
 #   CATALYST_OPTS  extra args passed to catalyst
-#   GLIBC_MIN      minimum glibc the pre-stage1 bump targets (default 2.43-r2)
 #   BUILD_DATE     build date used in version_stamp/iso/volid (default: today,
 #                  format MM-DD-YYYY - same shape as the hardcoded 08-06-2026)
 set -Eeuo pipefail
@@ -66,10 +60,6 @@ OLD_PREFIX='/home/bennji/Desktop/catalyst_stormg'
 ISO_DIR="${ISO_DIR:-$HOME/Desktop}"
 SCRATCH_MNT=""
 ISO_FILE=""
-BUMP_GLIBC="${BUMP_GLIBC:-1}"
-GLIBC_MIN="${GLIBC_MIN:-2.43-r2}"
-HOST_MAKE_CONF="${HOST_MAKE_CONF:-/etc/portage/make.conf}"
-GLIBC_ACCEPT_ARCH="${GLIBC_ACCEPT_ARCH:-amd64}"
 ONLY='all'
 DRY=0
 JOBS="${CATALYST_JOBS:-$(nproc)}"
@@ -103,8 +93,8 @@ _in_container(){
 }
 
 # Where the bulk, ephemeral build data lives: the imported portage tree plus
-# its git objects, catalyst's storedir, the distfiles cache and the glibc bump
-# chroot. In a container the workspace is normally bind-mounted from another
+# its git objects, catalyst's storedir and the distfiles cache. In a
+# container the workspace is normally bind-mounted from another
 # OS, and Docker Desktop's filesystem bridge manages only a few hundred small
 # files per minute (measured ~570); importing the 134k-file / ~720 MB portage
 # tree into it takes ~4 hours and looks exactly like a hang. Keep it on the
@@ -130,7 +120,7 @@ _on_err(){
     "${src##*/}" "$line" "${WORKDIR:-?}" "${DATA_DIR:-?}" >&2
   df -h "${DATA_DIR:-/}" "${WORKDIR:-/}" 2>/dev/null | sed 's/^/[!] /' >&2 || true
   if [ -n "${DATA_DIR_FROM_ENV:-}" ] || [ "${DATA_DIR:-}" = "${WORKDIR:-}" ]; then
-    printf '\033[31m[!]\033[0m Re-run the same command to resume: %s keeps the synced tree, distfiles, bumped stage3 and catalyst chroots.\n' \
+    printf '\033[31m[!]\033[0m Re-run the same command to resume: %s keeps the synced tree, distfiles, stage3 and catalyst chroots.\n' \
       "${DATA_DIR:-?}" >&2
   else
     printf '\033[31m[!]\033[0m To resume, keep %s across runs: docker run ... -v stormg-data:%s\n' \
@@ -202,7 +192,6 @@ _copy_iso(){
 _cleanup(){
   local rc=$?
   local iso m
-  _drop_host_keywords
   # Unmount scratch BEFORE rm -rf: its backing dirs live under $WORKDIR.
   for m in $SCRATCH_MNT; do
     umount "$m" 2>/dev/null && _ok "unmounted scratch over $m" || true
@@ -240,8 +229,6 @@ while [ $# -gt 0 ]; do
     --iso-dir)          ISO_DIR="$2"; shift ;;
     --snapshot=*)        SNAP_REF="${1#*=}"; SNAP_REF_EXPLICIT=1 ;;
     --snapshot)          SNAP_REF="$2"; SNAP_REF_EXPLICIT=1; shift ;;
-    --bump-glibc)        BUMP_GLIBC=1 ;;
-    --no-bump-glibc)     BUMP_GLIBC=0 ;;
     --keep)              KEEP=1 ;;
     --rebuild-stage1)    REBUILD_STAGE1=1 ;;
     --dry-run)           DRY=1 ;;
@@ -623,7 +610,7 @@ _ensure_stage3_builds(){
   fi
   [ -s "$src" ] || _die "No stage3 tarball at $src - run _ensure_stage3 first"
   mkdir -p "$(dirname "$dest")"
-  # refresh a stale (e.g. glibc-bumped) copy before placing
+  # refresh a stale copy before placing
   [ -e "$dest" ] && rm -f "$dest"
   _info "Placing stage3 in catalyst builds dir: $dest"
   if [ "$DRY" -eq 1 ]; then _info "[dry-run] link $src -> $dest"; return; fi
@@ -635,283 +622,19 @@ _ensure_stage3_builds(){
   _ok "stage3 ready for catalyst: $dest"
 }
 
-# Newest glibc PV available in the freshly-synced snapshot gentoo tree.
-_snapshot_glibc_newest(){
-  local dir="$REPOS_DIR/gentoo/sys-libs/glibc" v
-  [ -d "$dir" ] || return 1
-  # Live ebuilds (9999, 2.44.9999) sort highest under sort -V, but emerging one
-  # clones glibc from upstream git and rebuilds it from scratch - it is masked
-  # for a reason and fails in a bare stage3 chroot. Only consider released PVs.
-  v="$(ls "$dir"/glibc-*.ebuild 2>/dev/null \
-        | sed -E 's#.*/glibc-(.*)\.ebuild#\1#' \
-        | grep -vE '(^|\.)9999$' \
-        | sort -V | tail -1)" || v=""
-  [ -n "$v" ] || return 1
-  printf '%s' "$v"
-}
-
-# True if the first dot-version is >= the second (via sort -V).
-_ver_ge(){
-  [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]
-}
-
-# glibc PV actually INSIDE the (tarball) stage3 we're about to build from.
-_stage3_glibc_installed(){
-  local tar="$1" val pat
-  [ -s "$tar" ] && [ -f "/usr/bin/tar" ] || return 1
-  # gentoo stage3 tarballs store paths with a leading './', which a pattern
-  # anchored at 'var/' never matches - try both so a bumped tarball is
-  # recognised (that is what makes a re-run skip the bump instead of redoing it).
-  #
-  # PF is checked first: current portage no longer writes a PV file into the
-  # vdb (the directory name is authoritative), and every failed pattern costs a
-  # full decompression of the tarball.
-  for pat in './var/db/pkg/sys-libs/glibc-*/PF' 'var/db/pkg/sys-libs/glibc-*/PF' \
-             './var/db/pkg/sys-libs/glibc-*/PV' 'var/db/pkg/sys-libs/glibc-*/PV'; do
-    # head -1 closes the pipe early (tar is killed with SIGPIPE), hence the
-    # subshell: pipefail must not turn that into a failed assignment.
-    val="$( ( tar -xJf "$tar" --wildcards --to-stdout "$pat" 2>/dev/null || true ) | head -1 )"
-    val="${val#glibc-}"
-    val="$(printf '%s' "$val" | tr -d '\r\n')"
-    case "$val" in [0-9]*) printf '%s' "$val"; return 0 ;; esac
-  done
-  # Last resort: read it off the vdb directory name.
-  val="$(tar -tJf "$tar" 2>/dev/null \
-        | sed -nE 's#^\.?/?var/db/pkg/sys-libs/glibc-([^/]+)/$#\1#p' \
-        | grep -vE '(^|\.)9999$' | sort -V | tail -1)" || val=""
-  [ -n "$val" ] || return 1
-  printf '%s' "$val"
-}
-
-# Next minor above a glibc PV: 2.44-r4 -> 2.45.
-_glibc_mask_above(){
-  local v="${1%%-*}" maj min
-  maj="${v%%.*}"; min="${v#*.}"
-  case "$v" in *.*) ;; *) return 1 ;; esac
-  case "$min" in ''|*[!0-9]*) return 1 ;; esac
-  printf '%s.%s' "$maj" "$((min+1))"
-}
-
-# The committed portage confdir masks >=sys-libs/glibc-2.45 ("new glibc tends
-# to lead to trouble with sandbox"). Once a stage3 ships that glibc or newer,
-# the mask makes portage fall back to the newest ALLOWED glibc - 2.42-r7 - and
-# install it OVER the newer installed one, which the ebuild aborts with
-# "Downgrading glibc is not supported and a sure way to destruction".
-#
-# Give catalyst a copy of the confdir whose glibc mask sits just above the
-# glibc the seed stage3 actually carries: the candidate is then either that
-# same version (nothing to do) or older than what is installed, which portage
-# simply leaves alone. The original intent - hold back anything newer than the
-# seed - is preserved.
+# Copy the project's portage configuration into the build tree. Catalyst
+# copies this directory into its chroot, so regenerating it on every run keeps
+# edits under config/stages in effect.
 _prepare_portage_confdir(){
   local src="$REPO_DIR/config/stages" dst="$WORKDIR/portage-conf"
-  local tar="$DISTFILES_DIR/$STAGE3_RELDIR" pv thr f
   if [ "$DRY" -eq 1 ]; then
-    _info "[dry-run] would copy $src to $dst and raise the glibc mask"
+    _info "[dry-run] would copy $src to $dst"
     return 0
   fi
   [ -d "$src" ] || { _warn "no portage confdir at $src; using catalyst defaults"; return 0; }
   rm -rf "$dst"
   cp -a "$src" "$dst" || _die "could not copy $src to $dst"
-  # Keep the current stage3 exception explicit.  A cached/stale confdir must
-  # not leave glibc-2.44-r5 masked just because its package.unmask copy is old.
-  mkdir -p "$dst/package.unmask" "$dst/package.accept_keywords"
-  printf '=sys-libs/glibc-2.44-r5\n' \
-    > "$dst/package.unmask/glibc-2.44-r5"
-  printf '=sys-libs/glibc-2.44-r5 ~%s\n' "$GLIBC_ACCEPT_ARCH" \
-    > "$dst/package.accept_keywords/glibc-2.44-r5"
-  pv="$(_stage3_glibc_installed "$tar")" || pv=""
-  if [ -z "$pv" ]; then
-    _warn "could not read the stage3's glibc PV; leaving the glibc mask as committed"
-    return 0
-  fi
-  if ! thr="$(_glibc_mask_above "$pv")"; then
-    _warn "unexpected glibc PV '$pv'; leaving the glibc mask as committed"
-    return 0
-  fi
-  # Never generate a mask that covers 2.44: the current stage3 needs
-  # glibc-2.44-r5. The committed exception in package.unmask/glibc still
-  # covers older/stale confdirs, but this keeps the generated mask from
-  # reintroducing the 2.44 block.
-  if ! _ver_ge "$thr" "2.45"; then
-    thr="2.45"
-  fi
-  f="$dst/package.mask/releng/glibc"
-  mkdir -p "$(dirname "$f")"
-  cat > "$f" <<EOF
-# Rewritten by autocatalyst.sh for this build: the seed stage3 carries
-# sys-libs/glibc-$pv. Masking that version makes portage choose the newest
-# ALLOWED glibc (an older one) and install it over the newer installed
-# glibc, which aborts with "Downgrading glibc is not supported".
-#
-# The original intent is kept: hold back anything NEWER than the seed.
->=sys-libs/glibc-$thr
-EOF
-  # The newest glibc is usually still testing-keyworded, and catalyst's chroot
-  # make.conf carries no ACCEPT_KEYWORDS of its own - without this, portage
-  # falls back to the newest STABLE glibc, which is again older than the seed's.
-  mkdir -p "$dst/package.accept_keywords"
-  cat > "$dst/package.accept_keywords/glibc" <<EOF
-# Added by autocatalyst.sh: the seed stage3 carries glibc $pv.
-sys-libs/glibc ~$GLIBC_ACCEPT_ARCH
-EOF
-  _ok "portage confdir staged at $dst; glibc mask >=sys-libs/glibc-$thr, ~$GLIBC_ACCEPT_ARCH accepted (stage3 has $pv)"
-}
-
-# Unmount the live kernel filesystems we bind into the bump chroot. This MUST
-# happen before the chroot is repacked: tarring a mounted sysfs/procfs fills the
-# log with "File shrank by N bytes" / "Input/output error" / "Permission
-# denied", exits 2, and writes a multi-GB archive of kernel state instead of a
-# stage3.
-_bump_unmount(){
-  local root="$1" m
-  for m in proc dev sys; do
-    [ -d "$root/$m" ] || continue
-    if _have mountpoint && ! mountpoint -q "$root/$m"; then continue; fi
-    umount "$root/$m" 2>/dev/null || umount -l "$root/$m" 2>/dev/null || \
-      _warn "could not unmount $root/$m; the repack excludes it"
-  done
-}
-
-# Catalyst dies ("Downgrading glibc is not supported") when the stage3's glibc
-# is newer than what the snapshot profile wants to build. Prevent that by
-# upgrading the stage3 chroot's glibc to the snapshot's newest FIRST, so the
-# toolchain merge is at worst an upgrade. This replicates a mini stage1.
-_bump_glibc(){
-  if [ "${BUMP_GLIBC:-1}" != 1 ]; then
-    _info "glibc bump disabled (BUMP_GLIBC=0 / --no-bump-glibc)"
-    return 0
-  fi
-  if [ "$DRY" -eq 1 ]; then _info "[dry-run] skip glibc bump"; return 0; fi
-  local tar newest cur target root rootcmd rc mkconf cb arch
-  tar="$DISTFILES_DIR/$STAGE3_RELDIR"
-  [ -s "$tar" ] || { _warn "no source stage3 tarball; skipping glibc bump"; return 0; }
-  newest="$(_snapshot_glibc_newest)" || { _warn "cannot resolve snapshot glibc; skipping bump"; return 0; }
-  cur="$(_stage3_glibc_installed "$tar")" || cur=""
-  target="$newest"
-  if ! _ver_ge "$target" "$GLIBC_MIN"; then
-    _warn "snapshot newest glibc ($target) below requested floor ($GLIBC_MIN); using $target"
-  fi
-  _info "glibc: inside-stage3=${cur:-?}  snapshot-newest=$newest  target=$target"
-  if [ -n "$cur" ] && [ "$cur" = "$target" ]; then
-    _ok "stage3 glibc already at target; nothing to bump"
-    return 0
-  fi
-  # Never try to move glibc backwards: portage refuses it, and the failure is
-  # only noise because the stage3 is already newer than the tree.
-  if [ -n "$cur" ] && ! _ver_ge "$target" "$cur"; then
-    _ok "stage3 glibc $cur is newer than the tree's $target; nothing to bump"
-    return 0
-  fi
-  _info "Upgrading stage3 glibc to $target before catalyst stage1"
-  local root="$DATA_DIR/bumproot" oldroot="$DISTFILES_DIR/stage3.bumped.tar.xz"
-  rm -f "$oldroot" "$oldroot.part" 2>/dev/null || true
-  # Resume: a previous attempt may already have emerged the target glibc and
-  # then died while repacking. The emerge is the expensive part (tens of
-  # minutes), so reuse the chroot instead of extracting + rebuilding it again.
-  local need_emerge=1
-  if [ -d "$root/var/db/pkg/sys-libs/glibc-$target" ]; then
-    _ok "reusing bump chroot at $root (glibc $target already emerged)"
-    need_emerge=0
-  else
-    rm -rf "$root"; mkdir -p "$root"
-    _info "Extracting stage3 to $root"
-    _run tar -xJf "$tar" -C "$root"
-    # overlay the snapshot's portage tree so the chroot sees its glibc ebuild.
-    # Skip .git: the copy is throwaway and the objects are ~700 MB.
-    mkdir -p "$root/var/db/repos/gentoo"
-    if [ "$DRY" -eq 0 ]; then
-      tar -C "$REPOS_DIR/gentoo" --exclude=./.git -cf - . \
-        | tar -C "$root/var/db/repos/gentoo" -xf - || _warn "could not overlay the portage tree into $root"
-    fi
-  fi
-  if [ "${GENTOO_BIND:-1}" = 1 ]; then
-    mount --bind /proc "$root/proc" 2>/dev/null || _warn "no /proc bind"
-    mount --bind /dev "$root/dev"   2>/dev/null || _warn "no /dev bind"
-    mount --bind /sys "$root/sys"   2>/dev/null || _warn "no /sys bind"
-  fi
-  [ -e "$root/etc/resolv.conf" ] || cp -f /etc/resolv.conf "$root/etc/resolv.conf" 2>/dev/null
-  local mkconf="$root/etc/portage/make.conf"
-  [ -f "$mkconf" ] || mkdir -p "$(dirname "$mkconf")"
-  grep -Es '^ *(CHOST|CFLAGS|CPPFLAGS|LDFLAGS|MAKEOPTS|FEATURES)=' /etc/portage/make.conf 2>/dev/null >> "$mkconf" 2>/dev/null || :
-  # accept the newest glibc (incl. testing) so catalyst's stable-only resolution
-  # can never fall below the stage3's glibc.
-  cb="$(grep -Es '^(CHOST|CBUILD)=' /etc/portage/make.conf 2>/dev/null | head -1)" || cb=""
-  case "$cb" in *aarch64*|*arm64*) arch="arm64" ;; *x86_64*|*amd64*) arch="amd64" ;; *) arch="amd64" ;; esac
-  grep -q '^ACCEPT_KEYWORDS=' "$mkconf" 2>/dev/null || echo "ACCEPT_KEYWORDS=\"$arch ~$arch\"" >> "$mkconf"
-  # The bump chroot uses the stage3's own /etc/portage, not the project's
-  # portage_confdir. Make the exact target visible even when a snapshot
-  # profile masks it, and accept its testing keyword regardless of any
-  # ACCEPT_KEYWORDS already present in the stage3 make.conf.
-  mkdir -p "$root/etc/portage/package.unmask" \
-           "$root/etc/portage/package.accept_keywords"
-  printf '=sys-libs/glibc-%s\n' "$target" \
-    > "$root/etc/portage/package.unmask/glibc"
-  printf '=sys-libs/glibc-2.44-r5\n' \
-    >> "$root/etc/portage/package.unmask/glibc"
-  printf '=sys-libs/glibc-%s ~%s\n' "$target" "$arch" \
-    > "$root/etc/portage/package.accept_keywords/glibc"
-  printf '=sys-libs/glibc-2.44-r5 ~%s\n' "$arch" \
-    >> "$root/etc/portage/package.accept_keywords/glibc"
-  rootcmd="emerge -q --oneshot --nodeps \">=sys-libs/glibc-$GLIBC_MIN\" \">=sys-libs/glibc-$target\""
-  rc=0
-  if [ "$need_emerge" = 1 ]; then
-    _info "Running the bump inside the chroot (this builds glibc; it takes a while)"
-    chroot "$root" /bin/bash -lc "$rootcmd" || rc=$?
-  else
-    _ok "skipping the emerge; repacking the already-bumped chroot"
-  fi
-  # The chroot still has /proc, /dev and /sys bind-mounted from the emerge: a
-  # tar of the root now would archive live kernel state (the endless "File
-  # shrank by N bytes" / "Input/output error" noise) and fail. Unmount first.
-  _bump_unmount "$root"
-  local repacked=0
-  if [ "$rc" -ne 0 ]; then
-    # Never abort the whole build on a failed bump: the original stage3 may
-    # still build fine, and catalyst's own error is far more informative than a
-    # silent exit here.
-    _warn "glibc bump to $target failed (rc=$rc); continuing with the original stage3"
-    _warn "catalyst will build against whatever glibc the original stage3 carries"
-    [ -n "${KEEP:-}" ] || rm -rf "$root"
-  else
-    # Build the new tarball beside the old one and only replace it once it is
-    # complete and readable, so a failed repack (or a full disk) can never
-    # destroy a working stage3.
-    _info "Repacking bumped stage3"
-    rm -f "$oldroot.part"
-    if _run tar -cJf "$oldroot.part" -C "$root" --xattrs --acls \
-         --exclude=./proc/* --exclude=./sys/* --exclude=./dev/* \
-         --exclude=./var/tmp/portage/* --exclude=./var/cache/distfiles/* . \
-       && [ -s "$oldroot.part" ] && tar -tJf "$oldroot.part" >/dev/null 2>&1; then
-      _run mv -f "$oldroot.part" "$tar"
-      repacked=1
-      _ok "stage3 glibc bumped to $target"
-    else
-      rm -f "$oldroot.part"
-      _warn "could not repack the bumped stage3; keeping the original tarball"
-      _warn "the emerged chroot is kept at $root, so the next run skips the glibc rebuild"
-    fi
-  fi
-  if [ "$repacked" -eq 1 ] && [ -z "${KEEP:-}" ]; then rm -rf "$root"; fi
-  return 0
-}
-
-# Catalyst builds each stage's chroot make.conf off the HOST's
-# /etc/portage/make.conf. Without accepting testing KEYWORDS there, catalyst
-# resolves the newest STABLE glibc and can still try a downgrade against a
-# bumped stage3. Temporarily add an ACCEPT_KEYWORDS marker to the host conf,
-# then roll it back in _cleanup() (also see _drop_host_keywords).
-_accept_host_keywords(){
-  [ "$DRY" -eq 1 ] && { _info "[dry-run] would accept testing glibc in host make.conf"; return 0; }
-  local mk="$HOST_MAKE_CONF" arch="$GLIBC_ACCEPT_ARCH" offmatch
-  [ -f "$mk" ] || return 0
-  if grep -q '^#<stormg-bump-glibc>' "$mk"; then return 0; fi  # already injected
-  printf '\n#<stormg-drop-glibc>\nACCEPT_KEYWORDS="%s ~%s"\n#</stormg-drop-glibc>\n' "$arch" "$arch" >> "$mk"
-  _ok "accepted testing glibc in host make.conf ($arch ~$arch)"
-}
-_drop_host_keywords(){
-  local mk="$HOST_MAKE_CONF"
-  [ -f "$mk" ] && sed -i '/^#<stormg-drop-glibc>$/,/^#<\/stormg-drop-glibc>$/d' "$mk" 2>/dev/null || true
+  _ok "portage confdir staged at $dst"
 }
 
 # --------------------------------------------------------------------------
@@ -1015,7 +738,7 @@ _patch_catalyst_kmerge(){
 # --------------------------------------------------------------------------
 # catalyst copies portage_confdir ONCE: setup_confdir returns immediately when
 # its autoresume marker exists. A build resumed after the confdir changed would
-# therefore keep the old (glibc-masking) copy in its chroot and fail again, so
+# therefore keep the old copy in its chroot and fail again, so
 # drop just that marker - catalyst re-rsyncs the confdir while unpack,
 # chroot_setup and package progress stay untouched.
 _force_confdir_refresh(){
@@ -1036,7 +759,6 @@ _force_confdir_refresh(){
 }
 
 _run_stage1(){
-  _accept_host_keywords
   _force_confdir_refresh
   _info "== building portage snapshot (git treeish ${SNAP_REF:-HEAD}) =="
   mkdir -p "$WORKDIR/snapshot"
@@ -1135,7 +857,6 @@ main(){
   if [ "$do_stage1" -eq 1 ]; then
     _ensure_stage3
     _write_catalyst_conf
-    _bump_glibc
     _ensure_stage3_builds
     _prepare_portage_confdir
     _run_stage1
@@ -1143,10 +864,9 @@ main(){
 
   if [ "$ONLY" != stage1 ]; then
     [ -n "${KEEP:-}" ] || _write_catalyst_conf
-    # Re-stage the confdir on every run: it is generated (glibc mask, accept
-    # keywords) and then copied into the chroot, so reusing a copy from an
-    # earlier run would silently ignore edits to config/stages - which is how
-    # a stale glibc mask and a stale package.use survive a resume.
+    # Re-stage the confdir on every run: it is copied into the chroot, so
+    # reusing a copy from an earlier run would silently ignore edits to
+    # config/stages.
     _prepare_portage_confdir
     _run_stage2
     _collect_iso

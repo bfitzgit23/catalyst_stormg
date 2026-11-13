@@ -1,3 +1,0 @@
-# glibc-2.44-r5 is required by the current stage3; accept its testing
-# keyword when the target profile has not stabilized it yet.
-=sys-libs/glibc-2.44-r5 ~amd64

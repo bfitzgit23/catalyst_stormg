@@ -138,7 +138,7 @@ runner) has no `overlay/var/db/repos/*` to copy. In that case the script runs `e
 `guru` / `steam-overlay` from GitHub.
 
 `$DATA_DIR` holds everything big and disposable: the imported trees and their git objects,
-catalyst's `storedir`, the distfiles cache and the glibc bump chroot. It defaults to `$WORKDIR`,
+catalyst's `storedir` and the distfiles cache. It defaults to `$WORKDIR`,
 but to `/var/tmp/stormg-data` inside a container — a bind-mounted workspace (Docker Desktop on
 Windows/macOS) manages only a few hundred small files per *minute*, so importing the 134k-file
 portage tree there takes ~4 hours. Only the finished ISO is copied back into `$WORKDIR`.
@@ -167,28 +167,6 @@ A stage1 that already produced its tarball is **not** built again: a plain
 again would cost hours and stage2 only consumes that tarball. `--rebuild-stage1` (or `--only
 stage1`, or a fresh `BUILD_DATE`) forces it, and skipping stage1 also skips the gentoo-tree sync so
 the specs keep naming the snapshot the finished stage1 was built from.
-
-The glibc pre-bump targets the newest *released* glibc in the snapshot tree (live `9999`
-ebuilds are skipped — they clone upstream glibc and cannot build in a bare stage3). If the bump
-still fails it only warns and continues; pass `--no-bump-glibc` to skip it entirely.
-
-After the bump the chroot is repacked into the stage3 tarball, so `/proc`, `/dev` and `/sys` are
-unmounted first and excluded from the archive (tarring live kernel filesystems produced thousands
-of `File shrank by N bytes` errors and a corrupt tarball). The replacement is written to a
-`.part` file and only swapped in once it lists cleanly, and if the repack still fails the emerged
-chroot is kept — the next run reuses it and skips the glibc rebuild.
-
-A bumped stage3 carries a glibc that is *newer* than `config/stages/package.mask/releng/glibc`
-allows (it masks `>=sys-libs/glibc-2.45`). With that mask, portage ignores the installed glibc and
-picks the newest *allowed* one — `2.42-r7` — then refuses to install it over the newer version:
-`Downgrading glibc is not supported and a sure way to destruction`. So the script gives catalyst a
-staged copy of the confdir in `$WORKDIR/portage-conf` whose glibc mask is raised just above the
-version the stage3 actually carries (keeping the original "hold back anything newer" intent) and
-adds `sys-libs/glibc ~amd64` to `package.accept_keywords` — catalyst's chroot has no
-`ACCEPT_KEYWORDS` of its own, so the newest glibc is otherwise still rejected as testing-only.
-Catalyst copies `portage_confdir` only once (`setup_confdir` is skipped as soon as its autoresume
-marker exists), so each stage run clears just that marker to make it re-copy the fixed confdir
-while package progress is preserved.
 
 `config/stages/make.conf` deliberately lists every `VIDEO_CARDS` value **except `nvidia`**.
 `VIDEO_CARDS="*"` also enables `video_cards_nvidia`, which makes `x11-base/xorg-drivers` depend on
@@ -234,7 +212,6 @@ Options / env overrides:
   `source_subpath`, `livecd/iso` and `livecd/volid`. Default: the stamp of the newest unfinished
   build, else today; set it explicitly to force a new build date.
 - `-j <jobs>` / `CATALYST_JOBS` — make jobs (default `nproc`).
-- `--no-bump-glibc` — skip the pre-stage1 glibc upgrade of the stage3 chroot.
 - `--keep` — don't regenerate `$WORKDIR/catalyst.conf` before stage2.
 - `REPO_DIR`, `WORKDIR` — override where the repo and the build live.
 - `DATA_DIR` — where the bulky, disposable build data lives (trees, `storedir`, distfiles).
