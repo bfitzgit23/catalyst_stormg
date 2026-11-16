@@ -495,6 +495,7 @@ _fresh_sync(){
   # Local packages live at the repo root; seed them after importing the tree so
   # the snapshot contains their ebuilds and Manifests.
   _seed_local_package "www-client/chromium-bin" "$REPO_DIR/chromium-bin"
+  _seed_local_package "dev-cpp/simdutf" "$REPO_DIR/dev-cpp/simdutf"
 
   if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
     SNAP_REF="$(_git -C "$REPOS_DIR/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"

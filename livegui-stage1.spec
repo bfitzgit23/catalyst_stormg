@@ -241,6 +241,7 @@ livecd/packages:
 	sys-process/procps
 	sys-process/psmisc
 	www-client/firefox-bin
+	dev-cpp/simdutf
 	www-client/chromium-bin
 	net-print/epson-inkjet-printer-escpr
 	xfce-base/xfce4-meta
