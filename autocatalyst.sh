@@ -491,6 +491,11 @@ _fresh_sync(){
       _run _git -C "$REPOS_DIR/$name" pull --ff-only
     fi
   done
+
+  # Local packages live at the repo root; seed them after importing the tree so
+  # the snapshot contains their ebuilds and Manifests.
+  _seed_local_package "www-client/chromium-bin" "$REPO_DIR/chromium-bin"
+
   if [ "$SNAP_REF_EXPLICIT" -eq 0 ]; then
     SNAP_REF="$(_git -C "$REPOS_DIR/gentoo" rev-parse --short=12 HEAD 2>/dev/null || echo HEAD)"
   fi
@@ -734,7 +739,32 @@ _force_confdir_refresh(){
   return 0
 }
 
+# Portage ignores a DISTDIR entry that is a symbolic link ("... is a symbolic
+# link, ignoring"). Some prebuilt packages (notably chromium-bin) are staged
+# that way, so replace each symlinked distfile with a real copy before catalyst
+# resolves the stage1 package set.
+_normalize_distfiles(){
+  [ "$DRY" -eq 1 ] && { _info "[dry-run] would replace symlinked distfiles"; return 0; }
+  local dirs=("$DISTFILES_DIR") dir link tmp
+  dir="$(_conf_val distdir "$CATALYST_CONF" 2>/dev/null || true)"
+  [ -n "$dir" ] && dirs+=("$dir")
+  for dir in "${dirs[@]}"; do
+    [ -d "$dir" ] || continue
+    while IFS= read -r -d '' link; do
+      [ -f "$link" ] || continue
+      tmp="${link}.stormg-copy.$$"
+      if cp -L --reflink=auto --preserve=mode,timestamps -- "$link" "$tmp" 2>/dev/null          && mv -f -- "$tmp" "$link"; then
+        _ok "replaced symlinked distfile with a copy: ${link##*/}"
+      else
+        rm -f -- "$tmp" 2>/dev/null || true
+        _warn "could not replace symlinked distfile: $link"
+      fi
+    done < <(find "$dir" -maxdepth 1 -type l -print0 2>/dev/null)
+  done
+}
+
 _run_stage1(){
+  _normalize_distfiles
   _force_confdir_refresh
   _info "== building portage snapshot (git treeish ${SNAP_REF:-HEAD}) =="
   mkdir -p "$WORKDIR/snapshot"
