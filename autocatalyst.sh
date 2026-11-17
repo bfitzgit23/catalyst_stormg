@@ -358,9 +358,27 @@ _write_specs(){
     sed -i "s#^livecd/fsscript:.*#livecd/fsscript: ${esc}/$(basename "$FSS")#" "$dst"
   done
 
+  # livecd/cdtar is another early stage2 lookup. Stage the theme archive into
+  # the build tree and write that absolute path into the generated spec, so a
+  # stale checkout path (for example /home/bennji/Desktop/cdtar) cannot make
+  # catalyst abort with "cannot locate specified cdtar" after stage1.
+  local cdtar_name='grub-theme-natural-gentoo-remastered.tar.bz2'
+  local cdtar_src="$REPO_DIR/cdtar/$cdtar_name" cdtar_dir cdtar_dst
+  if [ ! -f "$cdtar_src" ] && [ -f "$SCRIPT_DIR/cdtar/$cdtar_name" ]; then
+    cdtar_src="$SCRIPT_DIR/cdtar/$cdtar_name"
+  fi
+  [ -f "$cdtar_src" ] || _die "cdtar not found at $REPO_DIR/cdtar/$cdtar_name or $SCRIPT_DIR/cdtar/$cdtar_name"
+  cdtar_dir="$WORKDIR/cdtar"
+  cdtar_dst="$cdtar_dir/$cdtar_name"
+  mkdir -p "$cdtar_dir"
+  if [ "$cdtar_src" != "$cdtar_dst" ]; then
+    cp -f "$cdtar_src" "$cdtar_dst" || _die "could not stage cdtar at $cdtar_dst"
+  fi
+  sed -i "s#^livecd/cdtar:.*#livecd/cdtar: ${escw}/cdtar/${cdtar_name}#" "$CONF_STAGE2"
+
   # A surviving placeholder means a rewrite did not apply (stale copy, typo);
   # say so now, not 30 minutes into stage2.
-  local left fss_line
+  local left fss_line cdtar_line
   left="$(grep -n '@REPO_DIR@' "$CONF_STAGE1" "$CONF_STAGE2" || true)"
   if [ -n "$left" ]; then
     _die "generated specs still contain @REPO_DIR@:
@@ -370,10 +388,17 @@ $left"
   if [ -n "$fss_line" ] && [ ! -f "$fss_line" ]; then
     _die "livecd/fsscript resolves to '$fss_line', which does not exist"
   fi
+  cdtar_line="$(sed -n 's#^livecd/cdtar:[[:space:]]*##p' "$CONF_STAGE2" | tail -n 1)"
+  if [ -n "$cdtar_line" ] && [ ! -f "$cdtar_line" ]; then
+    _die "livecd/cdtar resolves to '$cdtar_line', which does not exist"
+  fi
 
   _ok "specs written (fresh git repos + treeish ${SNAP_REF:-HEAD}, date ${DATE})"
   if [ -n "$fss_line" ]; then
     _info "stage2 fsscript: $fss_line"
+  fi
+  if [ -n "$cdtar_line" ]; then
+    _info "stage2 cdtar: $cdtar_line"
   fi
 }
 
