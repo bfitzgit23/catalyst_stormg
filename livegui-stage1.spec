@@ -258,6 +258,7 @@ livecd/packages:
 	app-cdr/xfburn
 	media-gfx/ristretto
 	dev-util/meld
+	app-editors/neovim
 	sys-boot/plymouth
 	app-misc/fastfetch
 	media-fonts/jetbrains-mono
