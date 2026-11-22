@@ -116,9 +116,14 @@ installed system too.
   and writes it into `backup_device_uuid`. Re-run it by hand after moving `/` to another device.
 - `services-openrc.conf` enables `cronie` (the `virtual/cron` default provider) because
   Timeshift's schedule is driven by cron.
-- No snapshot is created automatically: the first one is the user's call (GUI or
-  `sudo timeshift --create --comments "Initial" --tags D`), so installation never fills a small
-  disk with a multi-GB rsync snapshot.
+- The first boot of an installed system runs the one-shot OpenRC service
+  `timeshift-initial-snapshot` (`root_overlay/etc/init.d/timeshift-initial-snapshot` ->
+  `usr/local/bin/stormg-timeshift-baseline`). It creates one `Initial StormG snapshot` baseline,
+  but only when no snapshot exists yet *and* `df` shows enough free space for the included files
+  plus 10% and 1 GiB headroom; otherwise it records the reason and does nothing. The snapshot runs
+  in the background so the first boot is not blocked, and the outcome lives in
+  `/var/lib/timeshift-initial-snapshot.state` (delete that file to re-arm) and
+  `/var/log/timeshift-initial-snapshot.log`.
 
 ### Building the ISO (anywhere): `autocatalyst.sh`
 

@@ -1,0 +1,42 @@
+#!/sbin/openrc-run
+# timeshift-initial-snapshot - one-shot baseline snapshot on first boot.
+#
+# Enabled by Calamares in the installed system's default runlevel (see
+# root_overlay/etc/calamares/modules/services-openrc.conf). The real work is in
+# /usr/local/bin/stormg-timeshift-baseline, which checks for existing snapshots
+# and free space before running; it is started in the background so the first
+# boot is not held up by a multi-GB rsync, and it records its own result in
+# /var/lib/timeshift-initial-snapshot.state so it only ever acts once.
+
+description="Create the first Timeshift snapshot on a fresh StormG install"
+
+pidfile="/run/timeshift-initial-snapshot.pid"
+
+depend() {
+    need localmount
+    after bootmisc
+}
+
+start() {
+    if [ -e /var/lib/timeshift-initial-snapshot.state ]; then
+        einfo "initial Timeshift snapshot already handled"
+        return 0
+    fi
+
+    ebegin "Starting initial Timeshift snapshot in the background"
+    start-stop-daemon --start --quiet --background \
+        --make-pidfile --pidfile "$pidfile" \
+        --exec /usr/local/bin/stormg-timeshift-baseline
+    local rc=$?
+    eend "$rc"
+    if [ "$rc" -eq 0 ]; then
+        einfo "progress is logged to /var/log/timeshift-initial-snapshot.log"
+    fi
+    return 0
+}
+
+stop() {
+    # The snapshot finishes (and records its result) on its own; never
+    # interrupt it just because the service was stopped.
+    return 0
+}
