@@ -64,6 +64,7 @@ livecd/packages:
 	app-arch/zip
 	app-arch/unrar
 	app-backup/fsarchiver
+	app-backup/timeshift
 	app-cdr/dvd+rw-tools
 	app-cdr/cdrtools
 	app-crypt/chntpw

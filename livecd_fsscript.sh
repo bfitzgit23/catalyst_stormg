@@ -87,4 +87,7 @@ fi
 # Executed by trust-launch.desktop, 0644 in the repo.
 chmod 0755 /usr/local/bin/trust.sh
 
+# Executed by calamares' timeshift-setup shellprocess instance, 0644 in the repo.
+chmod 0755 /usr/local/bin/stormg-timeshift-setup
+
 exit 0

@@ -1,0 +1,61 @@
+#!/bin/sh
+# stormg-timeshift-setup - finish the Timeshift pre-configuration for the
+# system Calamares just installed.
+#
+# The live image (and therefore the installed squashfs) ships
+# /etc/timeshift/timeshift.json with the StormG defaults: rsync mode, a
+# daily/weekly/monthly schedule, and /home, caches, logs and the portage tree
+# excluded. The one value that cannot exist before installation is the UUID of
+# the installed root filesystem, which Timeshift uses as its backup device.
+# Fill it in here so Timeshift opens configured instead of asking for a device.
+#
+# Calamares runs this inside the target chroot through the shellprocess
+# instance "timeshift-setup"; it is safe to re-run by hand on an installed
+# system.
+
+set -eu
+
+conf=/etc/timeshift/timeshift.json
+
+root_source() {
+    # Calamares writes UUID= sources into /etc/fstab. Inside the installer
+    # chroot findmnt still describes the live medium, so fstab wins.
+    if [ -r /etc/fstab ]; then
+        awk '$2 == "/" { print $1; exit }' /etc/fstab
+        return 0
+    fi
+    findmnt -no SOURCE / 2>/dev/null || true
+}
+
+root_uuid() {
+    src="$(root_source)"
+    case "$src" in
+        UUID=*) printf '%s\n' "${src#UUID=}" ;;
+        /dev/*) blkid -s UUID -o value "$src" 2>/dev/null ;;
+    esac
+}
+
+uuid="$(root_uuid || true)"
+if [ -z "${uuid:-}" ]; then
+    echo "stormg-timeshift-setup: cannot determine the root filesystem UUID" >&2
+    exit 1
+fi
+
+if [ ! -f "$conf" ]; then
+    echo "stormg-timeshift-setup: $conf is missing (root_overlay not applied?)" >&2
+    exit 1
+fi
+
+sed -i \
+    "s|\"backup_device_uuid\"[[:space:]]*:[[:space:]]*\"[^\"]*\"|\"backup_device_uuid\" : \"${uuid}\"|" \
+    "$conf"
+
+if ! grep -q "\"backup_device_uuid\"[[:space:]]*:[[:space:]]*\"${uuid}\"" "$conf"; then
+    echo "stormg-timeshift-setup: could not write the backup device to $conf" >&2
+    exit 1
+fi
+
+chown root:root "$conf"
+chmod 0644 "$conf"
+
+echo "stormg-timeshift-setup: Timeshift backup device set to ${uuid}"

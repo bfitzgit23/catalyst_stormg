@@ -100,6 +100,26 @@ silently drift:
 - New `calamares-debug` diagnostic tool ships in `root_overlay/usr/local/bin/` (plus a
   "Calamares Diagnostics" desktop entry) - see the troubleshooting section above.
 
+### Timeshift (pre-configured backup/restore)
+
+`app-backup/timeshift` (GURU, `~amd64`) is part of the live image, so it is present on the
+installed system too.
+
+- `root_overlay/etc/timeshift/timeshift.json` ships the defaults used by both the live session and
+  the installed system: RSYNC mode (no BTRFS subvolume assumptions), `do_first_run: false` so the
+  setup wizard never appears, daily/weekly/monthly schedules (5/3/2 kept), and `/home`, `/root`,
+  caches, logs, `/var/db/repos`, `/usr/src` and the virtual filesystems excluded.
+- The one value that cannot be baked in is the backup device: Timeshift stores snapshots under
+  `/timeshift` on a selected filesystem. The Calamares `shellprocess` instance
+  `timeshift-setup` runs `root_overlay/usr/local/bin/stormg-timeshift-setup` in the target
+  chroot after `services-openrc`; it reads the `UUID=` source of `/` from the target `/etc/fstab`
+  and writes it into `backup_device_uuid`. Re-run it by hand after moving `/` to another device.
+- `services-openrc.conf` enables `cronie` (the `virtual/cron` default provider) because
+  Timeshift's schedule is driven by cron.
+- No snapshot is created automatically: the first one is the user's call (GUI or
+  `sudo timeshift --create --comments "Initial" --tags D`), so installation never fills a small
+  disk with a multi-GB rsync snapshot.
+
 ### Building the ISO (anywhere): `autocatalyst.sh`
 
 The two `*.spec` files bake in a build-host path (`/home/bennji/Desktop/catalyst_stormg/…`).
