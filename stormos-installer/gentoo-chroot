@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Gentoo equivalent of arch-chroot for the StormOS installer.
+set -euo pipefail
+
+root=${1:?usage: gentoo-chroot ROOT COMMAND...}
+shift
+mkdir -p "$root/proc" "$root/sys" "$root/dev"
+mount -t proc proc "$root/proc" 2>/dev/null || true
+mount --rbind /sys "$root/sys" 2>/dev/null || true
+mount --make-rslave "$root/sys" 2>/dev/null || true
+mount --rbind /dev "$root/dev" 2>/dev/null || true
+mount --make-rslave "$root/dev" 2>/dev/null || true
+cp -L /etc/resolv.conf "$root/etc/resolv.conf" 2>/dev/null || true
+exec chroot "$root" "$@"

@@ -1,0 +1,2 @@
+# AetherDE's FastAPI version is still ~amd64 in the Gentoo tree.
+dev-python/fastapi ~amd64

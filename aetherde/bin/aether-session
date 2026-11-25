@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# AetherDE X11 session entry point. Invoked by xinit/startx or a display manager.
+# Sequence is atomic: every daemon is launched, verified ready, and reaped on exit.
+set -Eeuo pipefail
+
+export XDG_CURRENT_DESKTOP=AetherDE
+export XDG_SESSION_DESKTOP=AetherDE
+export DESKTOP_SESSION=aether-de
+export XDG_SESSION_TYPE=x11
+
+LIBDIR=/usr/lib/aether-de
+SOCK=/tmp/aether-sys.sock
+LOGDIR="${XDG_CACHE_HOME:-$HOME/.cache}/aether-de"
+PORTFILE="$LOGDIR/gateway.port"
+PIDS=()
+mkdir -p "$LOGDIR"
+export PYTHONPATH="$LIBDIR${PYTHONPATH:+:$PYTHONPATH}"
+
+log() { printf '[aether-session] %s\n' "$*" >&2; }
+
+cleanup() {
+  local code=$?
+  trap - EXIT TERM HUP INT
+  log "shutting down (exit $code)"
+  rm -f "$SOCK" "$PORTFILE"
+  local pid
+  for pid in "${PIDS[@]}"; do
+    kill -TERM "$pid" 2>/dev/null || true
+  done
+  for pid in "${PIDS[@]}"; do
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      kill -0 "$pid" 2>/dev/null || break
+      sleep 0.1
+    done
+    kill -KILL "$pid" 2>/dev/null || true
+  done
+  exit "$code"
+}
+trap cleanup EXIT TERM HUP INT
+
+run() {
+  local name=$1
+  shift
+  log "starting $name"
+  "$@" >>"$LOGDIR/$name.log" 2>&1 &
+  PIDS+=("$!")
+}
+
+await_file() {
+  local file=$1 tries=$2
+  for _ in $(seq 1 "$tries"); do
+    [[ -s "$file" ]] && return 0
+    sleep 0.05
+  done
+  return 1
+}
+
+# 1. Publish the session environment to D-Bus activated services.
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+  dbus-update-activation-environment --systemd DISPLAY XAUTHORITY \
+    DBUS_SESSION_BUS_ADDRESS XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR
+fi
+systemctl --user import-environment DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS \
+  XDG_CURRENT_DESKTOP XDG_SESSION_TYPE 2>/dev/null || true
+
+# 2. XFCE settings first so the WM and compositor inherit theme/font/keys.
+run xfsettingsd xfsettingsd
+sleep 0.5
+
+# 3. Window manager with native compositing off; picom owns compositing.
+run picom picom --config /dev/null --backend glx --vsync
+run xfwm4 xfwm4 --compositor=off --replace
+
+# 4. Polkit authentication agent.
+if command -v polkit-gnome-authentication-agent-1 >/dev/null 2>&1; then
+  run polkit polkit-gnome-authentication-agent-1
+fi
+
+# 5. Python async system bridge (FastAPI over a unix domain socket).
+run aether-daemon python3 -m aether_de.daemon --socket "$SOCK"
+fallback_to_xfce() {
+  local reason=$1
+  log "$reason — falling back to XFCE"
+  trap - EXIT TERM HUP INT
+  rm -f "$SOCK" "$PORTFILE"
+  local pid
+  for pid in "${PIDS[@]}"; do
+    kill -TERM "$pid" 2>/dev/null || true
+  done
+  sleep 0.5
+  if command -v startxfce4 >/dev/null 2>&1; then
+    exec startxfce4
+  fi
+  log "startxfce4 is not available; cannot fall back"
+  exit 1
+}
+
+if ! await_file "$SOCK" 100; then
+  fallback_to_xfce "python daemon did not create $SOCK"
+fi
+
+# Gateway dependencies are installed at ISO build time. Self-heal if a tree was
+# copied by hand or the build-time npm step failed, so the session still starts.
+if [[ ! -d "$LIBDIR/gateway/node_modules" ]]; then
+  log "gateway dependencies missing; running npm install"
+  if ! (cd "$LIBDIR/gateway" && npm install --omit=dev --no-audit --no-fund) \
+      >>"$LOGDIR/npm.log" 2>&1; then
+    log "npm install failed; see $LOGDIR/npm.log"
+    exit 1
+  fi
+fi
+
+# 6. Node realtime gateway; it writes its bound port to PORTFILE.
+run aether-gateway node "$LIBDIR/gateway/server.js" \
+  --socket "$SOCK" --port 0 --port-file "$PORTFILE" --static "$LIBDIR/shell"
+if ! await_file "$PORTFILE" 100; then
+  fallback_to_xfce "gateway did not publish a port"
+fi
+PORT=$(cat "$PORTFILE")
+
+# 7. Borderless web shell pinned to the desktop layer.
+export AETHER_SHELL_URL="http://127.0.0.1:${PORT}/index.html"
+if command -v electron >/dev/null 2>&1; then
+  run aether-shell electron "$LIBDIR/shell/electron-main.js" -- "$AETHER_SHELL_URL"
+elif command -v firefox-bin >/dev/null 2>&1; then
+  run aether-shell firefox-bin --new-window "$AETHER_SHELL_URL"
+elif command -v firefox >/dev/null 2>&1; then
+  run aether-shell firefox --new-window "$AETHER_SHELL_URL"
+else
+  fallback_to_xfce "no Electron or browser found for the web shell"
+fi
+
+log "session ready at $AETHER_SHELL_URL"
+wait

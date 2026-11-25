@@ -1,0 +1,19 @@
+[Unit]
+Description=AetherDE system bridge (Python async X11/D-Bus daemon)
+Documentation=man:aether-session(1)
+After=graphical-session.target dbus.session.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+Environment=AETHER_SOCKET=/tmp/aether-sys.sock
+Environment=PYTHONPATH=/usr/lib/aether-de
+ExecStart=/usr/bin/python3 -m aether_de.daemon --socket /tmp/aether-sys.sock
+Restart=on-failure
+RestartSec=2
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=5
+
+[Install]
+WantedBy=graphical-session.target

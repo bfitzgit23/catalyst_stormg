@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Advanced Installer (Calamares)
+Comment=Fallback installer with manual partitioning options
+Exec=/usr/bin/calamares
+TryExec=/usr/bin/calamares
+Icon=preferences-system
+Categories=System;
+Terminal=false
+StartupNotify=true

@@ -247,6 +247,45 @@ case "$ONLY" in all|stage1|stage2) ;; *) _die "Bad --only value: $ONLY (all|stag
 [ -f "$FSS" ]     || _die "Missing $FSS"
 
 # --------------------------------------------------------------------------
+# 0a. refresh AetherDE + installer payload in root_overlay from the source trees
+# --------------------------------------------------------------------------
+# root_overlay is the only channel into the livecd chroot, so the payload has to
+# exist there as real files. Re-copy it from the source trees on every run so
+# the committed overlay copy cannot drift; dry runs must not touch the repo.
+_sync_stormos(){
+  [ "${DRY:-0}" -eq 1 ] && return 0
+  local de="$REPO_DIR/aetherde" inst="$REPO_DIR/stormos-installer"
+  local lib="$ROOT_OVL/usr/lib/aether-de" ilib="$ROOT_OVL/usr/lib/stormos-installer"
+  [ -d "$de" ] || _die "Missing $de"
+  [ -d "$inst" ] || _die "Missing $inst"
+  install -d -m 0755 "$lib" "$ilib" "$ROOT_OVL/usr/bin" \
+    "$ROOT_OVL/usr/share/xsessions" "$ROOT_OVL/usr/share/applications" \
+    "$ROOT_OVL/etc/skel"
+  rm -rf "$lib/aether_de" "$lib/gateway" "$lib/shell" \
+         "$ilib/backend" "$ilib/frontend"
+  cp -a "$de/src/aether_de" "$lib/aether_de"
+  cp -a "$de/gateway" "$lib/gateway"
+  cp -a "$de/shell" "$lib/shell"
+  cp -a "$inst/backend/." "$ilib/backend/"
+  cp -a "$inst/frontend/." "$ilib/frontend/"
+  install -m 0644 "$inst/electron-main.js" "$ilib/electron-main.js"
+  install -m 0644 "$inst/package.json" "$ilib/package.json"
+  install -m 0755 "$de/bin/aether-session" "$ROOT_OVL/usr/bin/aether-session"
+  install -m 0755 "$de/bin/aether-de" "$ROOT_OVL/usr/bin/aether-de"
+  install -m 0755 "$de/bin/aether-xinit" "$ROOT_OVL/usr/bin/aether-xinit"
+  install -m 0755 "$inst/stormos-installer" "$ROOT_OVL/usr/bin/stormos-installer"
+  install -m 0755 "$inst/gentoo-chroot" "$ROOT_OVL/usr/bin/gentoo-chroot"
+  install -m 0644 "$de/share/xsessions/aether-de.desktop" \
+    "$ROOT_OVL/usr/share/xsessions/aether-de.desktop"
+  install -m 0644 "$de/etc/skel/.xinitrc" "$ROOT_OVL/etc/skel/.xinitrc"
+  install -m 0644 "$inst/stormos-installer.desktop" \
+    "$ROOT_OVL/usr/share/applications/stormos-installer.desktop"
+  install -m 0644 "$inst/stormos-installer-advanced.desktop" \
+    "$ROOT_OVL/usr/share/applications/stormos-installer-advanced.desktop"
+}
+_sync_stormos
+
+# --------------------------------------------------------------------------
 # 0. keep the build stamp of an interrupted run
 # --------------------------------------------------------------------------
 # Catalyst identifies a build by version_stamp: the chroot and the autoresume
