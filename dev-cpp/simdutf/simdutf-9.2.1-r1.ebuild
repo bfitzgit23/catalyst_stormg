@@ -11,14 +11,17 @@ inherit cmake docs python-any-r1
 
 DESCRIPTION="Unicode validation and transcoding at billions of characters per second"
 HOMEPAGE="https://simdutf.github.io/simdutf/"
-SRC_URI="https://github.com/${PN}/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/${PN}/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz"
 
 LICENSE="|| ( Apache-2.0 MIT )"
 # 9.2.x is the ABI required by www-client/chromium-bin (libsimdutf.so.36).
+# The -r1 revision plus +atomic-base64 are what >=net-libs/nodejs-26 asks
+# for; upstream 9.2.x compiles the atomic base64 code unconditionally
+# (only SIMDUTF_ATOMIC_BASE64_TESTS exists), so the flag is metadata only.
 SLOT="0/36"
 KEYWORDS="amd64 arm arm64 ~loong ppc ppc64 ~riscv ~sparc x86"
 
-IUSE="test"
+IUSE="+atomic-base64 test"
 RESTRICT="!test? ( test )"
 
 RDEPEND="

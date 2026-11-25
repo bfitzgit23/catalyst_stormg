@@ -48,7 +48,7 @@ RDEPEND="
 	dev-libs/libxslt
 	dev-libs/nspr
 	dev-libs/nss
-	=dev-cpp/simdutf-9.2.1
+	=dev-cpp/simdutf-9.2.1-r1
 	dev-util/desktop-file-utils
 	media-libs/alsa-lib
 	media-libs/dav1d
