@@ -114,6 +114,9 @@ installed system too.
   `timeshift-setup` runs `root_overlay/usr/local/bin/stormg-timeshift-setup` in the target
   chroot after `services-openrc`; it reads the `UUID=` source of `/` from the target `/etc/fstab`
   and writes it into `backup_device_uuid`. Re-run it by hand after moving `/` to another device.
+- `config/stages/package.use/timeshift` turns on `x11-libs/xapp`'s `vala` and `introspection`
+  flags: Timeshift's GURU ebuild depends on `xapp[vala]`, xapp-3.x defaults both flags off, and
+  its `REQUIRED_USE` only allows `vala` together with `introspection`.
 - `services-openrc.conf` enables `cronie` (the `virtual/cron` default provider) because
   Timeshift's schedule is driven by cron.
 - The first boot of an installed system runs the one-shot OpenRC service

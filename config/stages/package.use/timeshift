@@ -1,0 +1,5 @@
+# app-backup/timeshift (GURU) links x11-libs/xapp's Vala bindings: its ebuild
+# requires >=x11-libs/xapp-1.0.4[vala(+)], xapp-3.x defaults neither +vala nor
+# +introspection, and xapp's REQUIRED_USE only allows vala together with
+# introspection. vte:2.91 already defaults both, so it needs no entry here.
+x11-libs/xapp vala introspection
