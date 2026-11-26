@@ -252,16 +252,6 @@ livecd/packages:
 	xfce-extra/xfce4-pulseaudio-plugin
 	xfce-base/xfce4-power-manager
 	x11-themes/adw-gtk3
-	# AetherDE web desktop: Python bridge, Node gateway, GUI and X11 plumbing.
-	dev-python/python-xlib
-	dev-python/dbus-next
-	dev-python/psutil
-	dev-python/fastapi
-	dev-python/uvicorn
-	net-libs/nodejs
-	x11-misc/picom
-	x11-apps/xprop
-	x11-apps/xinit
 	x11-misc/lightdm
 	x11-misc/lightdm-gtk-greeter
 	gui-libs/display-manager-init

@@ -92,22 +92,4 @@ chmod 0755 /usr/local/bin/trust.sh
 chmod 0755 /usr/local/bin/stormg-timeshift-setup
 chmod 0755 /usr/local/bin/stormg-timeshift-baseline
 
-# AetherDE + installer binaries, 0644 in the repo.
-chmod 0755 /usr/bin/aether-session /usr/bin/aether-de /usr/bin/aether-xinit \
-            /usr/bin/stormos-installer /usr/bin/gentoo-chroot \
-            /usr/lib/aether-de/gateway/server.js \
-            /usr/lib/stormos-installer/electron-main.js
-
-# Post-install hook: Calamares runs it from the target chroot.
-chmod 0755 /usr/local/bin/aetherde-postinstall.sh
-
-# Node dependencies for the AetherDE gateway. Failure is logged, not fatal:
-# aether-session retries at first login.
-if [ -d /usr/lib/aether-de/gateway ] \
-        && [ ! -d /usr/lib/aether-de/gateway/node_modules ]; then
-    (cd /usr/lib/aether-de/gateway \
-        && npm install --omit=dev --no-audit --no-fund) \
-        >/var/log/stormos-build-npm.log 2>&1 || true
-fi
-
 exit 0

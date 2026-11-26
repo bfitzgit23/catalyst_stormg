@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-# Convenience launcher for ~/.xinitrc and manual sessions.
-# Put `exec /usr/bin/aether-de` in ~/.xinitrc and run `startx`.
-exec /usr/bin/aether-session "$@"

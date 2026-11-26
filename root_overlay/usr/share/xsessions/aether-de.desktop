@@ -1,9 +1,0 @@
-[Desktop Entry]
-Encoding=UTF-8
-Name=AetherDE
-Comment=A web-native desktop environment on XFCE4/X11
-Exec=/usr/bin/aether-session
-TryExec=/usr/bin/aether-session
-Type=XSession
-DesktopNames=AetherDE
-X-GDM-Session-Type=X11-GenericSession

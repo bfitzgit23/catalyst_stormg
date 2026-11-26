@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=StormOS Installer
-Comment=Install StormOS to a disk
-Exec=/usr/bin/stormos-installer
-Icon=preferences-system
-Categories=System;
-Terminal=false
-StartupNotify=true
